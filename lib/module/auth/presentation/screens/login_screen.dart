@@ -1,6 +1,7 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
-import 'package:beatx_flutter/module/auth/controller/sign_up_controller.dart';
+import 'package:beatx_flutter/module/auth/presentation/screens/forget_password_screen.dart';
+import 'package:beatx_flutter/module/auth/presentation/screens/signup_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/social_auth_buttons.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
 import 'package:flutter/material.dart';
@@ -8,32 +9,33 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_gap.dart';
 import '../../../onbording/common/app_logo.dart';
+import '../../controller/login_controller.dart';
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final SignUpController _controller;
+  late final LoginController _controller;
   late final bool _ownsController;
 
   @override
   void initState() {
     super.initState();
-    _ownsController = !Get.isRegistered<SignUpController>();
+    _ownsController = !Get.isRegistered<LoginController>();
     _controller = _ownsController
-        ? Get.put(SignUpController())
-        : Get.find<SignUpController>();
+        ? Get.put(LoginController())
+        : Get.find<LoginController>();
   }
 
   @override
   void dispose() {
-    if (_ownsController && Get.isRegistered<SignUpController>()) {
-      Get.delete<SignUpController>();
+    if (_ownsController && Get.isRegistered<LoginController>()) {
+      Get.delete<LoginController>();
     }
     super.dispose();
   }
@@ -53,10 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
               Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(32, 16, 32, 70),
-                  child: _SignupCard(
-                    formKey: _formKey,
-                    controller: _controller,
-                  ),
+                  child: _LoginCard(formKey: _formKey, controller: _controller),
                 ),
               ),
             ],
@@ -67,12 +66,12 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-class _SignupCard extends StatelessWidget {
-  const _SignupCard({required this.formKey, required this.controller});
+class _LoginCard extends StatelessWidget {
+  const _LoginCard({required this.formKey, required this.controller});
 
   final GlobalKey<FormState> formKey;
-  final SignUpController controller;
-  static const _signupGradient = LinearGradient(
+  final LoginController controller;
+  static const _loginGradient = LinearGradient(
     colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
@@ -81,7 +80,7 @@ class _SignupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 22),
+      padding: const EdgeInsets.fromLTRB(16, 34, 16, 22),
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D0E),
         borderRadius: BorderRadius.circular(48),
@@ -99,30 +98,8 @@ class _SignupCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppLogo(),
-            const Text(
-              'Create Your Account',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                height: 1,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0,
-              ),
-            ),
-            const SizedBox(height: 28),
-            LabeledTextField(
-              title: 'Full Name',
-              hintText: 'Name',
-              prefixIcon: Icons.person_outline,
-              onChanged: controller.setUsername,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Enter your full name';
-                }
-                return null;
-              },
-            ),
+            const AppLogo(),
+            Gap.h32,
             LabeledTextField(
               title: 'EMAIL ADDRESS',
               hintText: "name@email.com",
@@ -156,26 +133,58 @@ class _SignupCard extends StatelessWidget {
               },
             ),
             Gap.h16,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ForgetPasswordScreen(),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFCFCBD1),
+                    minimumSize: Size.zero,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(
+                      color: Color(0xFFCFCBD1),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Gap.h16,
             RSaveButton(
-              key: const ValueKey('signup-save-button'),
+              key: const ValueKey('login-save-button'),
               height: 55,
               borderRadius: BorderRadius.circular(28),
-              activeGradient: _signupGradient,
+              activeGradient: _loginGradient,
               style: const TextStyle(
                 color: Color(0xFF111113),
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
               ),
-              saveText: 'Sign Up',
-              loadingText: 'Signing Up',
-              doneText: 'Signed Up',
-              errorText: 'Sign Up Failed',
+              saveText: 'Log In',
+              loadingText: 'Logging In',
+              doneText: 'Logged In',
+              errorText: 'Log In Failed',
               buttonStatusNotifier: controller.processNotifier,
               onSaveTap: () {
                 if (!(formKey.currentState?.validate() ?? false)) return;
 
-                controller.signup(
+                controller.login(
                   buttonNotifier: controller.processNotifier,
                   snackbarNotifier: SnackbarNotifier(context: context),
                   onDone: () {
@@ -192,7 +201,10 @@ class _SignupCard extends StatelessWidget {
             const SizedBox(height: 19),
             TextButton(
               onPressed: () {
-                Navigator.maybePop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SignupScreen()),
+                );
               },
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFCFCBD1),
@@ -202,7 +214,7 @@ class _SignupCard extends StatelessWidget {
               ),
               child: Text.rich(
                 TextSpan(
-                  text: 'Already Have an Account? ',
+                  text: 'New to BeatX? ',
                   style: const TextStyle(
                     color: Color(0xFFCFCBD1),
                     fontSize: 13,
@@ -211,9 +223,9 @@ class _SignupCard extends StatelessWidget {
                   ),
                   children: [
                     TextSpan(
-                      text: 'Log in',
+                      text: 'Register Now',
                       style: TextStyle(
-                        color: const Color(0xFFD27BFF),
+                        color: Color(0xFFD27BFF),
                         fontWeight: FontWeight.w800,
                       ),
                     ),

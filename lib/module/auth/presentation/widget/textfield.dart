@@ -75,7 +75,7 @@ class LabeledDropdown extends StatelessWidget {
           SizedBox(
             height: height,
             child: DropdownButtonFormField<String>(
-              value: value,
+              initialValue: value,
               isExpanded: true,
               style: TextStyle(
                 fontSize: itemTextSize,
@@ -136,8 +136,12 @@ class LabeledDropdown extends StatelessWidget {
   }
 }
 
-
 class LabeledTextField extends StatefulWidget {
+  static const Color defaultFieldFill = Color(0xFF1B1B1C);
+  static const Color defaultFieldHint = Color(0xFFC6C0C8);
+  static const Color defaultFieldLabel = Color(0xFFAAA3AD);
+  static const Color defaultFocusedBorder = Color(0xFF4ADDE8);
+
   final String? title;
   final String? hintText;
 
@@ -177,15 +181,15 @@ class LabeledTextField extends StatefulWidget {
     super.key,
     this.title,
     this.hintText,
-    this.textSize = 16,
+    this.textSize = 15,
     this.textColor = AppColors.white,
-    this.titleColor = AppColors.white,
-    this.borderColor = AppColors.primarybutton,
-    this.focusedBorderColor = AppColors.textFieldBorder,
-    this.borderRadius = 8,
-    this.backgroundColor = const Color(0xFFC1812C),
-    this.hintTextColor = AppColors.white,
-    this.hintTextSize = 16,
+    this.titleColor = defaultFieldLabel,
+    this.borderColor = Colors.transparent,
+    this.focusedBorderColor = defaultFocusedBorder,
+    this.borderRadius = 28,
+    this.backgroundColor = defaultFieldFill,
+    this.hintTextColor = defaultFieldHint,
+    this.hintTextSize = 15,
     this.hintTextWeight = FontWeight.w400,
     this.controller,
     this.keyboardType = TextInputType.text,
@@ -193,13 +197,13 @@ class LabeledTextField extends StatefulWidget {
     this.validator,
     this.onChanged,
     this.isPassword = false,
-    this.passwordVisibleColor = Colors.white,
-    this.passwordHiddenColor = Colors.grey,
-    this.height = 48,
+    this.passwordVisibleColor = defaultFieldHint,
+    this.passwordHiddenColor = defaultFieldHint,
+    this.height = 55,
     this.prefixIcon,
-    this.prefixIconColor = Colors.white,
-    this.prefixIconSize = 20,
-    this.prefixIconPadding = const EdgeInsets.symmetric(horizontal: 8),
+    this.prefixIconColor = defaultFieldHint,
+    this.prefixIconSize = 23,
+    this.prefixIconPadding = const EdgeInsets.only(left: 14, right: 8),
   });
 
   @override
@@ -279,9 +283,7 @@ class _LabeledTextFieldState extends State<LabeledTextField> {
               suffixIcon: widget.isPassword
                   ? IconButton(
                       icon: Icon(
-                        _obscureText
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscureText ? Icons.visibility_off : Icons.visibility,
                         color: _obscureText
                             ? widget.passwordHiddenColor
                             : widget.passwordVisibleColor,
@@ -300,7 +302,6 @@ class _LabeledTextFieldState extends State<LabeledTextField> {
     );
   }
 }
-
 
 // example of uses
 

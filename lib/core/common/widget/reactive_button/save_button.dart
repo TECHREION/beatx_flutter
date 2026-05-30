@@ -21,6 +21,7 @@ class RSaveButton extends StatefulWidget {
   final Color loadingBackgroundColor;
   final Color errorBackgroundColor;
   final Color successBackgroundColor;
+  final Gradient? activeGradient;
   const RSaveButton({
     required super.key,
     this.height,
@@ -36,6 +37,7 @@ class RSaveButton extends StatefulWidget {
     this.loadingBackgroundColor = AppColors.primarybutton,
     this.errorBackgroundColor = AppColors.primarybutton,
     this.successBackgroundColor = AppColors.primarybutton,
+    this.activeGradient,
     required this.buttonStatusNotifier,
     required this.onSaveTap,
     required this.onDone,
@@ -97,10 +99,10 @@ class _RSaveButtonState extends State<RSaveButton> {
           width: widget.width ?? constraints.maxWidth,
           decoration: BoxDecoration(
             gradient: switch (buttonStatusNotifier.status) {
-              EnabledStatus _ => _activeGradient,
-              LoadingStatus _ => _activeGradient,
-              ErrorStatus _ => _activeGradient,
-              SuccessStatus _ => _activeGradient,
+              EnabledStatus _ => widget.activeGradient ?? _activeGradient,
+              LoadingStatus _ => widget.activeGradient ?? _activeGradient,
+              ErrorStatus _ => widget.activeGradient ?? _activeGradient,
+              SuccessStatus _ => widget.activeGradient ?? _activeGradient,
               DisabledStatus _ => null,
             },
             color: switch (buttonStatusNotifier.status) {
