@@ -3,6 +3,7 @@ import 'package:beatx_flutter/module/profile/presentation/screens/genaarel_setti
 import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/my_profile_details_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/payment_methods_screen.dart';
+import 'package:beatx_flutter/module/subscription/presentation/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -148,6 +149,8 @@ class ProfileScreen extends StatelessWidget {
                           title: "Subscription",
                           trailingText: "Clarity Free",
                           trailingColor: const Color(0xFFD28DFF),
+                          onTap: () =>
+                              _openScreen(context, SubscriptionScreen()),
                         ),
 
                         _settingTile(
