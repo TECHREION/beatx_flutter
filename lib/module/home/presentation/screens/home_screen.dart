@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
+import 'package:beatx_flutter/module/profile/presentation/screens/my_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -87,7 +89,15 @@ class _HomeHeader extends StatelessWidget {
           const SizedBox(width: 12),
           const AppLogo(height: 42, width: 128),
           const Spacer(),
-          _CircleAction(icon: Icons.search_rounded, onTap: () {}),
+          _CircleAction(
+            icon: Icons.search_rounded,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ExploreScreen()),
+              );
+            },
+          ),
           const SizedBox(width: 12),
           _CircleAction(
             icon: Icons.notifications_rounded,
@@ -105,19 +115,33 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFD8E9FF), Color(0xFF1B3147)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          );
+        },
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD8E9FF), Color(0xFF1B3147)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: const Icon(Icons.person, color: Color(0xFF0F1B28), size: 25),
         ),
       ),
-      child: const Icon(Icons.person, color: Color(0xFF0F1B28), size: 25),
     );
   }
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'audiobook/presentation/screen/audiobook_screen.dart';
 import 'home/presentation/screens/home_screen.dart';
+import 'podcast/presentation/screen/podcast_screen.dart';
+import 'podcast/presentation/widget/mini_player.dart';
+import 'watch/presentation/screen/watch_screen.dart';
 
 class AppGround extends StatelessWidget {
   AppGround({super.key, this.initialIndex = 0})
@@ -12,9 +15,9 @@ class AppGround extends StatelessWidget {
 
   final List<Widget> pages = const [
     HomeScreen(),
-    Scaffold(backgroundColor: Color(0xFF0B0B0C)),
-    Scaffold(backgroundColor: Color(0xFF0B0B0C)),
-    Scaffold(backgroundColor: Color(0xFF0B0B0C)),
+    WatchScreen(),
+    PodcastScreen(),
+    AudiobookScreen(),
     Scaffold(backgroundColor: Color(0xFF0B0B0C)),
   ];
 
@@ -38,7 +41,17 @@ class AppGround extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const _MiniPlayer(),
+              Obx(() {
+                if (currentIndex.value == 1 || currentIndex.value == 3) {
+                  return const SizedBox.shrink();
+                }
+
+                if (currentIndex.value == 2) {
+                  return const PodcastMiniPlayer();
+                }
+
+                return const _MiniPlayer();
+              }),
               Container(
                 height: 72,
                 margin: const EdgeInsets.only(top: 10),

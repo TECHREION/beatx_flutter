@@ -1,5 +1,5 @@
-import 'package:beatx_flutter/module/auth/presentation/screens/login_screen.dart';
-import 'package:beatx_flutter/module/auth/presentation/screens/signup_screen.dart';
+import 'package:beatx_flutter/module/app_ground.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: LoginScreen(),
+      home: AppGround(),
     );
   }
 }
