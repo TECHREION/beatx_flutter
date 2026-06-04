@@ -1,12 +1,29 @@
+import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:beatx_flutter/module/profile/presentation/widgets/profile_screen_chrome.dart';
 import 'package:flutter/material.dart';
 
-class PaymentMethodsScreen extends StatelessWidget {
+class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
+
+  @override
+  State<PaymentMethodsScreen> createState() => _PaymentMethodsScreenState();
+}
+
+class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
+  final _saveButtonStatus = ProcessStatusNotifier(
+    initialStatus: EnabledStatus(),
+  );
 
   static const LinearGradient _paymentGradient = LinearGradient(
     colors: [Color(0xFFB2FF4E), Color(0xFF40DDEB)],
   );
+
+  @override
+  void dispose() {
+    _saveButtonStatus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,29 +122,20 @@ class PaymentMethodsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   const _InputField(hint: '12345'),
                   const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
+                  RSaveButton(
+                    key: const ValueKey('payment-method-save-button'),
                     height: 58,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: _paymentGradient,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                        ),
-                        child: const Text(
-                          'Update Payment Method',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
+                    borderRadius: BorderRadius.circular(30),
+                    activeGradient: _paymentGradient,
+                    buttonStatusNotifier: _saveButtonStatus,
+                    saveText: 'Update Payment Method',
+                    doneText: 'Updated',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
                     ),
+                    onSaveTap: _savePaymentMethod,
+                    onDone: _showSavedMessage,
                   ),
                 ],
               ),
@@ -136,6 +144,17 @@ class PaymentMethodsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _savePaymentMethod() {
+    _saveButtonStatus.setSuccess();
+  }
+
+  void _showSavedMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Payment method updated')),
+    );
+    _saveButtonStatus.setEnabled();
   }
 
   Widget _label(String text) {

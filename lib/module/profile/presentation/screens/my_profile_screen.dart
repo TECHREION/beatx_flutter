@@ -88,8 +88,14 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         const CircleAvatar(
                           radius: 35,
-                          backgroundImage: AssetImage(
-                            "assets/images/profile.jpg",
+                          backgroundColor: Color(0xFF222222),
+                          child: Text(
+                            'I',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
 

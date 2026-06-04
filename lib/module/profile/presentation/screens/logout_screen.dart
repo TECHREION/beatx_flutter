@@ -1,10 +1,39 @@
+import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:flutter/material.dart';
 
-class LogoutDialog extends StatelessWidget {
+class LogoutDialog extends StatefulWidget {
   const LogoutDialog({super.key, required this.onLogout, this.onCancel});
 
   final VoidCallback onLogout;
   final VoidCallback? onCancel;
+
+  @override
+  State<LogoutDialog> createState() => _LogoutDialogState();
+}
+
+class _LogoutDialogState extends State<LogoutDialog> {
+  final _logoutButtonStatus = ProcessStatusNotifier(
+    initialStatus: EnabledStatus(),
+  );
+  final _cancelButtonStatus = ProcessStatusNotifier(
+    initialStatus: EnabledStatus(),
+  );
+
+  static const LinearGradient _logoutGradient = LinearGradient(
+    colors: [Color(0xFFFF0909), Color(0xFFFF0909)],
+  );
+
+  static const LinearGradient _cancelGradient = LinearGradient(
+    colors: [Color(0xFF050608), Color(0xFF050608)],
+  );
+
+  @override
+  void dispose() {
+    _logoutButtonStatus.dispose();
+    _cancelButtonStatus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +60,7 @@ class LogoutDialog extends StatelessWidget {
             Stack(
               alignment: Alignment.center,
               children: [
-                const SizedBox(width: 190, height: 190),
+                const SizedBox(width: 190, height: 150),
                 ...List.generate(
                   7,
                   (index) => Positioned(
@@ -48,8 +77,8 @@ class LogoutDialog extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  width: 150,
-                  height: 150,
+                  width: 120,
+                  height: 120,
                   decoration: const BoxDecoration(
                     color: Color(0xFFFF0909),
                     shape: BoxShape.circle,
@@ -57,7 +86,7 @@ class LogoutDialog extends StatelessWidget {
                   child: const Icon(
                     Icons.logout_rounded,
                     color: Colors.white,
-                    size: 70,
+                    size: 60,
                   ),
                 ),
               ],
@@ -67,7 +96,7 @@ class LogoutDialog extends StatelessWidget {
               'Logout?',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 40,
+                fontSize: 32,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -75,59 +104,49 @@ class LogoutDialog extends StatelessWidget {
             const Text(
               'Are you sure you want to Signout?',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 17),
+              style: TextStyle(color: Colors.white54, fontSize: 14),
             ),
             const SizedBox(height: 34),
-            SizedBox(
-              width: double.infinity,
-              height: 62,
-              child: ElevatedButton(
-                onPressed: onLogout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF0909),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                ),
-                child: const Text(
-                  'Yes, Logout',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+            RSaveButton(
+              key: const ValueKey('logout-confirm-button'),
+              height: 52,
+              borderRadius: BorderRadius.circular(40),
+              activeGradient: _logoutGradient,
+              buttonStatusNotifier: _logoutButtonStatus,
+              saveText: 'Yes, Logout',
+              doneText: 'Logging Out',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
+              onSaveTap: () => _logoutButtonStatus.setSuccess(),
+              onDone: widget.onLogout,
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 62,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onCancel?.call();
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white38),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                ),
-                child: const Text(
-                  'No, Cancel',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
+            RSaveButton(
+              key: const ValueKey('logout-cancel-button'),
+              height: 52,
+              borderRadius: BorderRadius.circular(40),
+              activeGradient: _cancelGradient,
+              buttonStatusNotifier: _cancelButtonStatus,
+              saveText: 'No, Cancel',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
+              onSaveTap: _cancel,
+              onDone: () {},
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _cancel() {
+    Navigator.pop(context);
+    widget.onCancel?.call();
   }
 }

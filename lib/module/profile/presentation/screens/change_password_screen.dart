@@ -1,3 +1,5 @@
+import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:flutter/material.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -20,6 +22,9 @@ class _ChangePasswordScreenState
       TextEditingController();
   final confirmPasswordController =
       TextEditingController();
+  final _saveButtonStatus = ProcessStatusNotifier(
+    initialStatus: EnabledStatus(),
+  );
 
   static const LinearGradient buttonGradient =
       LinearGradient(
@@ -30,6 +35,15 @@ class _ChangePasswordScreenState
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
+
+  @override
+  void dispose() {
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    _saveButtonStatus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,42 +209,21 @@ class _ChangePasswordScreenState
 
                   const SizedBox(height: 36),
 
-                  /// Save Button
-                  SizedBox(
-                    width: double.infinity,
+                  RSaveButton(
+                    key: const ValueKey('change-password-save-button'),
                     height: 58,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: buttonGradient,
-                        borderRadius:
-                            BorderRadius.circular(30),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Save Password
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.transparent,
-                          shadowColor:
-                              Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                                    30),
-                          ),
-                        ),
-                        child: const Text(
-                          "Save Changes",
-                          style: TextStyle(
-                            color: Color(0xFF111111),
-                            fontSize: 18,
-                            fontWeight:
-                                FontWeight.w700,
-                          ),
-                        ),
-                      ),
+                    borderRadius: BorderRadius.circular(30),
+                    activeGradient: buttonGradient,
+                    buttonStatusNotifier: _saveButtonStatus,
+                    saveText: 'Save Changes',
+                    doneText: 'Saved',
+                    style: const TextStyle(
+                      color: Color(0xFF111111),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                     ),
+                    onSaveTap: _savePassword,
+                    onDone: _showSavedMessage,
                   ),
                 ],
               ),
@@ -285,6 +278,17 @@ class _ChangePasswordScreenState
         ),
       ),
     );
+  }
+
+  void _savePassword() {
+    _saveButtonStatus.setSuccess();
+  }
+
+  void _showSavedMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Password updated')),
+    );
+    _saveButtonStatus.setEnabled();
   }
 }
 

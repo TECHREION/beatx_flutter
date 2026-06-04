@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/module/profile/presentation/screens/music_history_screen.dart';
+import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/privacy_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/settings_screen.dart';
 import 'package:flutter/cupertino.dart';
@@ -250,30 +251,37 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
 
                   const SizedBox(height: 12),
 
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 20,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
+                  Material(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      onTap: _showLogoutDialog,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.logout, color: Colors.red),
-                        SizedBox(width: 12),
-                        Text(
-                          "Sign Out",
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 20,
                         ),
-                      ],
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.logout, color: Colors.red),
+                            SizedBox(width: 12),
+                            Text(
+                              "Sign Out",
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 
@@ -297,6 +305,18 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         border: Border.all(color: Colors.white24),
       ),
       child: child,
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => LogoutDialog(
+        onLogout: () {
+          Navigator.pop(dialogContext);
+          Navigator.maybePop(context);
+        },
+      ),
     );
   }
 
