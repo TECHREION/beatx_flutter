@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/my_profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -244,95 +242,14 @@ class _TrendingCard extends StatelessWidget {
       aspectRatio: 1.03,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            const _ArtworkBackground(
-              asset: 'assets/image/Robot.png',
-              colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
-            ),
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0x99000000)],
-                ),
+        child: Image.asset(
+          'assets/image/home_trending.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              const _ArtworkBackground(
+                asset: 'assets/image/Container.png',
+                colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
               ),
-            ),
-            Positioned(
-              left: 22,
-              right: 22,
-              bottom: 22,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(34),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                  child: Container(
-                    height: 64,
-                    padding: const EdgeInsets.fromLTRB(18, 8, 16, 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.48),
-                      borderRadius: BorderRadius.circular(34),
-                    ),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Tumi Acho Bole',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Imran Mahmudul',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Color(0xFFC4C0C8),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Color(0xFF111113),
-                            size: 30,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -664,19 +581,19 @@ class _NewReleaseList extends StatelessWidget {
         title: 'Tumi Onek Dami',
         subtitle: 'Fahim Islam - Single',
         meta: 'NEW',
-        asset: 'assets/image/1.png',
+        asset: 'assets/image/Container.png',
       ),
       _ReleaseData(
         title: 'Amar Hote Hote Mokhlesul Islam Nilu',
         subtitle: 'Amar Hote Hote - Single',
         meta: '4:20',
-        asset: 'assets/image/2.png',
+        asset: 'assets/image/Album Art.png',
       ),
       _ReleaseData(
         title: 'Emon Ekta Golpo',
         subtitle: 'Nabila - Single',
         meta: '3:15',
-        asset: 'assets/image/3.png',
+        asset: 'assets/image/Album Art (1).png',
       ),
     ];
 
@@ -777,10 +694,19 @@ class _ArtistWatchList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const artists = [
-      _ArtistData(name: 'Fahim Islam', asset: 'assets/image/Robot.png'),
-      _ArtistData(name: 'Kazi Shuvo', asset: 'assets/image/UK.png'),
-      _ArtistData(name: 'Tashrif Khan', asset: 'assets/image/Italy.png'),
-      _ArtistData(name: 'Nabila', asset: 'assets/image/onboarding1.png'),
+      _ArtistData(
+        name: 'Fahim Islam',
+        asset: 'assets/image/Overlay+Shadow.png',
+      ),
+      _ArtistData(
+        name: 'Kazi Shuvo',
+        asset: 'assets/image/Overlay+Shadow (1).png',
+      ),
+      _ArtistData(
+        name: 'Tashrif Khan',
+        asset: 'assets/image/Overlay+Shadow (2).png',
+      ),
+      _ArtistData(name: 'Nabila', asset: 'assets/image/Album Art (1).png'),
     ];
 
     return SizedBox(
@@ -853,16 +779,13 @@ class _ArtworkBackground extends StatelessWidget {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Image.asset(
-            asset,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.music_note_rounded,
-              color: Colors.white,
-              size: 42,
-            ),
+        Image.asset(
+          asset,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => const Icon(
+            Icons.music_note_rounded,
+            color: Colors.white,
+            size: 42,
           ),
         ),
       ],

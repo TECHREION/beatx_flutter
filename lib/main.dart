@@ -1,5 +1,4 @@
 import 'package:beatx_flutter/module/app_ground.dart';
-import 'package:beatx_flutter/module/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

@@ -437,16 +437,13 @@ class _ArtworkImage extends StatelessWidget {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(6),
-          child: Image.asset(
-            asset,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.music_note_rounded,
-              color: Colors.white,
-              size: 42,
-            ),
+        Image.asset(
+          asset,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => const Icon(
+            Icons.music_note_rounded,
+            color: Colors.white,
+            size: 42,
           ),
         ),
       ],

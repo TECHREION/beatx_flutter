@@ -180,10 +180,7 @@ class _MiniArtwork extends StatelessWidget {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(5),
-          child: Image.asset('assets/image/Robot.png', fit: BoxFit.contain),
-        ),
+        Image.asset('assets/image/Now Playing.png', fit: BoxFit.cover),
       ],
     );
   }
