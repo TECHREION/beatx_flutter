@@ -17,7 +17,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String _password = '';
-  String _confirmPassword = '';
 
   static const _buttonGradient = LinearGradient(
     colors: [
@@ -149,7 +148,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                             prefixIcon: Icons.lock_outline,
                             isPassword: true,
                             onChanged: (value) {
-                              _confirmPassword = value;
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {

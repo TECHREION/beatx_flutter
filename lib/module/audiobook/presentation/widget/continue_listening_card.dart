@@ -7,10 +7,14 @@ class ContinueListeningCard extends StatelessWidget {
     super.key,
     required this.book,
     this.compact = false,
+    this.onResume,
+    this.onDetails,
   });
 
   final AudiobookModel book;
   final bool compact;
+  final VoidCallback? onResume;
+  final VoidCallback? onDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +107,7 @@ class ContinueListeningCard extends StatelessWidget {
                 child: SizedBox(
                   height: 48,
                   child: FilledButton.icon(
-                    onPressed: () {},
+                    onPressed: onResume,
                     icon: const Icon(Icons.play_arrow_rounded, size: 25),
                     label: const Text('RESUME'),
                     style: FilledButton.styleFrom(
@@ -126,7 +130,7 @@ class ContinueListeningCard extends StatelessWidget {
                 child: SizedBox(
                   height: 48,
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: onDetails,
                     icon: const Icon(Icons.info_outline_rounded, size: 20),
                     label: const Text('DETAILS'),
                     style: OutlinedButton.styleFrom(

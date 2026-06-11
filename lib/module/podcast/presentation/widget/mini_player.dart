@@ -18,7 +18,7 @@ class PodcastMiniPlayer extends StatelessWidget {
         children: [
           ClipOval(
             child: Image.asset(
-              'assets/image/1.png',
+              'assets/image/Now Playing.png',
               width: 44,
               height: 44,
               fit: BoxFit.cover,

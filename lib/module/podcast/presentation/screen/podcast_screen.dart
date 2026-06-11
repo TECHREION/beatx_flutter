@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-
 import '../../controller/podcast_controller.dart';
 import '../widget/category_card.dart';
 import '../widget/episode_tile.dart';
@@ -144,7 +143,7 @@ class _PodcastHeader extends StatelessWidget {
       children: [
         ClipOval(
           child: Image.asset(
-            'assets/image/1.png',
+            'assets/image/a1.png',
             width: 42,
             height: 42,
             fit: BoxFit.cover,

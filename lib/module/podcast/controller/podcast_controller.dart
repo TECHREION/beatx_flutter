@@ -15,7 +15,7 @@ class PodcastController extends GetxController {
       host: 'Teamature',
       description:
           'Exploring the intersections of artificial intelligence and human psychology...',
-      image: 'assets/image/image.png',
+      image: 'assets/image/Featured Podcast 1.png',
       badge: 'TRENDING NOW',
     ),
     PodcastModel(
@@ -23,7 +23,7 @@ class PodcastController extends GetxController {
       host: 'Fahim Islam',
       description:
           'Fresh conversations on culture, creativity, and sound design.',
-      image: 'assets/image/onboarding1.png',
+      image: 'assets/image/Featured Podcast 1.png',
       badge: 'CURATED PICK',
     ),
   ];
@@ -31,26 +31,29 @@ class PodcastController extends GetxController {
   final categories = const <CategoryModel>[
     CategoryModel(
       title: 'True Crime',
-      image: 'assets/image/blackout.png',
+      image: 'assets/image/podcast_category_true_crime.png',
       tint: Color(0xFF4D314F),
     ),
     CategoryModel(
       title: 'Comedy',
-      image: 'assets/image/e.png',
+      image: 'assets/image/podcast_category_comedy.png',
       tint: Color(0xFF176064),
     ),
     CategoryModel(
       title: 'Tech',
-      image: 'assets/image/Robot.png',
+      image: 'assets/image/podcast_category_tech.png',
       tint: Color(0xFF4E563B),
     ),
   ];
 
   final podcasters = const <PodcasterModel>[
-    PodcasterModel(name: 'Fahim Islam', image: 'assets/image/1.png'),
-    PodcasterModel(name: 'SARAH V.', image: 'assets/image/2.png'),
-    PodcasterModel(name: 'DR. THORNE', image: 'assets/image/3.png'),
-    PodcasterModel(name: 'MARCUS K.', image: 'assets/image/4.png'),
+    PodcasterModel(name: 'Fahim Islam', image: 'assets/image/a1.png'),
+    PodcasterModel(name: 'SARAH V.', image: 'assets/image/a2.png'),
+    PodcasterModel(name: 'DR. THORNE', image: 'assets/image/a3.png'),
+    PodcasterModel(
+      name: 'MARCUS K.',
+      image: 'assets/image/podcast_avatar_marcus.png',
+    ),
   ];
 
   final episodes = const <EpisodeModel>[
@@ -58,20 +61,20 @@ class PodcastController extends GetxController {
       title: 'The Crime Renaissance',
       subtitle: 'Why modern producers are...',
       meta: '45 min - Frequency Response',
-      image: 'assets/image/blackout.png',
+      image: 'assets/image/Episode 1.png',
       isNew: true,
     ),
     EpisodeModel(
       title: 'S04 E12: Silicon Dreams',
       subtitle: 'What happens when the AI...',
       meta: '58 min - Neural Networks',
-      image: 'assets/image/2.png',
+      image: 'assets/image/Episode 2.png',
     ),
     EpisodeModel(
       title: 'Quantum Supremacy & Audio',
       subtitle: 'How quantum computing will...',
       meta: '1h 12m - Tech Talk',
-      image: 'assets/image/3.png',
+      image: 'assets/image/Episode 3.png',
     ),
   ];
 

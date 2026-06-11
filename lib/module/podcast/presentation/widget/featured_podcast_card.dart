@@ -10,7 +10,7 @@ class FeaturedPodcastCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 0.87,
+      aspectRatio: 0.79,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: Stack(
@@ -66,7 +66,7 @@ class FeaturedPodcastCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 27,
+                      fontSize: 28,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0,
                     ),

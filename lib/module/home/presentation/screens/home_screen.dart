@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/my_profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -717,40 +718,48 @@ class _ArtistWatchList extends StatelessWidget {
         separatorBuilder: (_, index) => const SizedBox(width: 26),
         itemBuilder: (context, index) {
           final artist = artists[index];
-          return SizedBox(
-            width: 86,
-            child: Column(
-              children: [
-                Container(
-                  width: 74,
-                  height: 74,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFFFC400),
-                      width: 2,
+          return GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ArtistProfileScreen(),
+              ),
+            ),
+            child: SizedBox(
+              width: 86,
+              child: Column(
+                children: [
+                  Container(
+                    width: 74,
+                    height: 74,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFFFC400),
+                        width: 2,
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: CircleAvatar(
+                      backgroundColor: const Color(0xFF1A1A1D),
+                      backgroundImage: AssetImage(artist.asset),
                     ),
                   ),
-                  padding: const EdgeInsets.all(2),
-                  child: CircleAvatar(
-                    backgroundColor: const Color(0xFF1A1A1D),
-                    backgroundImage: AssetImage(artist.asset),
+                  const SizedBox(height: 9),
+                  Text(
+                    artist.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 9),
-                Text(
-                  artist.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },

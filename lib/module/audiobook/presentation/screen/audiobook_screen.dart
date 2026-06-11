@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../controller/audiobook_controller.dart';
+import '../../model/audiobook_model.dart';
+import 'audiobook_detail_screen.dart';
+import 'audiobook_new_releases_screen.dart';
 import '../widget/bestseller_tile.dart';
 import '../widget/continue_listening_card.dart';
 import '../widget/genre_chip.dart';
@@ -51,6 +54,14 @@ class AudiobookScreen extends StatelessWidget {
                         Obx(
                           () => ContinueListeningCard(
                             book: controller.continueListening.value,
+                            onResume: () => _openDetails(
+                              context,
+                              controller.continueListening.value,
+                            ),
+                            onDetails: () => _openDetails(
+                              context,
+                              controller.continueListening.value,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -72,7 +83,19 @@ class AudiobookScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 22),
-                        const _SectionHeader(title: 'New Releases'),
+                        _SectionHeader(
+                          title: 'New Releases',
+                          onViewAll: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AudiobookNewReleasesScreen(
+                                  books: controller.newReleases,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         const SizedBox(height: 14),
                         SizedBox(
                           height: 306,
@@ -84,6 +107,10 @@ class AudiobookScreen extends StatelessWidget {
                                   const SizedBox(width: 16),
                               itemBuilder: (context, index) => NewReleaseCard(
                                 book: controller.newReleases[index],
+                                onTap: () => _openDetails(
+                                  context,
+                                  controller.newReleases[index],
+                                ),
                               ),
                             ),
                           ),
@@ -113,6 +140,13 @@ class AudiobookScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _openDetails(BuildContext context, AudiobookModel book) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AudiobookDetailScreen(book: book)),
     );
   }
 }
@@ -153,7 +187,7 @@ class _AudiobookHeader extends StatelessWidget {
       children: [
         ClipOval(
           child: Image.asset(
-            'assets/image/1.png',
+            'assets/image/a1.png',
             width: 42,
             height: 42,
             fit: BoxFit.cover,
@@ -246,22 +280,26 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
+  const _SectionHeader({required this.title, required this.onViewAll});
 
   final String title;
+  final VoidCallback onViewAll;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(child: _SectionTitle(title: title)),
-        const Text(
-          'View All',
-          style: TextStyle(
-            color: Color(0xFF9BFF4D),
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
+        GestureDetector(
+          onTap: onViewAll,
+          child: const Text(
+            'View All',
+            style: TextStyle(
+              color: Color(0xFF9BFF4D),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
           ),
         ),
       ],
