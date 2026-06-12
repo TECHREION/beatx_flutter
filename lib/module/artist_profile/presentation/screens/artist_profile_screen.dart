@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../controller/artist_profile_controller.dart';
 import '../../model/artist_profile_model.dart';
-import '../widgets/artist_product_grid.dart';
+import 'artist_product_grid.dart';
 import 'artist_best_screen.dart';
 import 'artist_hits_screen.dart';
 
