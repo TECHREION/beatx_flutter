@@ -4,6 +4,7 @@ import 'audiobook/presentation/screen/audiobook_screen.dart';
 import 'home/presentation/screens/home_screen.dart';
 import 'podcast/presentation/screen/podcast_screen.dart';
 import 'podcast/presentation/widget/mini_player.dart';
+import 'shop/presentation/screens/shop_screen.dart';
 import 'watch/presentation/screen/watch_screen.dart';
 
 class AppGround extends StatelessWidget {
@@ -18,7 +19,7 @@ class AppGround extends StatelessWidget {
     WatchScreen(),
     PodcastScreen(),
     AudiobookScreen(),
-    Scaffold(backgroundColor: Color(0xFF0B0B0C)),
+    ShopScreen(),
   ];
 
   final List<_NavItemData> _navItems = const [
