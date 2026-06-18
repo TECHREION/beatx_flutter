@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../../core/common/widget/app_header.dart';
 import '../../controller/podcast_controller.dart';
 import '../widget/category_card.dart';
 import '../widget/episode_tile.dart';
@@ -32,7 +33,7 @@ class PodcastScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                     sliver: SliverList.list(
                       children: [
-                        const _PodcastHeader(),
+                        const AppHeader(title: 'Podcasts', notificationBadge: '3'),
                         const SizedBox(height: 28),
                         const Text(
                           'CURATION',
@@ -134,87 +135,6 @@ class _PodcastGlow extends StatelessWidget {
   }
 }
 
-class _PodcastHeader extends StatelessWidget {
-  const _PodcastHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipOval(
-          child: Image.asset(
-            'assets/image/a1.png',
-            width: 42,
-            height: 42,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(width: 12),
-        const Text(
-          'Podcasts',
-          style: TextStyle(
-            color: Color(0xFF40DDEB),
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
-          ),
-        ),
-        const Spacer(),
-        const _HeaderIcon(icon: Icons.search_rounded),
-        SizedBox(width: 12),
-        _HeaderIcon(icon: Icons.notifications_rounded, badge: '3'),
-      ],
-    );
-  }
-}
-
-class _HeaderIcon extends StatelessWidget {
-  const _HeaderIcon({required this.icon, this.badge});
-
-  final IconData icon;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.13),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.white, size: 23),
-        ),
-        if (badge != null)
-          Positioned(
-            right: 1,
-            top: -3,
-            child: Container(
-              width: 17,
-              height: 17,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE93657),
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                badge!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
 
 class _RoundArrowButton extends StatelessWidget {
   const _RoundArrowButton({required this.icon, required this.onTap});

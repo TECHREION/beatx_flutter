@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/common/background_image.dart';
+import '../../../../../core/common/widget/app_header.dart';
 import '../../controller/shop_controller.dart';
 import '../../model/shop_model.dart';
 import 'shop_detail_screen.dart';
@@ -17,12 +18,14 @@ class ShopScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
-          _ShopAppBar(),
+          const SliverToBoxAdapter(
+            child: AppHeader(title: 'Shop', notificationBadge: '3'),
+          ),
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 _BannersSection(banners: controller.banners),
                 const SizedBox(height: 20),
                 _CategoryChipsSection(controller: controller),
@@ -41,44 +44,6 @@ class ShopScreen extends StatelessWidget {
   }
 }
 
-// ─── App Bar ──────────────────────────────────────────────────────────────────
-
-class _ShopAppBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SliverAppBar(
-      backgroundColor: const Color(0xFF0B0B0C),
-      surfaceTintColor: Colors.transparent,
-      floating: true,
-      snap: true,
-      titleSpacing: 20,
-      title: const Text(
-        'Store',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 24),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.search_rounded, color: Colors.white, size: 24),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
-          onPressed: () {},
-        ),
-        const SizedBox(width: 4),
-      ],
-    );
-  }
-}
 
 // ─── Promo Banners ─────────────────────────────────────────────────────────────
 

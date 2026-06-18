@@ -3,15 +3,17 @@
 import 'package:flutter/foundation.dart';
 
 base class ApiEndpoints {
-  static const String socketUrl = _RemoteServer.socketUrl;
-  static const String baseUrl = _RemoteServer.baseUrl;
+  static const String socketUrl = _LocalHostWifi.socketUrl;
+  static const String baseUrl = _LocalHostWifi.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
   static const String logout = _Auth.logout;
   static const String socialLogin = _Auth.socialLogin;
   static const String signup = _Auth.signup;
+  static const String emailVerification = _Auth.emailVerification;
   static const String verifyCode = _Auth.verifyCode;
+  static const String verifyEmail = _Auth.emailVerification;
   static const String forgetPassword = _Auth.forgetPassword;
   static const String createNewPassword = _Auth.resetPassword;
   static const String refreshToken = _Auth.refreshToken;
@@ -27,17 +29,17 @@ base class ApiEndpoints {
 
 //arrow360degree@gmail.com
 
-class _RemoteServer {
-  static const String socketUrl =
-      'https://backend-mattiaiarriccio.onrender.com';
+// class _RemoteServer {
+//   static const String socketUrl =
+//       'https://backend-mattiaiarriccio.onrender.com';
 
-  static const String baseUrl =
-      'https://backend-mattiaiarriccio.onrender.com/api/v1';
-}
+//   static const String baseUrl =
+//       'https://backend-mattiaiarriccio.onrender.com/api/v1';
+// }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://10.10.5.46:5001';
-  static const String baseUrl = 'http://10.10.5.46:5001/api/v1';
+  static const String socketUrl = 'http://13.206.25.95:3000/';
+  static const String baseUrl = 'http://13.206.25.95:3000/api/v1';
 }
 
 class _Auth {
@@ -47,6 +49,7 @@ class _Auth {
   static const String logout = '$_authRoute/logout';
   static const String socialLogin = '$_authRoute/social-login';
   static const String signup = '$_authRoute/register';
+  static const String emailVerification = '$_authRoute/verify-email';
   static const String forgetPassword = '$_authRoute/password-reset/request';
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/password-reset/verify';

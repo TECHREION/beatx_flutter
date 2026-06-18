@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/common/widget/app_header.dart';
 import '../../controller/audiobook_controller.dart';
 import '../../model/audiobook_model.dart';
 import 'audiobook_detail_screen.dart';
@@ -37,7 +38,7 @@ class AudiobookScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
                     sliver: SliverList.list(
                       children: [
-                        const _AudiobookHeader(),
+                        const AppHeader(title: 'Audiobook', notificationBadge: '3'),
                         const SizedBox(height: 30),
                         const Text(
                           'RESUME JOURNEY',
@@ -178,87 +179,6 @@ class _AudiobookGlow extends StatelessWidget {
   }
 }
 
-class _AudiobookHeader extends StatelessWidget {
-  const _AudiobookHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipOval(
-          child: Image.asset(
-            'assets/image/a1.png',
-            width: 42,
-            height: 42,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Text(
-          'Audiobook',
-          style: TextStyle(
-            color: Color(0xFF40DDEB),
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
-          ),
-        ),
-        const Spacer(),
-        const _HeaderIcon(icon: Icons.search_rounded),
-        const SizedBox(width: 11),
-        const _HeaderIcon(icon: Icons.notifications_rounded, badge: '3'),
-      ],
-    );
-  }
-}
-
-class _HeaderIcon extends StatelessWidget {
-  const _HeaderIcon({required this.icon, this.badge});
-
-  final IconData icon;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.13),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.white, size: 23),
-        ),
-        if (badge != null)
-          Positioned(
-            right: 1,
-            top: -3,
-            child: Container(
-              width: 17,
-              height: 17,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE93657),
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                badge!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title});
