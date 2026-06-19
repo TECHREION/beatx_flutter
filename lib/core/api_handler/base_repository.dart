@@ -65,10 +65,18 @@ base class BaseRepository {
             ),
           );
         default:
+          final statusCode = e.response?.statusCode;
+          final responseData = e.response?.data;
+          debugPrint('DioException [$statusCode]: $responseData');
+          final message = responseData is Map
+              ? (responseData['message'] ?? 'Some error occured.').toString()
+              : 'Some error occured.';
           return Left(
             DataCRUDFailure(
-              failure: Failure.unknownFailure,
-              uiMessage: e.response?.data["message"] ?? "Some error occured.",
+              failure: statusCode == 403
+                  ? Failure.forbidden
+                  : Failure.unknownFailure,
+              uiMessage: message,
               fullError: 'Some error occured. ${'\n'} Error: ${e.toString()}',
             ),
           );

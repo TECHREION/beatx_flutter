@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/api_handler/failure.dart';
-import '../../../core/helpers/handle_fold.dart';
 import '../../../core/helpers/validation.dart';
 import '../../../core/localization/app_language_controller.dart';
 import '../../../core/notifiers/button_status_notifier.dart';
@@ -84,25 +83,44 @@ class LoginController extends GetxController {
   Future<void> login({
     ProcessStatusNotifier? buttonNotifier,
     SnackbarNotifier? snackbarNotifier,
-    VoidCallback? onDone,
     VoidCallback? needVerifyAccount,
   }) async {
     buttonNotifier?.setLoading();
 
     final result = await Get.find<AuthInterface>().login(loginModel);
 
-    handleFold(
-      either: result,
-      processStatusNotifier: buttonNotifier,
-      successSnackbarNotifier: snackbarNotifier,
-      errorSnackbarNotifier: snackbarNotifier,
-      onError: (error) {
-        if (error.failure == Failure.forbidden) {
+    result.fold(
+      (failure) {
+        final msg = failure.uiMessage.toLowerCase();
+        final isUnverified = failure.failure == Failure.forbidden ||
+            msg.contains('verif') ||
+            msg.contains('not verified') ||
+            msg.contains('please verify');
+        if (isUnverified) {
+          buttonNotifier?.setEnabled();
           needVerifyAccount?.call();
+        } else {
+          buttonNotifier?.setError();
+          snackbarNotifier?.notifyError(message: failure.uiMessage);
         }
       },
-      onSuccess: (_) {
-        onDone?.call();
+      (success) {
+        buttonNotifier?.setSuccess();
+        snackbarNotifier?.notifySuccess(message: success.message);
+      },
+    );
+  }
+
+  Future<void> resendVerificationOtp({
+    SnackbarNotifier? snackbarNotifier,
+    VoidCallback? onSent,
+  }) async {
+    final result = await Get.find<AuthInterface>().resendEmailOtp(email.value);
+    result.fold(
+      (failure) => snackbarNotifier?.notifyError(message: failure.uiMessage),
+      (success) {
+        snackbarNotifier?.notifySuccess(message: success.message);
+        onSent?.call();
       },
     );
   }

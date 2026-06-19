@@ -261,23 +261,7 @@ class _OtpCard extends StatelessWidget {
             },
           ),
           const SizedBox(height: 18),
-          TextButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF40DDEB),
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text(
-              'Resend Code',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0,
-              ),
-            ),
-          ),
+          _ResendButton(controller: controller),
         ],
       ),
     );
@@ -348,6 +332,63 @@ class _OtpFields extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+class _ResendButton extends StatefulWidget {
+  const _ResendButton({required this.controller});
+  final VerifyOtpController controller;
+
+  @override
+  State<_ResendButton> createState() => _ResendButtonState();
+}
+
+class _ResendButtonState extends State<_ResendButton> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_rebuild);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_rebuild);
+    super.dispose();
+  }
+
+  void _rebuild() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final emailCtrl = widget.controller is VerifyEmailOtpController
+        ? widget.controller as VerifyEmailOtpController
+        : null;
+
+    if (emailCtrl == null) return const SizedBox.shrink();
+
+    final canResend = emailCtrl.canResend;
+    final secondsLeft = emailCtrl.resendSecondsLeft;
+
+    return TextButton(
+      onPressed: canResend ? emailCtrl.resendOtp : null,
+      style: TextButton.styleFrom(
+        foregroundColor: const Color(0xFF40DDEB),
+        disabledForegroundColor: const Color(0xFF555558),
+        minimumSize: Size.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(
+        canResend ? 'Resend Code' : 'Resend in ${secondsLeft}s',
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+        ),
+      ),
     );
   }
 }

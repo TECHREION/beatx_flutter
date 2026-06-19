@@ -14,6 +14,7 @@ base class ApiEndpoints {
   static const String emailVerification = _Auth.emailVerification;
   static const String verifyCode = _Auth.verifyCode;
   static const String verifyEmail = _Auth.emailVerification;
+  static const String resendEmailOtp = _Auth.resendEmailOtp;
   static const String forgetPassword = _Auth.forgetPassword;
   static const String createNewPassword = _Auth.resetPassword;
   static const String refreshToken = _Auth.refreshToken;
@@ -54,6 +55,7 @@ class _Auth {
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/password-reset/verify';
   static const String resetPassword = '$_authRoute/password-reset/reset';
+  static const String resendEmailOtp = '$_authRoute/resend-verification';
 }
 
 //------------------------------ User -----------------------------

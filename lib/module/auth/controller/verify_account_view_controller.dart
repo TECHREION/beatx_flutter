@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../../core/helpers/handle_fold.dart';
@@ -40,7 +42,56 @@ class VerifyEmailOtpController extends VerifyOtpController {
   VerifyEmailOtpController({
     required super.email,
     required super.snackbarNotifier,
-  });
+  }) {
+    _startCountdown();
+  }
+
+  static const _resendCooldown = 60;
+
+  int resendSecondsLeft = _resendCooldown;
+  bool get canResend => resendSecondsLeft == 0;
+  bool isResending = false;
+
+  Timer? _countdownTimer;
+
+  void _startCountdown() {
+    resendSecondsLeft = _resendCooldown;
+    notifyListeners();
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (resendSecondsLeft > 0) {
+        resendSecondsLeft--;
+        notifyListeners();
+      } else {
+        t.cancel();
+      }
+    });
+  }
+
+  Future<void> resendOtp() async {
+    if (!canResend || isResending) return;
+    isResending = true;
+    notifyListeners();
+
+    final result = await authInterface.resendEmailOtp(email);
+
+    result.fold(
+      (err) => snackbarNotifier.notifyError(message: err.uiMessage),
+      (success) {
+        snackbarNotifier.notifySuccess(message: success.message);
+        _startCountdown();
+      },
+    );
+
+    isResending = false;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void verify() async {

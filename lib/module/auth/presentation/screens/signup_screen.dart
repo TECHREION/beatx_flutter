@@ -175,27 +175,25 @@ class _SignupCard extends StatelessWidget {
               buttonStatusNotifier: controller.processNotifier,
               onSaveTap: () {
                 if (!(formKey.currentState?.validate() ?? false)) return;
-
                 controller.signup(
                   buttonNotifier: controller.processNotifier,
                   snackbarNotifier: SnackbarNotifier(context: context),
-                  onDone: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OtpVerificationScreen(
-                          email: controller.email.value,
-                          mode: OtpMode.emailVerification,
-                          onVerified: () {
-                            Navigator.popUntil(context, (route) => route.isFirst);
-                          },
-                        ),
-                      ),
-                    );
-                  },
                 );
               },
-              onDone: () {},
+              onDone: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OtpVerificationScreen(
+                      email: controller.email.value,
+                      mode: OtpMode.emailVerification,
+                      onVerified: () {
+                        Navigator.popUntil(context, (route) => route.isFirst);
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
             Gap.h16,
             const _ConnectDivider(),

@@ -23,6 +23,8 @@ abstract base class AuthInterface extends BaseRepository {
 
   FutureRequest<Success> verifyEmail(VerifyOtpParam param);
 
+  FutureRequest<Success> resendEmailOtp(String email);
+
   FutureRequest<Success> resetPassword(ResetPasswordModel params);
 
   // FutureRequest<Success> changePassword(ChangePasswordModel param);

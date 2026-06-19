@@ -46,7 +46,7 @@ final class AuthInterfaceImpl extends AuthInterface {
           options: appLanguageOptions(),
         );
 
-        debugPrint("login response: ${response.data}");
+        debugPrint("login response [${response.statusCode}]: ${response.data}");
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -208,6 +208,23 @@ final class AuthInterfaceImpl extends AuthInterface {
         }
 
         return Success(message: body['message'] ?? 'Email verified successfully');
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success> resendEmailOtp(String email) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.resendEmailOtp,
+          data: {'email': email},
+          options: appLanguageOptions(),
+        );
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+        return Success(message: body['message'] ?? 'OTP resent successfully');
       },
     );
   }

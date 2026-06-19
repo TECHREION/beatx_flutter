@@ -1,6 +1,7 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/presentation/screens/forget_password_screen.dart';
+import 'package:beatx_flutter/module/auth/presentation/screens/otp_verify_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/screens/signup_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/social_auth_buttons.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
@@ -184,20 +185,43 @@ class _LoginCard extends StatelessWidget {
               buttonStatusNotifier: controller.processNotifier,
               onSaveTap: () {
                 if (!(formKey.currentState?.validate() ?? false)) return;
-
                 controller.login(
                   buttonNotifier: controller.processNotifier,
                   snackbarNotifier: SnackbarNotifier(context: context),
-                  onDone: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => AppGround()),
-                      (route) => false,
+                  needVerifyAccount: () {
+                    controller.resendVerificationOtp(
+                      snackbarNotifier: SnackbarNotifier(context: context),
+                      onSent: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OtpVerificationScreen(
+                              email: controller.email.value,
+                              mode: OtpMode.emailVerification,
+                              onVerified: () {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AppGround(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
               },
-              onDone: () {},
+              onDone: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => AppGround()),
+                  (route) => false,
+                );
+              },
             ),
             Gap.h16,
             const _ConnectDivider(),

@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../core/helpers/handle_fold.dart';
 import '../../../core/localization/app_language_controller.dart';
 import '../../../core/notifiers/button_status_notifier.dart';
 import '../../../core/notifiers/snackbar_notifier.dart';
@@ -70,26 +68,20 @@ class SignUpController extends GetxController {
   Future<void> signup({
     ProcessStatusNotifier? buttonNotifier,
     SnackbarNotifier? snackbarNotifier,
-    VoidCallback? onDone,
   }) async {
     buttonNotifier?.setLoading();
 
     final result = await Get.find<AuthInterface>().signup(signupModel);
 
-    handleFold(
-      either: result,
-      errorSnackbarNotifier: snackbarNotifier,
-      successSnackbarNotifier: snackbarNotifier,
-      onError: (failure) {
+    result.fold(
+      (failure) {
         buttonNotifier?.setError();
         snackbarNotifier?.notifyError(message: failure.uiMessage);
       },
-      onSuccess: (success) {
+      (success) {
         buttonNotifier?.setSuccess();
         snackbarNotifier?.notifySuccess(message: success.message);
-        onDone?.call();
       },
-      processStatusNotifier: buttonNotifier,
     );
   }
 }
