@@ -18,22 +18,11 @@ class SignupModel {
   });
 
   Map<String, dynamic> toMap() {
-    final map = <String, dynamic>{
-      'username': username.trim(),
-      'phoneNumber': phoneNumber.trim(),
+    return {
+      'name': username.trim(),
       'email': email.trim(),
       'password': password,
-      'confirmPassword': confirmPassword,
-      'preferredLanguage': preferredLanguage.trim().isEmpty
-          ? 'en'
-          : preferredLanguage.trim(),
     };
-
-    if ((lastName ?? '').trim().isNotEmpty) {
-      map['lastName'] = lastName!.trim();
-    }
-
-    return map;
   }
 }
 

@@ -311,12 +311,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   void _showLogoutDialog() {
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => LogoutDialog(
-        onLogout: () {
-          Navigator.pop(dialogContext);
-          Navigator.maybePop(context);
-        },
-      ),
+      builder: (_) => const LogoutDialog(),
     );
   }
 

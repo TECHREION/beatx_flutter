@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_gap.dart';
 import '../../../onbording/common/app_logo.dart';
+import 'otp_verify_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -179,7 +180,18 @@ class _SignupCard extends StatelessWidget {
                   buttonNotifier: controller.processNotifier,
                   snackbarNotifier: SnackbarNotifier(context: context),
                   onDone: () {
-                    Navigator.maybePop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OtpVerificationScreen(
+                          email: controller.email.value,
+                          mode: OtpMode.emailVerification,
+                          onVerified: () {
+                            Navigator.popUntil(context, (route) => route.isFirst);
+                          },
+                        ),
+                      ),
+                    );
                   },
                 );
               },

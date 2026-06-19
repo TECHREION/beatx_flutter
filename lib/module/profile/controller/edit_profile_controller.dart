@@ -19,10 +19,34 @@ class EditProfileController extends GetxController {
     : _picker = picker ?? ImagePicker();
 
   final profile = const ProfileModel(
-    fullName: 'Iqbal Hasan',
-    email: 'Iqbal@email.com',
-    phoneNumber: '+880 18********',
+    fullName: '',
+    email: '',
+    phoneNumber: '',
   ).obs;
+
+  final isLoadingProfile = true.obs;
+
+  ProfileInterface _getOrCreateProfileInterface() {
+    if (!Get.isRegistered<ProfileInterface>() &&
+        Get.isRegistered<AuthorizedPigeon>()) {
+      Get.put<ProfileInterface>(
+        ProfileInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      );
+    }
+    return Get.find<ProfileInterface>();
+  }
+
+  Future<void> fetchProfile() async {
+    isLoadingProfile.value = true;
+    final result = await _getOrCreateProfileInterface().getProfile();
+    result.fold(
+      (_) {},
+      (userProfile) {
+        profile.value = userProfile.toProfileModel();
+      },
+    );
+    isLoadingProfile.value = false;
+  }
 
   Future<void> pickProfileImage(ImageSource source) async {
     final image = await _picker.pickImage(
@@ -53,21 +77,9 @@ class EditProfileController extends GetxController {
       phoneNumber: phoneNumber,
     );
 
-    if (!Get.isRegistered<ProfileInterface>() &&
-        Get.isRegistered<AuthorizedPigeon>()) {
-      Get.put<ProfileInterface>(
-        ProfileInterfaceImpl(Get.find<AuthorizedPigeon>()),
-      );
-    }
-
-    if (!Get.isRegistered<ProfileInterface>()) {
-      processNotifier.setSuccess();
-      return Future.value();
-    }
-
     processNotifier.setLoading();
 
-    return Get.find<ProfileInterface>().updateProfile(profile.value).then((
+    return _getOrCreateProfileInterface().updateProfile(profile.value).then((
       result,
     ) {
       handleFold(

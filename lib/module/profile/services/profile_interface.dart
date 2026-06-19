@@ -4,5 +4,7 @@ import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/profile/model/profile_model.dart';
 
 abstract base class ProfileInterface extends BaseRepository {
+  FutureRequest<UserProfileModel> getProfile();
+
   FutureRequest<Success> updateProfile(ProfileModel params);
 }

@@ -1,54 +1,33 @@
-// import 'dart:async';
-// import 'package:app_pigeon/app_pigeon.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:mattiaiarriccio_flutter/app/app_manager.dart';
-// import 'package:mattiaiarriccio_flutter/features/auth/presentation/screens/login_screen.dart';
-// import 'package:mattiaiarriccio_flutter/features/app_ground.dart';
-// import 'package:mattiaiarriccio_flutter/features/onbording/common/app_logo.dart';
+import 'package:beatx_flutter/module/onbording/common/app_logo.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-// class SplashView extends StatefulWidget {
-//   const SplashView({super.key});
+class SplashView extends StatelessWidget {
+  const SplashView({super.key});
 
-//   @override
-//   State<SplashView> createState() => _SplashViewState();
-// }
-
-// class _SplashViewState extends State<SplashView> {
-//   late Timer timer;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     timer = Timer(const Duration(milliseconds: 1000), _navigateNext);
-//   }
-
-//   void _navigateNext() {
-//     final appManager = Get.find<AppManager>();
-
-//     if (appManager.currentAuthStatus is Authenticated) {
-//       // User is logged in → go to AppGround
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => AppGround()),
-//       );
-//     } else {
-//       // User not logged in → go to Login screen
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => const LoginScreen()),
-//       );
-//     }
-//   }
-
-//   @override
-//   void dispose() {
-//     timer.cancel();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Scaffold(body: Center(child: AppLogo()));
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: const Color(0xFF0B0B0C),
+      ),
+      child: const Scaffold(
+        backgroundColor: Color(0xFF0B0B0C),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppLogo(height: 72, width: 180),
+              SizedBox(height: 32),
+              CircularProgressIndicator(
+                color: Color(0xFF40DDEB),
+                strokeWidth: 2.5,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

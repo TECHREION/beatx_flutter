@@ -4,6 +4,7 @@ import 'package:beatx_flutter/module/auth/presentation/screens/forget_password_s
 import 'package:beatx_flutter/module/auth/presentation/screens/signup_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/social_auth_buttons.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
+import 'package:beatx_flutter/module/app_ground.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -188,7 +189,11 @@ class _LoginCard extends StatelessWidget {
                   buttonNotifier: controller.processNotifier,
                   snackbarNotifier: SnackbarNotifier(context: context),
                   onDone: () {
-                    Navigator.maybePop(context);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => AppGround()),
+                      (route) => false,
+                    );
                   },
                 );
               },

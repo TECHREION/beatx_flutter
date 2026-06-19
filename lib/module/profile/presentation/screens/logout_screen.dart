@@ -1,11 +1,12 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
+import 'package:beatx_flutter/module/auth/services/auth_interface.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LogoutDialog extends StatefulWidget {
-  const LogoutDialog({super.key, required this.onLogout, this.onCancel});
+  const LogoutDialog({super.key, this.onCancel});
 
-  final VoidCallback onLogout;
   final VoidCallback? onCancel;
 
   @override
@@ -33,6 +34,30 @@ class _LogoutDialogState extends State<LogoutDialog> {
     _logoutButtonStatus.dispose();
     _cancelButtonStatus.dispose();
     super.dispose();
+  }
+
+  Future<void> _logout() async {
+    _logoutButtonStatus.setLoading();
+
+    final result = await Get.find<AuthInterface>().logout();
+
+    result.fold(
+      (failure) {
+        _logoutButtonStatus.setError();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(failure.uiMessage)),
+        );
+      },
+      (_) {
+        // AppManager listens to authStream and navigates to LoginScreen
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  void _cancel() {
+    Navigator.pop(context);
+    widget.onCancel?.call();
   }
 
   @override
@@ -114,14 +139,16 @@ class _LogoutDialogState extends State<LogoutDialog> {
               activeGradient: _logoutGradient,
               buttonStatusNotifier: _logoutButtonStatus,
               saveText: 'Yes, Logout',
-              doneText: 'Logging Out',
+              loadingText: 'Logging out...',
+              doneText: 'Done',
+              errorText: 'Failed',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
-              onSaveTap: () => _logoutButtonStatus.setSuccess(),
-              onDone: widget.onLogout,
+              onSaveTap: _logout,
+              onDone: () {},
             ),
             const SizedBox(height: 16),
             RSaveButton(
@@ -143,10 +170,5 @@ class _LogoutDialogState extends State<LogoutDialog> {
         ),
       ),
     );
-  }
-
-  void _cancel() {
-    Navigator.pop(context);
-    widget.onCancel?.call();
   }
 }

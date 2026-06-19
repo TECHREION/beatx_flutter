@@ -228,12 +228,7 @@ class ProfileScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => LogoutDialog(
-        onLogout: () {
-          Navigator.pop(dialogContext);
-          Navigator.maybePop(context);
-        },
-      ),
+      builder: (_) => const LogoutDialog(),
     );
   }
 

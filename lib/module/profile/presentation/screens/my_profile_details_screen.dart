@@ -24,9 +24,9 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'Iqbal Hasan');
-  final _emailController = TextEditingController(text: 'Iqbal@email.com');
-  final _phoneController = TextEditingController(text: '+880 18********');
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   late final EditProfileController _controller;
   late final bool _ownsController;
 
@@ -38,10 +38,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ? Get.put(EditProfileController())
         : Get.find<EditProfileController>();
 
-    final profile = _controller.profile.value;
-    _nameController.text = profile.fullName;
-    _emailController.text = profile.email;
-    _phoneController.text = profile.phoneNumber;
+    _controller.fetchProfile().then((_) {
+      final profile = _controller.profile.value;
+      _nameController.text = profile.fullName;
+      _emailController.text = profile.email;
+      _phoneController.text = profile.phoneNumber;
+    });
   }
 
   @override
@@ -99,10 +101,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
 
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
+          Obx(() {
+            if (_controller.isLoadingProfile.value) {
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF40DDEB)),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+          Obx(() {
+            if (_controller.isLoadingProfile.value) return const SizedBox.shrink();
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// Header
@@ -301,7 +313,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
             ),
-          ),
+          );
+        }),
         ],
       ),
     );

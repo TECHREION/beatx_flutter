@@ -36,6 +36,36 @@ abstract class VerifyOtpController extends ChangeNotifier {
   void verify();
 }
 
+class VerifyEmailOtpController extends VerifyOtpController {
+  VerifyEmailOtpController({
+    required super.email,
+    required super.snackbarNotifier,
+  });
+
+  @override
+  void verify() async {
+    if (prcessNotifier.status is LoadingStatus) return;
+
+    prcessNotifier.setLoading();
+
+    final result = await authInterface.verifyEmail(
+      VerifyOtpParam(email: email, otp: otp),
+    );
+
+    handleFold(
+      either: result,
+      processStatusNotifier: prcessNotifier,
+      successSnackbarNotifier: snackbarNotifier,
+      errorSnackbarNotifier: snackbarNotifier,
+    );
+
+    result.fold(
+      (err) => prcessNotifier.setError(),
+      (success) => prcessNotifier.setSuccess(),
+    );
+  }
+}
+
 class VerifyForgetPasswordOtpController extends VerifyOtpController {
   VerifyForgetPasswordOtpController({
     required super.email,

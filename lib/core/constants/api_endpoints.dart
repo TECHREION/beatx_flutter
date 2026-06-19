@@ -56,9 +56,14 @@ class _Auth {
   static const String resetPassword = '$_authRoute/password-reset/reset';
 }
 
-//------------------------------ Help&Support -----------------------------
-class _HelpSupport {
-
+//------------------------------ User -----------------------------
+// ---------------------- USER -----------------------------
+class _User {
+  static const String _userRoute = '${ApiEndpoints.baseUrl}/users';
+  static String getuserbyId = '$_userRoute/me';
+  static String updateProfile = '$_userRoute/me';
+  static String changePassword = '$_userRoute/me/password';
+  static String preferences = '$_userRoute/me/preferences';
 }
 
 //------------------------------ Interest -----------------------------
@@ -90,14 +95,7 @@ class _SafetyTips {
 
 }
 
-// ---------------------- USER -----------------------------
-class _User {
-  static const String _userRoute = '${ApiEndpoints.baseUrl}/users';
-  static String getuserbyId = '$_userRoute/me';
-  static String updateProfile = '$_userRoute/me';
-  static String changePassword = '$_userRoute/me/password';
-  static String preferences = '$_userRoute/me/preferences';
-}
+
 
 //-----------------------chat----------------
 class _Chat {

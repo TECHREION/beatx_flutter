@@ -6,22 +6,26 @@ import 'package:flutter/services.dart';
 
 import '../../../onbording/common/app_logo.dart';
 
+enum OtpMode { emailVerification, forgetPassword }
+
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({
     super.key,
     required this.email,
     this.onVerified,
+    this.mode = OtpMode.forgetPassword,
   });
 
   final String email;
   final VoidCallback? onVerified;
+  final OtpMode mode;
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  late final VerifyForgetPasswordOtpController _controller;
+  late final VerifyOtpController _controller;
   late final List<TextEditingController> _fieldControllers;
   late final List<FocusNode> _focusNodes;
   bool _controllerReady = false;
@@ -44,10 +48,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.didChangeDependencies();
     if (_controllerReady) return;
 
-    _controller = VerifyForgetPasswordOtpController(
-      email: widget.email,
-      snackbarNotifier: SnackbarNotifier(context: context),
-    );
+    final snackbar = SnackbarNotifier(context: context);
+    _controller = widget.mode == OtpMode.emailVerification
+        ? VerifyEmailOtpController(email: widget.email, snackbarNotifier: snackbar)
+        : VerifyForgetPasswordOtpController(email: widget.email, snackbarNotifier: snackbar);
     _controllerReady = true;
   }
 
@@ -153,7 +157,7 @@ class _OtpCard extends StatelessWidget {
     required this.onVerified,
   });
 
-  final VerifyForgetPasswordOtpController controller;
+  final VerifyOtpController controller;
   final List<TextEditingController> fieldControllers;
   final List<FocusNode> focusNodes;
   final void Function(String value, int index) onDigitChanged;

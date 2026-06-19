@@ -1,3 +1,6 @@
+
+import 'dart:convert';
+
 import 'package:beatx_flutter/module/auth/services/auth_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:app_pigeon/app_pigeon.dart';
@@ -21,6 +24,18 @@ final class AuthInterfaceImpl extends AuthInterface {
     return appPigeon.authStream;
   }
 
+  /// Decodes the JWT payload and returns the claims map.
+  Map<String, dynamic> _jwtClaims(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return {};
+      final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      return Map<String, dynamic>.from(jsonDecode(payload) as Map);
+    } catch (_) {
+      return {};
+    }
+  }
+
   @override
   FutureRequest<Success> login(LoginRequestModel params) async {
     return await asyncTryCatch(
@@ -36,27 +51,40 @@ final class AuthInterfaceImpl extends AuthInterface {
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
-        final loginResponse = LoginResponse.fromMap(body);
-        if (Get.isRegistered<AppLanguageController>()) {
-          await Get.find<AppLanguageController>().syncFromBackendValue(
-            loginResponse.preferredLanguage,
-          );
-        }
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        final accessToken = (data['accessToken'] ?? '').toString();
+        final refreshToken = (data['refreshToken'] ?? '').toString();
+
+        // Backend returns no user object — decode from JWT
+        final claims = _jwtClaims(accessToken);
+        final uid = (claims['sub'] ?? '').toString();
+        final email = (claims['email'] ?? params.email).toString();
+        final role = (claims['role'] ?? 'user').toString();
 
         await appPigeon.saveNewAuth(
           saveAuthParams: SaveNewAuthParams(
-            uid: loginResponse.userId,
-            accessToken: loginResponse.accessToken,
-            refreshToken: loginResponse.refreshToken,
+            uid: uid,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
             data: {
-              "userId": loginResponse.userId,
-              "name": loginResponse.name,
-              "email": loginResponse.email,
-              "role": loginResponse.role,
-              "preferredLanguage": loginResponse.preferredLanguage,
+              'userId': uid,
+              'email': email,
+              'role': role,
+              'name': '',
+              'preferredLanguage': params.preferredLanguage,
             },
           ),
         );
+
+        if (Get.isRegistered<AppLanguageController>()) {
+          await Get.find<AppLanguageController>().syncFromBackendValue(
+            params.preferredLanguage,
+          );
+        }
 
         return Success(message: body['message'] ?? 'Login successful');
       },
@@ -69,49 +97,17 @@ final class AuthInterfaceImpl extends AuthInterface {
       tryFunc: () async {
         final response = await appPigeon.post(
           ApiEndpoints.signup,
-          data: FormData.fromMap(params.toMap()),
+          data: params.toMap(),
           options: appLanguageOptions(),
         );
 
         debugPrint("Signup response: ${response.data}");
 
-        final body = response.data;
-        final signupResponse = SignupResponse.fromMap(
-          body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{},
-        );
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
 
-        final signupUser = signupResponse.data?.user;
-        final accessToken = signupResponse.data?.accessToken ?? '';
-        if (signupUser != null && accessToken.isNotEmpty) {
-          if (Get.isRegistered<AppLanguageController>()) {
-            await Get.find<AppLanguageController>().syncFromBackendValue(
-              signupUser.preferredLanguage,
-            );
-          }
-          await appPigeon.saveNewAuth(
-            saveAuthParams: SaveNewAuthParams(
-              uid: signupUser.id,
-              accessToken: accessToken,
-              refreshToken: '',
-              data: {
-                "userId": signupUser.id,
-                "name": signupUser.fullName.isNotEmpty
-                    ? signupUser.fullName
-                    : signupUser.firstName,
-                "email": signupUser.email,
-                "role": signupUser.role,
-                "preferredLanguage": signupUser.preferredLanguage,
-              },
-            ),
-          );
-        }
-
-        // success returned from server
-        return Success(
-          message: signupResponse.message.isNotEmpty
-              ? signupResponse.message
-              : 'Signup successful',
-        );
+        return Success(message: (body['message'] ?? 'Signup successful').toString());
       },
     );
   }
@@ -162,6 +158,56 @@ final class AuthInterfaceImpl extends AuthInterface {
         );
         final body = response.data;
         return Success(message: body['message'] ?? 'OTP verified');
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success> verifyEmail(param) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.verifyEmail,
+          data: param.toJson(),
+          options: appLanguageOptions(),
+        );
+
+        debugPrint("verifyEmail response: ${response.data}");
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        final accessToken = (data['accessToken'] ?? '').toString();
+        final refreshToken = (data['refreshToken'] ?? '').toString();
+
+        if (accessToken.isNotEmpty) {
+          final claims = _jwtClaims(accessToken);
+          final uid = (claims['sub'] ?? '').toString();
+          final email = (claims['email'] ?? param.email).toString();
+          final role = (claims['role'] ?? 'user').toString();
+
+          await appPigeon.saveNewAuth(
+            saveAuthParams: SaveNewAuthParams(
+              uid: uid,
+              accessToken: accessToken,
+              refreshToken: refreshToken,
+              data: {
+                'userId': uid,
+                'email': email,
+                'role': role,
+                'name': '',
+                'preferredLanguage': 'en',
+              },
+            ),
+          );
+        }
+
+        return Success(message: body['message'] ?? 'Email verified successfully');
       },
     );
   }

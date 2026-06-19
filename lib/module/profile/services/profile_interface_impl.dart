@@ -12,6 +12,27 @@ final class ProfileInterfaceImpl extends ProfileInterface {
   ProfileInterfaceImpl(this.appPigeon);
 
   @override
+  FutureRequest<UserProfileModel> getProfile() {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.getuserbyId,
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        return UserProfileModel.fromMap(data);
+      },
+    );
+  }
+
+  @override
   FutureRequest<Success> updateProfile(ProfileModel params) {
     return asyncTryCatch(
       tryFunc: () async {
