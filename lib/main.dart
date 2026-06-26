@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0B0B0C),
       ),
-      home: const SplashView(),
+      home: SplashView(),
     );
   }
 }

@@ -3,34 +3,17 @@ import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.da
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const LinearGradient _pageGlow = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFF121833),
-      Color(0xFF32185F),
-      Color(0xFF071916),
-      Color(0xFF0B0B0C),
-    ],
-    stops: [0, 0.18, 0.34, 0.58],
-  );
-
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF202020),
-      ),
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: const Color(0xFF0B0B0C),
-        body: Container(
-          decoration: const BoxDecoration(gradient: _pageGlow),
+        body: AppBackgroundImage(
           child: SafeArea(
             bottom: false,
             child: CustomScrollView(
@@ -78,8 +61,8 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
+    
   }
 }
 

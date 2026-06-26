@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/common/widget/app_header.dart';
+import '../../../../core/common/background_image.dart';
 import '../../controller/watch_controller.dart';
 import '../../model/featured_video_model.dart';
 import '../../model/music_video_model.dart';
+import 'video_screen.dart';
 
 class WatchScreen extends StatelessWidget {
   const WatchScreen({super.key});
@@ -14,127 +16,121 @@ class WatchScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(WatchController());
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF202020),
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFF070808),
-        body: Stack(
-          children: [
-            const _WatchBackdrop(),
-            SafeArea(
-              bottom: false,
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
-                    sliver: SliverList.list(
-                      children: [
-                        const AppHeader(title: 'Watch', notificationBadge: '3'),
-                        const SizedBox(height: 22),
-                        Obx(
-                          () =>
-                              _HeroVideo(video: controller.featuredVideo.value),
-                        ),
-                        const SizedBox(height: 24),
-                        const _TrendingHeader(),
-                        const SizedBox(height: 8),
-                        Obx(
-                          () => Column(
-                            children: [
-                              for (final video
-                                  in controller.trendingVideos) ...[
-                                _VideoTile(video: video),
-                                const SizedBox(height: 18),
-                              ],
+    return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AppBackgroundImage(
+          child: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
+                  sliver: SliverList.list(
+                    children: [
+                      const AppHeader(title: 'Watch', notificationBadge: '3'),
+                      const SizedBox(height: 22),
+                      Obx(
+                        () =>
+                            _HeroVideo(video: controller.featuredVideo.value),
+                      ),
+                      const SizedBox(height: 24),
+                      const _TrendingHeader(),
+                      const SizedBox(height: 8),
+                      Obx(
+                        () => Column(
+                          children: [
+                            for (final video
+                                in controller.trendingVideos) ...[
+                              _VideoTile(
+                                video: video,
+                                onTap: () => Get.to(() => MusicPlayerScreen()),
+                              ),
+                              const SizedBox(height: 18),
                             ],
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 74),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 74),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-    );
+      );
+
   }
 }
 
-class _WatchBackdrop extends StatelessWidget {
-  const _WatchBackdrop();
+// class _WatchBackdrop extends StatelessWidget {
+//   const _WatchBackdrop();
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned(
-          top: -38,
-          left: 56,
-          right: 10,
-          child: Container(
-            height: 240,
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                colors: [
-                  const Color(0xFFFF2ED7).withValues(alpha: 0.82),
-                  const Color(0xFF5924C6).withValues(alpha: 0.48),
-                  Colors.transparent,
-                ],
-                stops: const [0, 0.46, 1],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 50,
-          right: -40,
-          child: Transform.rotate(
-            angle: -0.42,
-            child: Container(
-              width: 260,
-              height: 90,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    const Color(0xFF40DDEB).withValues(alpha: 0.42),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 22,
-          right: -22,
-          child: Transform.rotate(
-            angle: 0.66,
-            child: Container(
-              width: 220,
-              height: 70,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    const Color(0xFF9BFF4D).withValues(alpha: 0.28),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Stack(
+//       children: [
+//         Positioned(
+//           top: -38,
+//           left: 56,
+//           right: 10,
+//           child: Container(
+//             height: 240,
+//             decoration: BoxDecoration(
+//               gradient: RadialGradient(
+//                 colors: [
+//                   const Color(0xFFFF2ED7).withValues(alpha: 0.82),
+//                   const Color(0xFF5924C6).withValues(alpha: 0.48),
+//                   Colors.transparent,
+//                 ],
+//                 stops: const [0, 0.46, 1],
+//               ),
+//             ),
+//           ),
+//         ),
+//         Positioned(
+//           top: 50,
+//           right: -40,
+//           child: Transform.rotate(
+//             angle: -0.42,
+//             child: Container(
+//               width: 260,
+//               height: 90,
+//               decoration: BoxDecoration(
+//                 gradient: LinearGradient(
+//                   colors: [
+//                     Colors.transparent,
+//                     const Color(0xFF40DDEB).withValues(alpha: 0.42),
+//                     Colors.transparent,
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//         Positioned(
+//           top: 22,
+//           right: -22,
+//           child: Transform.rotate(
+//             angle: 0.66,
+//             child: Container(
+//               width: 220,
+//               height: 70,
+//               decoration: BoxDecoration(
+//                 gradient: LinearGradient(
+//                   colors: [
+//                     Colors.transparent,
+//                     const Color(0xFF9BFF4D).withValues(alpha: 0.28),
+//                     Colors.transparent,
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
 
 
 class _HeroVideo extends StatelessWidget {
@@ -302,89 +298,93 @@ class _TrendingHeader extends StatelessWidget {
 }
 
 class _VideoTile extends StatelessWidget {
-  const _VideoTile({required this.video});
+  const _VideoTile({required this.video, this.onTap});
 
   final MusicVideoModel video;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AspectRatio(
-          aspectRatio: 1.83,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  video.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const ColoredBox(
-                        color: Color(0xFF202020),
-                        child: Icon(
-                          Icons.play_circle_fill_rounded,
-                          color: Colors.white38,
-                          size: 50,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 1.83,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    video.image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const ColoredBox(
+                          color: Color(0xFF202020),
+                          child: Icon(
+                            Icons.play_circle_fill_rounded,
+                            color: Colors.white38,
+                            size: 50,
+                          ),
                         ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.45),
+                        ],
                       ),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.45),
-                      ],
                     ),
                   ),
-                ),
-                Positioned(
-                  right: 6,
-                  bottom: 5,
-                  child: Text(
-                    video.duration,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0,
+                  Positioned(
+                    right: 6,
+                    bottom: 5,
+                    child: Text(
+                      video.duration,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          video.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
+          const SizedBox(height: 8),
+          Text(
+            video.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${video.artist} - ${video.meta}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFF9C98A1),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0,
+          const SizedBox(height: 4),
+          Text(
+            '${video.artist} - ${video.meta}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF9C98A1),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
