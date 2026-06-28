@@ -117,7 +117,7 @@ class PlayerScreen extends StatelessWidget {
                           // Album art card
                           Obx(
                             () => Container(
-                              height: 390,
+                              height: 250,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(42),
