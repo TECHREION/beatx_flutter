@@ -1,7 +1,11 @@
+import 'dart:ui';
+
+import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
@@ -12,57 +16,71 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: const Color(0xFF0B0B0C),
-        body: AppBackgroundImage(
-          child: SafeArea(
-            bottom: false,
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: AppHeader(
-                    showLogo: true,
-                    onSearchTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ExploreScreen()),
+      backgroundColor: const Color(0xFF0B0B0C),
+      body: AppBackgroundImage(
+        child: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: AppHeader(
+                  showLogo: true,
+                  onSearchTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExploreScreen()),
+                  ),
+                  notificationBadge: '3',
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                sliver: SliverList.list(
+                  children: [
+                    const _SectionTitle(
+                        title: 'Trending Now', action: 'See all'),
+                    const SizedBox(height: 16),
+                    _TrendingCard(
+                      onPlay: () {
+                        Get.find<PlayerController>().play(
+                          title: 'Tumi Acho Bole',
+                          artist: 'Imran Mahmudul',
+                          imageAsset: 'assets/image/a4.png',
+                          audioAsset: 'audio/music1.m4a',
+                        );
+                        Get.to(
+                          () => const PlayerScreen(),
+                          transition: Transition.downToUp,
+                          preventDuplicates: true,
+                        );
+                      },
                     ),
-                    notificationBadge: '3',
-                  ),
+                    const SizedBox(height: 36),
+                    const _SectionTitle(title: 'Your Mix'),
+                    const SizedBox(height: 16),
+                    const _DailyDiscoverCard(),
+                    const SizedBox(height: 16),
+                    const _MixGrid(),
+                    const SizedBox(height: 16),
+                    const _SectionTitle(title: 'Explore More'),
+                    const SizedBox(height: 16),
+                    const _ExploreRow(),
+                    const SizedBox(height: 32),
+                    const _NewReleaseHeader(),
+                    const SizedBox(height: 16),
+                    const _NewReleaseList(),
+                    const SizedBox(height: 28),
+                    const _SectionTitle(title: 'Artists to Watch'),
+                    const SizedBox(height: 14),
+                    const _ArtistWatchList(),
+                    const SizedBox(height: 104),
+                  ],
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                  sliver: SliverList.list(
-                    children: const [
-                      _SectionTitle(title: 'Trending Now', action: 'See all'),
-                      SizedBox(height: 16),
-                      _TrendingCard(),
-                      SizedBox(height: 36),
-                      _SectionTitle(title: 'Your Mix'),
-                      SizedBox(height: 16),
-                      _DailyDiscoverCard(),
-                      SizedBox(height: 16),
-                      _MixGrid(),
-                      SizedBox(height: 32),
-                      _SectionTitle(title: 'Explore More'),
-                      SizedBox(height: 16),
-                      _ExploreRow(),
-                      SizedBox(height: 32),
-                      _NewReleaseHeader(),
-                      SizedBox(height: 16),
-                      _NewReleaseList(),
-                      SizedBox(height: 28),
-                      _SectionTitle(title: 'Artists to Watch'),
-                      SizedBox(height: 14),
-                      _ArtistWatchList(),
-                      SizedBox(height: 104),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      );
-    
+      ),
+    );
   }
 }
 
@@ -103,22 +121,123 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _TrendingCard extends StatelessWidget {
-  const _TrendingCard();
+  const _TrendingCard({this.onPlay});
+
+  final VoidCallback? onPlay;
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.03,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Image.asset(
-          'assets/image/a4.png',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              const _ArtworkBackground(
-                asset: 'assets/image/Container.png',
-                colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
-              ),
+    return GestureDetector(
+      onTap: onPlay,
+      child: AspectRatio(
+        aspectRatio: 1.03,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+              width: 1.2,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(29),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/image/a4.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const _ArtworkBackground(
+                        asset: 'assets/image/Container.png',
+                        colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
+                      ),
+                ),
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(50),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.40),
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.10),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Tumi Acho Bole',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Imran Mahmudul',
+                                    style: TextStyle(
+                                      color: Colors.white
+                                          .withValues(alpha: 0.58),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF64FF8F),
+                                    Color(0xFF40DDEB),
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF64FF8F)
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 14,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.black,
+                                size: 28,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -449,20 +568,26 @@ class _NewReleaseList extends StatelessWidget {
       _ReleaseData(
         title: 'Tumi Onek Dami',
         subtitle: 'Fahim Islam - Single',
+        artist: 'Fahim Islam',
         meta: 'NEW',
         asset: 'assets/image/Container.png',
+        audioAsset: 'audio/music2.mp3',
       ),
       _ReleaseData(
         title: 'Amar Hote Hote Mokhlesul Islam Nilu',
         subtitle: 'Amar Hote Hote - Single',
+        artist: 'Mokhlesul Islam Nilu',
         meta: '4:20',
         asset: 'assets/image/Album Art.png',
+        audioAsset: 'audio/music3.m4a',
       ),
       _ReleaseData(
         title: 'Emon Ekta Golpo',
         subtitle: 'Nabila - Single',
+        artist: 'Nabila',
         meta: '3:15',
         asset: 'assets/image/Album Art (1).png',
+        audioAsset: 'audio/music4.mp3',
       ),
     ];
 
@@ -484,7 +609,20 @@ class _ReleaseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return GestureDetector(
+      onTap: () {
+        Get.find<PlayerController>().play(
+          title: item.title,
+          artist: item.artist,
+          imageAsset: item.asset,
+          audioAsset: item.audioAsset,
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PlayerScreen()),
+        );
+      },
+      child: Row(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(18),
@@ -553,6 +691,7 @@ class _ReleaseTile extends StatelessWidget {
           ],
         ),
       ],
+    ),
     );
   }
 }
@@ -674,14 +813,18 @@ class _ReleaseData {
   const _ReleaseData({
     required this.title,
     required this.subtitle,
+    required this.artist,
     required this.meta,
     required this.asset,
+    required this.audioAsset,
   });
 
   final String title;
   final String subtitle;
+  final String artist;
   final String meta;
   final String asset;
+  final String audioAsset;
 }
 
 class _ArtistData {

@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/floating_player.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'audiobook/presentation/screen/audiobook_screen.dart';
@@ -33,26 +34,15 @@ class AppGround extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
+      extendBody: true,
       body: Obx(() => pages[currentIndex.value]),
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Container(
-          color: const Color(0xFF0B0B0C),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Obx(() {
-              //   if (currentIndex.value == 1 || currentIndex.value == 3) {
-              //     return const SizedBox.shrink();
-              //   }
-
-              //   if (currentIndex.value == 2) {
-              //     return const PodcastMiniPlayer();
-              //   }
-
-              //   return const _MiniPlayer();
-              // }),
-              Container(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const FloatingPlayer(),
+            Container(
                 height: 72,
                 margin: const EdgeInsets.only(top: 10),
                 decoration: const BoxDecoration(
@@ -77,7 +67,6 @@ class AppGround extends StatelessWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }

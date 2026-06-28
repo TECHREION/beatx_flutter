@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../../core/common/widget/app_header.dart';
+import '../../../../../core/player/player_controller.dart';
+import '../../../home/presentation/screens/audio_play_screen.dart';
 import '../../controller/podcast_controller.dart';
 import '../widget/category_card.dart';
 import '../widget/episode_tile.dart';
@@ -90,7 +92,22 @@ class PodcastScreen extends StatelessWidget {
                         const _RecentHeader(),
                         const SizedBox(height: 14),
                         for (final episode in controller.episodes) ...[
-                          EpisodeTile(episode: episode),
+                          EpisodeTile(
+                            episode: episode,
+                            onTap: () {
+                              Get.find<PlayerController>().play(
+                                title: episode.title,
+                                artist: episode.meta.split(' - ').last,
+                                imageAsset: episode.image,
+                                audioAsset: episode.audioAsset,
+                              );
+                              Get.to(
+                                () => const PlayerScreen(),
+                                transition: Transition.downToUp,
+                                preventDuplicates: true,
+                              );
+                            },
+                          ),
                           const SizedBox(height: 12),
                         ],
                         const SizedBox(height: 28),

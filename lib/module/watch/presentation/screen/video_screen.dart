@@ -14,32 +14,6 @@ class MusicPlayerScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-
-          /// Background
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(
-                  controller.currentMusic.value.image,
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withOpacity(.3),
-                  Colors.black.withOpacity(.95),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-
           SafeArea(
             child: Obx(
               () => SingleChildScrollView(
@@ -170,7 +144,7 @@ class MusicPlayerScreen extends StatelessWidget {
                                 .title,
                             style:
                                 const TextStyle(
-                              fontSize: 28,
+                              fontSize: 20,
                               fontWeight:
                                   FontWeight.bold,
                             ),

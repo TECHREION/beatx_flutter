@@ -62,6 +62,7 @@ class PodcastController extends GetxController {
       subtitle: 'Why modern producers are...',
       meta: '45 min - Frequency Response',
       image: 'assets/image/Episode 1.png',
+      audioAsset: 'audio/music5.m4a',
       isNew: true,
     ),
     EpisodeModel(
@@ -69,12 +70,14 @@ class PodcastController extends GetxController {
       subtitle: 'What happens when the AI...',
       meta: '58 min - Neural Networks',
       image: 'assets/image/Episode 2.png',
+      audioAsset: 'audio/music6.m4a',
     ),
     EpisodeModel(
       title: 'Quantum Supremacy & Audio',
       subtitle: 'How quantum computing will...',
       meta: '1h 12m - Tech Talk',
       image: 'assets/image/Episode 3.png',
+      audioAsset: 'audio/music1.m4a',
     ),
   ];
 

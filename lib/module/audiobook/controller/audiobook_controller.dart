@@ -13,6 +13,7 @@ class AudiobookController extends GetxController {
     chapter: 'Chapter 14: The Eridian',
     progress: 0.72,
     remaining: '4 HOURS REMAINING',
+    audioAsset: 'audio/music2.mp3',
   ).obs;
 
   final queuedBook = const AudiobookModel(
@@ -23,6 +24,7 @@ class AudiobookController extends GetxController {
     chapter: 'Chapter 08: The Return',
     progress: 0.72,
     remaining: '4 HOURS REMAINING',
+    audioAsset: 'audio/music3.m4a',
   ).obs;
 
   final genres = const <GenreModel>[
@@ -44,6 +46,7 @@ class AudiobookController extends GetxController {
       chapter: 'Chapter 01',
       progress: 0,
       remaining: '',
+      audioAsset: 'audio/music4.mp3',
     ),
     AudiobookModel(
       title: 'Digital Dreams',
@@ -53,6 +56,7 @@ class AudiobookController extends GetxController {
       chapter: 'Chapter 01',
       progress: 0,
       remaining: '',
+      audioAsset: 'audio/music5.m4a',
     ),
     AudiobookModel(
       title: 'Paradox',
@@ -62,6 +66,7 @@ class AudiobookController extends GetxController {
       chapter: 'Chapter 01',
       progress: 0,
       remaining: '',
+      audioAsset: 'audio/music6.m4a',
     ),
     AudiobookModel(
       title: 'Manoj Basur Galpo...',
@@ -71,6 +76,7 @@ class AudiobookController extends GetxController {
       chapter: 'Chapter 01',
       progress: 0,
       remaining: '',
+      audioAsset: 'audio/music1.m4a',
     ),
   ].obs;
 

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/common/widget/app_header.dart';
+import '../../../../../core/player/player_controller.dart';
+import '../../../home/presentation/screens/audio_play_screen.dart';
 import '../../controller/audiobook_controller.dart';
 import '../../model/audiobook_model.dart';
 import 'audiobook_detail_screen.dart';
@@ -50,10 +52,20 @@ class AudiobookScreen extends StatelessWidget {
                         Obx(
                           () => ContinueListeningCard(
                             book: controller.continueListening.value,
-                            onResume: () => _openDetails(
-                              context,
-                              controller.continueListening.value,
-                            ),
+                            onResume: () {
+                              final book = controller.continueListening.value;
+                              Get.find<PlayerController>().play(
+                                title: book.title,
+                                artist: book.author,
+                                imageAsset: book.cover,
+                                audioAsset: book.audioAsset,
+                              );
+                              Get.to(
+                                () => const PlayerScreen(),
+                                transition: Transition.downToUp,
+                                preventDuplicates: true,
+                              );
+                            },
                             onDetails: () => _openDetails(
                               context,
                               controller.continueListening.value,
@@ -62,9 +74,25 @@ class AudiobookScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
                         Obx(
-                          () => ContinueListeningCard(
-                            book: controller.queuedBook.value,
-                            compact: true,
+                          () => GestureDetector(
+                            onTap: () {
+                              final book = controller.queuedBook.value;
+                              Get.find<PlayerController>().play(
+                                title: book.title,
+                                artist: book.author,
+                                imageAsset: book.cover,
+                                audioAsset: book.audioAsset,
+                              );
+                              Get.to(
+                                () => const PlayerScreen(),
+                                transition: Transition.downToUp,
+                                preventDuplicates: true,
+                              );
+                            },
+                            child: ContinueListeningCard(
+                              book: controller.queuedBook.value,
+                              compact: true,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -103,10 +131,20 @@ class AudiobookScreen extends StatelessWidget {
                                   const SizedBox(width: 16),
                               itemBuilder: (context, index) => NewReleaseCard(
                                 book: controller.newReleases[index],
-                                onTap: () => _openDetails(
-                                  context,
-                                  controller.newReleases[index],
-                                ),
+                                onTap: () {
+                                  final book = controller.newReleases[index];
+                                  Get.find<PlayerController>().play(
+                                    title: book.title,
+                                    artist: book.author,
+                                    imageAsset: book.cover,
+                                    audioAsset: book.audioAsset,
+                                  );
+                                  Get.to(
+                                    () => const PlayerScreen(),
+                                    transition: Transition.downToUp,
+                                    preventDuplicates: true,
+                                  );
+                                },
                               ),
                             ),
                           ),

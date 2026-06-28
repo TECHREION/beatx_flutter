@@ -7,6 +7,7 @@ class AudiobookModel {
     required this.chapter,
     required this.progress,
     required this.remaining,
+    required this.audioAsset,
   });
 
   final String title;
@@ -16,4 +17,5 @@ class AudiobookModel {
   final String chapter;
   final double progress;
   final String remaining;
+  final String audioAsset;
 }

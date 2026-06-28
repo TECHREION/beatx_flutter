@@ -42,6 +42,7 @@ dependencies:
   intl: ^0.19.0
   app_pigeon: 0.1.4
   dio: ^5.9.0
+  audioplayers: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,7 @@ flutter:
     - assets/logo/
     - assets/image/
     - assets/icon/
+    - assets/audio/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
