@@ -175,15 +175,16 @@ class _CategoryChipsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
-      child: Obx(
-        () => ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: controller.categories.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final cat = controller.categories[index];
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: controller.categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final cat = controller.categories[index];
+          // Only the chip itself is reactive — categories list never changes.
+          return Obx(() {
             final isSelected = controller.selectedCategory.value == index;
             return GestureDetector(
               onTap: () => controller.selectCategory(index),
@@ -191,7 +192,9 @@ class _CategoryChipsSection extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF3BDDEB) : const Color(0xFF1C1C22),
+                  color: isSelected
+                      ? const Color(0xFF3BDDEB)
+                      : const Color(0xFF1C1C22),
                   borderRadius: BorderRadius.circular(20),
                   border: isSelected
                       ? null
@@ -201,16 +204,19 @@ class _CategoryChipsSection extends StatelessWidget {
                 child: Text(
                   cat.label,
                   style: TextStyle(
-                    color: isSelected ? const Color(0xFF0B0B0C) : const Color(0xFFA7A3AA),
+                    color: isSelected
+                        ? const Color(0xFF0B0B0C)
+                        : const Color(0xFFA7A3AA),
                     fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight:
+                        isSelected ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.1,
                   ),
                 ),
               ),
             );
-          },
-        ),
+          });
+        },
       ),
     );
   }

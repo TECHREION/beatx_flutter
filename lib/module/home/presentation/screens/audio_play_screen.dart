@@ -2,6 +2,8 @@ import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../watch/presentation/screen/equelizer_screen.dart';
+
 class PlayerScreen extends StatelessWidget {
   const PlayerScreen({super.key});
 
@@ -98,7 +100,13 @@ class PlayerScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(Icons.more_vert, color: Colors.white),
+                      GestureDetector(
+                        onTap: () => Get.to(
+                          () => const EqualizerScreen(),
+                          transition: Transition.downToUp,
+                        ),
+                        child: const Icon(Icons.more_vert, color: Colors.white),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 25),

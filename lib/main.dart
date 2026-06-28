@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BeatX',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const ScrollBehavior().copyWith(scrollbars: false),
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0B0B0C),
       ),
