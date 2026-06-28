@@ -20,12 +20,7 @@ class AudiobookScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(AudiobookController());
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF202020),
-      ),
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: const Color(0xFF080909),
         body: Stack(
           children: [
@@ -99,7 +94,7 @@ class AudiobookScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 14),
                         SizedBox(
-                          height: 306,
+                          height: 318,
                           child: Obx(
                             () => ListView.separated(
                               scrollDirection: Axis.horizontal,
@@ -140,8 +135,8 @@ class AudiobookScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
+
   }
 
   void _openDetails(BuildContext context, AudiobookModel book) {
@@ -162,7 +157,7 @@ class _AudiobookGlow extends StatelessWidget {
       left: 40,
       right: -36,
       child: Container(
-        height: 306,
+        height: 318,
         decoration: BoxDecoration(
           gradient: RadialGradient(
             colors: [
