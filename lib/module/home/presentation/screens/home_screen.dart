@@ -129,7 +129,7 @@ class _TrendingCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: Image.asset(
-          'assets/image/home_trending.png',
+          'assets/image/a4.png',
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) =>
               const _ArtworkBackground(

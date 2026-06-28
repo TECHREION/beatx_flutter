@@ -18,6 +18,14 @@ class AppManager extends GetxController {
   void onInit() {
     super.onInit();
     _sub = _pigeon.authStream.listen(_onAuthChanged);
+    _checkAuthNow();
+  }
+
+  Future<void> _checkAuthNow() async {
+    final auth = await _pigeon.getCurrentAuthRecord();
+    if (authStatus.value is AuthLoading) {
+      _onAuthChanged(auth != null ? Authenticated(auth: auth) : UnAuthenticated());
+    }
   }
 
   void _onAuthChanged(AuthStatus status) {
