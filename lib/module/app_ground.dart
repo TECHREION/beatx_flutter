@@ -36,38 +36,35 @@ class AppGround extends StatelessWidget {
       backgroundColor: const Color(0xFF0B0B0C),
       extendBody: true,
       body: Obx(() => pages[currentIndex.value]),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const FloatingPlayer(),
-            Container(
-                height: 72,
-                margin: const EdgeInsets.only(top: 10),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF202020),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-                ),
-                child: Obx(
-                  () => Row(
-                    children: List.generate(_navItems.length, (index) {
-                      final item = _navItems[index];
-                      final selected = currentIndex.value == index;
-                      return Expanded(
-                        child: _NavItem(
-                          item: item,
-                          selected: selected,
-                          onTap: () => currentIndex.value = index,
-                        ),
-                      );
-                    }),
-                  ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const FloatingPlayer(),
+          Container(
+              height: 80,
+              margin: const EdgeInsets.only(top: 0, bottom: 0, left: 12, right: 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFF202020),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Obx(
+                () => Row(
+                  children: List.generate(_navItems.length, (index) {
+                    final item = _navItems[index];
+                    final selected = currentIndex.value == index;
+                    return Expanded(
+                      child: _NavItem(
+                        item: item,
+                        selected: selected,
+                        onTap: () => currentIndex.value = index,
+                      ),
+                    );
+                  }),
                 ),
               ),
-            ],
-          ),
-      ),
+            ),
+          ],
+        ),
     );
   }
 }
