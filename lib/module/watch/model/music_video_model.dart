@@ -5,6 +5,7 @@ class MusicVideoModel {
     required this.meta,
     required this.duration,
     required this.image,
+    required this.videoAsset,
   });
 
   final String title;
@@ -12,6 +13,7 @@ class MusicVideoModel {
   final String meta;
   final String duration;
   final String image;
+  final String videoAsset;
 }
 class MusicModel {
   final String title;

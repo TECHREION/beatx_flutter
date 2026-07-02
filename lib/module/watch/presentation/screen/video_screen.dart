@@ -1,13 +1,54 @@
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
 import 'package:beatx_flutter/module/watch/model/music_video_model.dart';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
 
-class MusicPlayerScreen extends StatelessWidget {
-  MusicPlayerScreen({super.key});
+class MusicPlayerScreen extends StatefulWidget {
+  const MusicPlayerScreen({super.key, required this.video});
 
-  final MusicPlayerController controller =
-      Get.put(MusicPlayerController());
+  final MusicVideoModel video;
+
+  @override
+  State<MusicPlayerScreen> createState() => _MusicPlayerScreenState();
+}
+
+class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
+  final MusicPlayerController controller = Get.put(MusicPlayerController());
+
+  late final VideoPlayerController _videoController;
+  ChewieController? _chewieController;
+
+  @override
+  void initState() {
+    super.initState();
+    _videoController = VideoPlayerController.asset(widget.video.videoAsset)
+      ..initialize().then((_) {
+        if (!mounted) return;
+        setState(() {
+          _chewieController = ChewieController(
+            videoPlayerController: _videoController,
+            autoPlay: true,
+            looping: false,
+            aspectRatio: _videoController.value.aspectRatio,
+            materialProgressColors: ChewieProgressColors(
+              playedColor: Colors.cyanAccent,
+              handleColor: Colors.cyanAccent,
+              bufferedColor: Colors.white38,
+              backgroundColor: Colors.white24,
+            ),
+          );
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _chewieController?.dispose();
+    _videoController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,70 +103,21 @@ class MusicPlayerScreen extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    /// Play Section
-                    SizedBox(
-                      height: 220,
-                      child: Center(
-                        child: GestureDetector(
-                          onTap:
-                              controller.togglePlay,
-                          child: Container(
-                            width: 90,
-                            height: 90,
-                            decoration:
-                                BoxDecoration(
-                              shape:
-                                  BoxShape.circle,
-                              color:
-                                  Colors.black87,
-                              border: Border.all(
-                                color: Colors
-                                    .purpleAccent,
-                                width: 3,
+                    /// Video Player
+                    AspectRatio(
+                      aspectRatio: _videoController.value.isInitialized
+                          ? _videoController.value.aspectRatio
+                          : 16 / 9,
+                      child: _chewieController != null
+                          ? Chewie(controller: _chewieController!)
+                          : const ColoredBox(
+                              color: Colors.black,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.cyanAccent,
+                                ),
                               ),
                             ),
-                            child: Icon(
-                              controller
-                                      .isPlaying
-                                      .value
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              size: 50,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    /// Slider
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(
-                              horizontal: 16),
-                      child: Column(
-                        children: [
-                          Slider(
-                            value: controller
-                                .progress.value,
-                            min: 0,
-                            max: 223,
-                            activeColor:
-                                Colors.greenAccent,
-                            onChanged: controller
-                                .updateProgress,
-                          ),
-
-                          const Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceBetween,
-                            children: [
-                              Text("01:42"),
-                              Text("03:43"),
-                            ],
-                          ),
-                        ],
-                      ),
                     ),
 
                     /// Song Info
@@ -138,10 +130,7 @@ class MusicPlayerScreen extends StatelessWidget {
                                 .start,
                         children: [
                           Text(
-                            controller
-                                .currentMusic
-                                .value
-                                .title,
+                            widget.video.title,
                             style:
                                 const TextStyle(
                               fontSize: 20,
@@ -154,10 +143,7 @@ class MusicPlayerScreen extends StatelessWidget {
                               height: 10),
 
                           Text(
-                            controller
-                                .currentMusic
-                                .value
-                                .description,
+                            '${widget.video.artist} • ${widget.video.meta}',
                             style:
                                 const TextStyle(
                               color:

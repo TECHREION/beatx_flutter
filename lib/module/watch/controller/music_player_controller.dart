@@ -9,17 +9,6 @@ class MusicPlayerController extends GetxController {
 
   RxBool isPlaying = false.obs;
 
-  final currentMusic = MusicModel(
-    title: 'Midnight Pulse - Official Music Video',
-    artist: 'BeatX Studios',
-    image:
-        'https://images.unsplash.com/photo-1519608487953-e999c86e7455',
-    duration: '3:43',
-    description:
-        'Experience the atmospheric journey through the neon-enriched corridors of a future Tokyo. Directed by Kenton Soma. Produced by BeatX Studios.',
-    views: '450K views',
-  ).obs;
-
   final upNextList = <MusicModel>[
     MusicModel(
       title: 'Neon Dreams: The Making of Pulse',

@@ -18,6 +18,8 @@ class WatchController extends GetxController {
       meta: '1.2M views - 2 days ago',
       duration: '04:20',
       image: 'assets/image/image.png',
+      videoAsset:
+          'assets/video/mixkit-countryside-meadow-4075-hd-ready.mp4',
     ),
     MusicVideoModel(
       title: 'Bhalo Thake Mon',
@@ -25,6 +27,8 @@ class WatchController extends GetxController {
       meta: '890K views',
       duration: '04:20',
       image: 'assets/image/onboarding1.png',
+      videoAsset:
+          'assets/video/mixkit-highway-in-the-middle-of-a-mountain-range-4633-hd-ready.mp4',
     ),
     MusicVideoModel(
       title: 'Tor Lagiya',
@@ -32,6 +36,7 @@ class WatchController extends GetxController {
       meta: '450K views',
       duration: '04:20',
       image: 'assets/image/blackout.png',
+      videoAsset: 'assets/video/mixkit-raft-going-slowly-down-a-river-1218-hd-ready.mp4',
     ),
   ].obs;
 }

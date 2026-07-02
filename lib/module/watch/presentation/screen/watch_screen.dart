@@ -42,7 +42,8 @@ class WatchScreen extends StatelessWidget {
                                 in controller.trendingVideos) ...[
                               _VideoTile(
                                 video: video,
-                                onTap: () => Get.to(() => MusicPlayerScreen()),
+                                onTap: () =>
+                                    Get.to(() => MusicPlayerScreen(video: video)),
                               ),
                               const SizedBox(height: 18),
                             ],
