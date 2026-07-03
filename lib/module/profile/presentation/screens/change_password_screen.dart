@@ -62,7 +62,7 @@ class _ChangePasswordScreenState
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.deepPurple.withOpacity(.20),
+                    Colors.deepPurple.withValues(alpha: .20),
                     Colors.transparent,
                   ],
                 ),
@@ -81,7 +81,7 @@ class _ChangePasswordScreenState
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.cyan.withOpacity(.15),
+                    Colors.cyan.withValues(alpha: .15),
                     Colors.transparent,
                   ],
                 ),
@@ -107,7 +107,7 @@ class _ChangePasswordScreenState
                         height: 48,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(.06),
+                          color: Colors.white.withValues(alpha: .06),
                         ),
                         child: IconButton(
                           onPressed: () =>
