@@ -117,7 +117,7 @@ class PlayerScreen extends StatelessWidget {
                           // Album art card
                           Obx(
                             () => Container(
-                              height: 250,
+                              height: 350,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(42),
@@ -204,37 +204,51 @@ class PlayerScreen extends StatelessWidget {
                           }),
                           const SizedBox(height: 14),
 
-                          // Progress bar
+                          // Progress bar (scrubbable)
                           Obx(() {
-                            final progress =
-                                ctrl.duration.value.inMilliseconds > 0
-                                    ? (ctrl.position.value.inMilliseconds /
-                                            ctrl.duration.value
-                                                .inMilliseconds)
-                                        .clamp(0.0, 1.0)
-                                    : 0.0;
-                            return Stack(
-                              children: [
-                                Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white24,
-                                    borderRadius:
-                                        BorderRadius.circular(100),
-                                  ),
-                                ),
-                                FractionallySizedBox(
-                                  widthFactor: progress,
-                                  child: Container(
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      gradient: _beatxGradient,
-                                      borderRadius:
-                                          BorderRadius.circular(100),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            final durationMs =
+                                ctrl.duration.value.inMilliseconds;
+                            final progress = durationMs > 0
+                                ? (ctrl.position.value.inMilliseconds /
+                                        durationMs)
+                                    .clamp(0.0, 1.0)
+                                : 0.0;
+                            return SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 8,
+                                activeTrackColor:
+                                    const Color(0xFF9BFF4D),
+                                inactiveTrackColor: Colors.white24,
+                                thumbColor: Colors.white,
+                                thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 8),
+                                overlayShape: const RoundSliderOverlayShape(
+                                    overlayRadius: 16),
+                                overlayColor:
+                                    const Color(0xFF9BFF4D).withValues(
+                                        alpha: 0.2),
+                              ),
+                              child: Slider(
+                                value: progress,
+                                min: 0.0,
+                                max: 1.0,
+                                onChanged: durationMs > 0
+                                    ? (value) {
+                                        ctrl.position.value = Duration(
+                                          milliseconds:
+                                              (value * durationMs).round(),
+                                        );
+                                      }
+                                    : null,
+                                onChangeEnd: durationMs > 0
+                                    ? (value) {
+                                        ctrl.seek(Duration(
+                                          milliseconds:
+                                              (value * durationMs).round(),
+                                        ));
+                                      }
+                                    : null,
+                              ),
                             );
                           }),
                           const SizedBox(height: 10),

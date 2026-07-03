@@ -44,6 +44,11 @@ class PlayerController extends GetxController {
     await _player.play(AssetSource(audioAsset));
   }
 
+  Future<void> seek(Duration position) async {
+    this.position.value = position;
+    await _player.seek(position);
+  }
+
   Future<void> pause() async {
     isPlaying.value = false;
     await _player.pause();
