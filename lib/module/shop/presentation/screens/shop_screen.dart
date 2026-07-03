@@ -5,6 +5,7 @@ import '../../../../../core/common/background_image.dart';
 import '../../../../../core/common/widget/app_header.dart';
 import '../../controller/shop_controller.dart';
 import '../../model/shop_model.dart';
+import '../widgets/event_tickets_screen.dart';
 import 'shop_detail_screen.dart';
 
 class ShopScreen extends StatelessWidget {
@@ -61,7 +62,12 @@ class _BannersSection extends StatelessWidget {
             .map(
               (b) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: _PromoBannerCard(banner: b),
+                child: GestureDetector(
+                  onTap: b.title == 'Event Tickets'
+                      ? () => Get.to(() => const EventTicketsScreen())
+                      : null,
+                  child: _PromoBannerCard(banner: b),
+                ),
               ),
             )
             .toList(),

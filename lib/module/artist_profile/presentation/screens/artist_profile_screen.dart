@@ -700,7 +700,7 @@ class _HotAlbumsSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 168,
+          height: 180,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: controller.artist.albums.length,

@@ -37,7 +37,7 @@ class ShopDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: topPad + kToolbarHeight + 8),
-                  _ProductHeroImage(image: controller.product.image),
+                  Center(child: _ProductHeroImage(image: controller.product.image)),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Column(
@@ -145,7 +145,8 @@ class _ProductHeroImage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        height: 300,
+        height: 340,
+        width: double.infinity,
         decoration: BoxDecoration(
           color: const Color(0xFFE8E3DA),
           borderRadius: BorderRadius.circular(20),

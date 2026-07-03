@@ -3,11 +3,18 @@ import 'package:flutter/services.dart';
 
 import '../../model/audiobook_model.dart';
 
-class AudiobookNewReleasesScreen extends StatelessWidget {
+class AudiobookNewReleasesScreen extends StatefulWidget {
   const AudiobookNewReleasesScreen({super.key, required this.books});
 
   final List<AudiobookModel> books;
 
+  @override
+  State<AudiobookNewReleasesScreen> createState() =>
+      _AudiobookNewReleasesScreenState();
+}
+
+class _AudiobookNewReleasesScreenState
+    extends State<AudiobookNewReleasesScreen> {
   static const _genres = [
     'All Genres',
     'Fiction',
@@ -18,8 +25,11 @@ class AudiobookNewReleasesScreen extends StatelessWidget {
     'Sci-Fi',
   ];
 
+  int _selectedGenreIndex = 0;
+
   @override
   Widget build(BuildContext context) {
+    final books = widget.books;
     final currentBook = books.isNotEmpty ? books.first : null;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -46,7 +56,12 @@ class AudiobookNewReleasesScreen extends StatelessWidget {
                           runSpacing: 14,
                           children: [
                             for (var i = 0; i < _genres.length; i++)
-                              _ReleaseChip(label: _genres[i], selected: i == 0),
+                              _ReleaseChip(
+                                label: _genres[i],
+                                selected: i == _selectedGenreIndex,
+                                onTap: () =>
+                                    setState(() => _selectedGenreIndex = i),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 34),
@@ -59,7 +74,7 @@ class AudiobookNewReleasesScreen extends StatelessWidget {
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 24,
                                 mainAxisSpacing: 30,
-                                childAspectRatio: 0.56,
+                                childAspectRatio: 0.5,
                               ),
                           itemBuilder: (context, index) =>
                               _ReleaseGridCard(book: books[index]),
@@ -70,7 +85,7 @@ class AudiobookNewReleasesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            if (currentBook != null) _ReleaseMiniPlayer(book: currentBook),
+            // if (currentBook != null) _ReleaseMiniPlayer(book: currentBook),
           ],
         ),
       ),
@@ -115,7 +130,6 @@ class _ReleaseHeader extends StatelessWidget {
       child: Row(
         children: [
           Material(
-            color: const Color(0xFF3B276A),
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -145,26 +159,33 @@ class _ReleaseHeader extends StatelessWidget {
 }
 
 class _ReleaseChip extends StatelessWidget {
-  const _ReleaseChip({required this.label, required this.selected});
+  const _ReleaseChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFF40DDEB) : const Color(0xFF202020),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? const Color(0xFF0E1112) : const Color(0xFFAAA5AD),
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF40DDEB) : const Color(0xFF202020),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? const Color(0xFF0E1112) : const Color(0xFFAAA5AD),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -241,91 +262,91 @@ class _ReleaseGridCard extends StatelessWidget {
   }
 }
 
-class _ReleaseMiniPlayer extends StatelessWidget {
-  const _ReleaseMiniPlayer({required this.book});
+// class _ReleaseMiniPlayer extends StatelessWidget {
+//   const _ReleaseMiniPlayer({required this.book});
 
-  final AudiobookModel book;
+//   final AudiobookModel book;
 
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 24,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: 72,
-          padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF151617),
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: const Color(0xFF124A56), width: 1),
-          ),
-          child: Row(
-            children: [
-              ClipOval(
-                child: Image.asset(
-                  'assets/image/audiobook_paradox.png',
-                  width: 52,
-                  height: 52,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      book.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      book.author,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFAAA5AD),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 52,
-                height: 52,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.pause_rounded,
-                  color: Color(0xFF111113),
-                  size: 32,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Positioned(
+//       left: 16,
+//       right: 16,
+//       bottom: 24,
+//       child: SafeArea(
+//         top: false,
+//         child: Container(
+//           height: 72,
+//           padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
+//           decoration: BoxDecoration(
+//             color: const Color(0xFF151617),
+//             borderRadius: BorderRadius.circular(36),
+//             border: Border.all(color: const Color(0xFF124A56), width: 1),
+//           ),
+//           child: Row(
+//             children: [
+//               ClipOval(
+//                 child: Image.asset(
+//                   'assets/image/audiobook_paradox.png',
+//                   width: 52,
+//                   height: 52,
+//                   fit: BoxFit.cover,
+//                 ),
+//               ),
+//               const SizedBox(width: 12),
+//               Expanded(
+//                 child: Column(
+//                   mainAxisAlignment: MainAxisAlignment.center,
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       book.title,
+//                       maxLines: 1,
+//                       overflow: TextOverflow.ellipsis,
+//                       style: const TextStyle(
+//                         color: Colors.white,
+//                         fontSize: 17,
+//                         fontWeight: FontWeight.w800,
+//                         letterSpacing: 0,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 3),
+//                     Text(
+//                       book.author,
+//                       maxLines: 1,
+//                       overflow: TextOverflow.ellipsis,
+//                       style: const TextStyle(
+//                         color: Color(0xFFAAA5AD),
+//                         fontSize: 13,
+//                         fontWeight: FontWeight.w600,
+//                         letterSpacing: 0,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//               const SizedBox(width: 10),
+//               Container(
+//                 width: 52,
+//                 height: 52,
+//                 decoration: const BoxDecoration(
+//                   gradient: LinearGradient(
+//                     colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
+//                     begin: Alignment.topLeft,
+//                     end: Alignment.bottomRight,
+//                   ),
+//                   shape: BoxShape.circle,
+//                 ),
+//                 child: const Icon(
+//                   Icons.pause_rounded,
+//                   color: Color(0xFF111113),
+//                   size: 32,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
