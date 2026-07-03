@@ -26,6 +26,19 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>BeatX uses the camera so you can take a profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BeatX uses your photo library so you can choose a profile photo.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- Backend is served over plain HTTP on a bare IP (http://13.206.25.95:3000).
+		     iOS App Transport Security blocks cleartext by default. A bare IP literal
+		     cannot use NSExceptionDomains, so arbitrary loads are required for the API
+		     to work on iOS. Replace this with an HTTPS domain before public release. -->
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

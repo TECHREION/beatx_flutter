@@ -49,7 +49,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(.05),
+                      color: Colors.white.withValues(alpha: .05),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
