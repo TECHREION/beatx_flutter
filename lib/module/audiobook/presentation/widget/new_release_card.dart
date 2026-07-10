@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../model/audiobook_model.dart';
+import 'book_cover.dart';
 
 class NewReleaseCard extends StatelessWidget {
   const NewReleaseCard({super.key, required this.book, this.onTap});
 
-  final AudiobookModel book;
+  final Audiobook book;
   final VoidCallback? onTap;
 
   @override
@@ -22,19 +23,7 @@ class NewReleaseCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               child: AspectRatio(
                 aspectRatio: 0.82,
-                child: Image.asset(
-                  book.cover,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const ColoredBox(
-                        color: Color(0xFF202020),
-                        child: Icon(
-                          Icons.menu_book_rounded,
-                          color: Colors.white38,
-                          size: 54,
-                        ),
-                      ),
-                ),
+                child: BookCover(url: book.coverUrl),
               ),
             ),
             const SizedBox(height: 12),

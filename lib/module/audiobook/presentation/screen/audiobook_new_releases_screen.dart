@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../controller/audiobook_controller.dart';
 import '../../model/audiobook_model.dart';
+import '../widget/book_cover.dart';
+import 'audiobook_detail_screen.dart';
 
 class AudiobookNewReleasesScreen extends StatefulWidget {
   const AudiobookNewReleasesScreen({super.key, required this.books});
 
-  final List<AudiobookModel> books;
+  final List<Audiobook> books;
 
   @override
   State<AudiobookNewReleasesScreen> createState() =>
@@ -15,22 +18,25 @@ class AudiobookNewReleasesScreen extends StatefulWidget {
 
 class _AudiobookNewReleasesScreenState
     extends State<AudiobookNewReleasesScreen> {
-  static const _genres = [
-    'All Genres',
-    'Fiction',
-    'Non-Fiction',
-    'Biography',
-    'Mystery',
-    'Fantasy',
-    'Sci-Fi',
-  ];
+  String _selectedGenre = AudiobookController.allGenres;
 
-  int _selectedGenreIndex = 0;
+  List<String> get _genres {
+    final names = <String>{for (final book in widget.books) book.genreName}
+      ..removeWhere((name) => name.isEmpty);
+
+    return [AudiobookController.allGenres, ...names];
+  }
+
+  List<Audiobook> get _filteredBooks {
+    if (_selectedGenre == AudiobookController.allGenres) return widget.books;
+    return widget.books
+        .where((book) => book.genreName == _selectedGenre)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final books = widget.books;
-    final currentBook = books.isNotEmpty ? books.first : null;
+    final books = _filteredBooks;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -55,37 +61,58 @@ class _AudiobookNewReleasesScreenState
                           spacing: 12,
                           runSpacing: 14,
                           children: [
-                            for (var i = 0; i < _genres.length; i++)
+                            for (final genre in _genres)
                               _ReleaseChip(
-                                label: _genres[i],
-                                selected: i == _selectedGenreIndex,
+                                label: genre,
+                                selected: genre == _selectedGenre,
                                 onTap: () =>
-                                    setState(() => _selectedGenreIndex = i),
+                                    setState(() => _selectedGenre = genre),
                               ),
                           ],
                         ),
                         const SizedBox(height: 34),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: books.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 24,
-                                mainAxisSpacing: 30,
-                                childAspectRatio: 0.5,
+                        if (books.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Text(
+                              'No releases in this genre.',
+                              style: TextStyle(
+                                color: Color(0xFF77727A),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0,
                               ),
-                          itemBuilder: (context, index) =>
-                              _ReleaseGridCard(book: books[index]),
-                        ),
+                            ),
+                          )
+                        else
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: books.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 24,
+                                  mainAxisSpacing: 30,
+                                  childAspectRatio: 0.5,
+                                ),
+                            itemBuilder: (context, index) => _ReleaseGridCard(
+                              book: books[index],
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      AudiobookDetailScreen(book: books[index]),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            // if (currentBook != null) _ReleaseMiniPlayer(book: currentBook),
           ],
         ),
       ),
@@ -193,160 +220,67 @@ class _ReleaseChip extends StatelessWidget {
 }
 
 class _ReleaseGridCard extends StatelessWidget {
-  const _ReleaseGridCard({required this.book});
+  const _ReleaseGridCard({required this.book, this.onTap});
 
-  final AudiobookModel book;
+  final Audiobook book;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.34),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: AspectRatio(
-              aspectRatio: 0.72,
-              child: Image.asset(
-                book.cover,
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-                errorBuilder: (context, error, stackTrace) => const ColoredBox(
-                  color: Color(0xFF202020),
-                  child: Icon(
-                    Icons.menu_book_rounded,
-                    color: Colors.white38,
-                    size: 54,
-                  ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.34),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: AspectRatio(
+                aspectRatio: 0.72,
+                child: BookCover(
+                  url: book.coverUrl,
+                  alignment: Alignment.topCenter,
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          book.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 23,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
+          const SizedBox(height: 14),
+          Text(
+            book.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          book.author,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFFAAA5AD),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0,
+          const SizedBox(height: 8),
+          Text(
+            book.author,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFFAAA5AD),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
-
-// class _ReleaseMiniPlayer extends StatelessWidget {
-//   const _ReleaseMiniPlayer({required this.book});
-
-//   final AudiobookModel book;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Positioned(
-//       left: 16,
-//       right: 16,
-//       bottom: 24,
-//       child: SafeArea(
-//         top: false,
-//         child: Container(
-//           height: 72,
-//           padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
-//           decoration: BoxDecoration(
-//             color: const Color(0xFF151617),
-//             borderRadius: BorderRadius.circular(36),
-//             border: Border.all(color: const Color(0xFF124A56), width: 1),
-//           ),
-//           child: Row(
-//             children: [
-//               ClipOval(
-//                 child: Image.asset(
-//                   'assets/image/audiobook_paradox.png',
-//                   width: 52,
-//                   height: 52,
-//                   fit: BoxFit.cover,
-//                 ),
-//               ),
-//               const SizedBox(width: 12),
-//               Expanded(
-//                 child: Column(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Text(
-//                       book.title,
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                       style: const TextStyle(
-//                         color: Colors.white,
-//                         fontSize: 17,
-//                         fontWeight: FontWeight.w800,
-//                         letterSpacing: 0,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 3),
-//                     Text(
-//                       book.author,
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                       style: const TextStyle(
-//                         color: Color(0xFFAAA5AD),
-//                         fontSize: 13,
-//                         fontWeight: FontWeight.w600,
-//                         letterSpacing: 0,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//               const SizedBox(width: 10),
-//               Container(
-//                 width: 52,
-//                 height: 52,
-//                 decoration: const BoxDecoration(
-//                   gradient: LinearGradient(
-//                     colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
-//                     begin: Alignment.topLeft,
-//                     end: Alignment.bottomRight,
-//                   ),
-//                   shape: BoxShape.circle,
-//                 ),
-//                 child: const Icon(
-//                   Icons.pause_rounded,
-//                   color: Color(0xFF111113),
-//                   size: 32,
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

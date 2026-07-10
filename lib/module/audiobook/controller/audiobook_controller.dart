@@ -1,106 +1,81 @@
+import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
 import '../model/audiobook_model.dart';
-import '../model/bestseller_model.dart';
-import '../model/genre_model.dart';
+import '../services/audio_book_interface.dart';
+import '../services/audio_book_interface_impl.dart';
 
 class AudiobookController extends GetxController {
-  final continueListening = const AudiobookModel(
-    title: 'Project Hail Mary',
-    author: 'Andy Weir',
-    narrator: 'Ray Porter',
-    cover: 'assets/image/audiobook_hail_mary_hero.png',
-    chapter: 'Chapter 14: The Eridian',
-    progress: 0.72,
-    remaining: '4 HOURS REMAINING',
-    audioAsset: 'audio/music2.mp3',
-  ).obs;
+  static const String allGenres = 'All Genres';
 
-  final queuedBook = const AudiobookModel(
-    title: 'The Children Of Bangladeshi',
-    author: 'Jason Laure',
-    narrator: 'Maya Khan',
-    cover: 'assets/image/audiobook_children_bangladesh.png',
-    chapter: 'Chapter 08: The Return',
-    progress: 0.72,
-    remaining: '4 HOURS REMAINING',
-    audioAsset: 'audio/music3.m4a',
-  ).obs;
+  final home = const HomeAudiobookData().obs;
+  final isLoading = true.obs;
+  final errorMessage = ''.obs;
+  final selectedGenre = allGenres.obs;
 
-  final genres = const <GenreModel>[
-    GenreModel(title: 'All Genres', isSelected: true),
-    GenreModel(title: 'Fiction'),
-    GenreModel(title: 'Non-Fiction'),
-    GenreModel(title: 'Biography'),
-    GenreModel(title: 'Mystery'),
-    GenreModel(title: 'Fantasy'),
-    GenreModel(title: 'Sci-Fi'),
-  ].obs;
+  @override
+  void onInit() {
+    super.onInit();
+    fetchHome();
+  }
 
-  final newReleases = const <AudiobookModel>[
-    AudiobookModel(
-      title: 'The Prism Theory',
-      author: 'Elena Valery',
-      narrator: 'Arif Rahman',
-      cover: 'assets/image/audiobook_prism_theory.png',
-      chapter: 'Chapter 01',
-      progress: 0,
-      remaining: '',
-      audioAsset: 'audio/music4.mp3',
-    ),
-    AudiobookModel(
-      title: 'Digital Dreams',
-      author: 'Marcus Thorne',
-      narrator: 'Leah Bose',
-      cover: 'assets/image/audiobook_digital_dreams.png',
-      chapter: 'Chapter 01',
-      progress: 0,
-      remaining: '',
-      audioAsset: 'audio/music5.m4a',
-    ),
-    AudiobookModel(
-      title: 'Paradox',
-      author: 'Jim Al-Khalili',
-      narrator: 'Ray Porter',
-      cover: 'assets/image/audiobook_paradox.png',
-      chapter: 'Chapter 01',
-      progress: 0,
-      remaining: '',
-      audioAsset: 'audio/music6.m4a',
-    ),
-    AudiobookModel(
-      title: 'Manoj Basur Galpo...',
-      author: 'Elena Valery',
-      narrator: 'Arif Rahman',
-      cover: 'assets/image/audiobook_manoj_galpo.png',
-      chapter: 'Chapter 01',
-      progress: 0,
-      remaining: '',
-      audioAsset: 'audio/music1.m4a',
-    ),
-  ].obs;
+  AudioBookInterface _audioBookInterface() {
+    if (!Get.isRegistered<AudioBookInterface>() &&
+        Get.isRegistered<AuthorizedPigeon>()) {
+      Get.put<AudioBookInterface>(
+        AudioBookInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      );
+    }
+    return Get.find<AudioBookInterface>();
+  }
 
-  final bestsellers = const <BestsellerModel>[
-    BestsellerModel(
-      rank: '01',
-      title: 'Badsah Namdar',
-      author: 'Humayun Ahmed',
-      cover: 'assets/image/audiobook_badsah_namdar.png',
-      trendUp: true,
-    ),
-    BestsellerModel(
-      rank: '02',
-      title: 'Amazonio',
-      author: 'James Rollis',
-      cover: 'assets/image/audiobook_amazonio.png',
-      trendUp: true,
-    ),
-    BestsellerModel(
-      rank: '03',
-      title: 'Ondhokare Golpo',
-      author: 'Ovik Sarkar',
-      cover: 'assets/image/audiobook_ondhokare_golpo.png',
-      trendUp: false,
-    ),
-  ].obs;
+  Future<void> fetchHome() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    final result = await _audioBookInterface().audiobookHome();
+
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      home.value = success.data ?? const HomeAudiobookData();
+      if (!genres.contains(selectedGenre.value)) {
+        selectedGenre.value = allGenres;
+      }
+    });
+
+    isLoading.value = false;
+  }
+
+  void selectGenre(String genre) => selectedGenre.value = genre;
+
+  List<ContinueListeningBook> get continueListening =>
+      home.value.continueListening;
+
+  ContinueListeningBook? get currentBook =>
+      continueListening.isEmpty ? null : continueListening.first;
+
+  /// The next book queued behind [currentBook], rendered as the compact card.
+  ContinueListeningBook? get queuedBook =>
+      continueListening.length > 1 ? continueListening[1] : null;
+
+  List<Bestseller> get bestsellers => home.value.bestsellers;
+
+  List<TrendingAudiobook> get trending => home.value.trending;
+
+  /// `All Genres` followed by every distinct genre present in the response.
+  List<String> get genres {
+    final names = <String>{
+      for (final book in home.value.newReleases) book.genreName,
+      for (final book in home.value.trending) book.genreName,
+    }..removeWhere((name) => name.isEmpty);
+
+    return [allGenres, ...names];
+  }
+
+  List<Audiobook> get newReleases {
+    final books = home.value.newReleases;
+    if (selectedGenre.value == allGenres) return books;
+    return books
+        .where((book) => book.genreName == selectedGenre.value)
+        .toList();
+  }
 }

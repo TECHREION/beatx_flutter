@@ -26,7 +26,13 @@ base class ApiEndpoints {
   static String changePassword = _User.changePassword;
   static String userPreferences = _User.preferences;
 
+
+  //---------------------- Audiobook -----------------------------
+  static const String audiobookhome = _Audiobook._audiobookhome;
+
 }
+
+
 
 //arrow360degree@gmail.com
 
@@ -68,8 +74,10 @@ class _User {
   static String preferences = '$_userRoute/me/preferences';
 }
 
-//------------------------------ Interest -----------------------------
-class _Interest {
+//------------------------------ Audiobook -----------------------------
+class _Audiobook {
+  static const String _audiobookRoute = '${ApiEndpoints.baseUrl}/audiobooks';
+  static const String _audiobookhome = '$_audiobookRoute/home';
 
 }
 

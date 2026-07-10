@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../model/audiobook_model.dart';
+import 'book_cover.dart';
 
 class ContinueListeningCard extends StatelessWidget {
   const ContinueListeningCard({
@@ -11,7 +12,7 @@ class ContinueListeningCard extends StatelessWidget {
     this.onDetails,
   });
 
-  final AudiobookModel book;
+  final ContinueListeningBook book;
   final bool compact;
   final VoidCallback? onResume;
   final VoidCallback? onDetails;
@@ -21,6 +22,10 @@ class ContinueListeningCard extends StatelessWidget {
     if (compact) {
       return _CompactContinueCard(book: book);
     }
+
+    final chapterLabel = book.chapterTitle.isNotEmpty
+        ? book.chapterTitle
+        : (book.totalChapters > 0 ? '${book.totalChapters} Chapters' : '');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -35,7 +40,7 @@ class ContinueListeningCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: AspectRatio(
               aspectRatio: 0.95,
-              child: _CoverImage(asset: book.cover),
+              child: BookCover(url: book.coverUrl),
             ),
           ),
           const SizedBox(height: 18),
@@ -52,7 +57,7 @@ class ContinueListeningCard extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Text(
-            '${book.author} - Narrated by ${book.narrator}',
+            book.author,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -67,7 +72,7 @@ class ContinueListeningCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  book.chapter,
+                  chapterLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -159,7 +164,7 @@ class ContinueListeningCard extends StatelessWidget {
 class _CompactContinueCard extends StatelessWidget {
   const _CompactContinueCard({required this.book});
 
-  final AudiobookModel book;
+  final ContinueListeningBook book;
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +183,7 @@ class _CompactContinueCard extends StatelessWidget {
                 child: SizedBox(
                   width: 58,
                   height: 58,
-                  child: _CoverImage(asset: book.cover),
+                  child: BookCover(url: book.coverUrl, iconSize: 28),
                 ),
               ),
               const SizedBox(width: 14),
@@ -228,7 +233,7 @@ class _CompactContinueCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              book.remaining,
+              book.formattedRemaining,
               style: const TextStyle(
                 color: Color(0xFFAAA5AD),
                 fontSize: 12,
@@ -239,39 +244,6 @@ class _CompactContinueCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CoverImage extends StatelessWidget {
-  const _CoverImage({required this.asset});
-
-  final String asset;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFF5F0D7), Color(0xFF88622A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        Image.asset(
-          asset,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const Icon(
-            Icons.menu_book_rounded,
-            color: Colors.white,
-            size: 54,
-          ),
-        ),
-      ],
     );
   }
 }

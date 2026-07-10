@@ -2,28 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../model/audiobook_model.dart';
+import '../widget/book_cover.dart';
 
 class AudiobookDetailScreen extends StatelessWidget {
   const AudiobookDetailScreen({super.key, required this.book});
 
-  final AudiobookModel book;
-
-  static const _chapters = [
-    'Chapter 1: The Eridian',
-    'Chapter 2: The Eridian',
-    'Chapter 3: The Eridian',
-    'Chapter 4: The Eridian',
-    'Chapter 5: The Eridian',
-    'Chapter 6: The Eridian',
-    'Chapter 7: The Eridian',
-    'Chapter 8: The Eridian',
-    'Chapter 9: The Eridian',
-    'Chapter 10: The Eridian',
-    'Chapter 11: The Eridian',
-    'Chapter 12: The Eridian',
-    'Chapter 13: The Eridian',
-    'Chapter 14: The Eridian',
-  ];
+  final Audiobook book;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +29,7 @@ class AudiobookDetailScreen extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: AspectRatio(
                       aspectRatio: 1.0,
-                      child: Image.asset(book.cover, fit: BoxFit.cover),
+                      child: BookCover(url: book.coverUrl, iconSize: 72),
                     ),
                   ),
                   SliverPadding(
@@ -54,25 +38,11 @@ class AudiobookDetailScreen extends StatelessWidget {
                       children: [
                         _ActionPanel(book: book),
                         const SizedBox(height: 20),
-                        const _RatingsBlock(),
+                        _RatingsBlock(book: book),
                         const SizedBox(height: 10),
                         const _SynopsisBlock(),
                         const SizedBox(height: 20),
-                        const _UniverseHeader(),
-                        const SizedBox(height: 16),
-                        _UniverseBookCard(
-                          label: 'PREQUEL',
-                          labelColor: const Color(0xFF128596),
-                          expanded: true,
-                          chapters: _chapters.take(5).toList(),
-                        ),
-                        const SizedBox(height: 20),
-                        const _UniverseBookCard(
-                          label: 'SEQUEL',
-                          labelColor: Color(0xFF667752),
-                          expanded: false,
-                          chapters: [],
-                        ),
+                        _ChaptersBlock(totalChapters: book.totalChapters),
                       ],
                     ),
                   ),
@@ -159,10 +129,21 @@ class _DetailHeader extends StatelessWidget {
 class _ActionPanel extends StatelessWidget {
   const _ActionPanel({required this.book});
 
-  final AudiobookModel book;
+  final Audiobook book;
 
   @override
   Widget build(BuildContext context) {
+    final progress = book is ContinueListeningBook
+        ? (book as ContinueListeningBook).progress
+        : 0.0;
+    final chapterLabel = book is ContinueListeningBook
+        ? (book as ContinueListeningBook).chapterTitle
+        : '';
+    final subtitle = [
+      book.author,
+      if (book.genreName.isNotEmpty) book.genreName,
+    ].join(' - ');
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -185,7 +166,7 @@ class _ActionPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${book.author} - Narrated by ${book.narrator}',
+            subtitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -195,44 +176,46 @@ class _ActionPanel extends StatelessWidget {
               letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  book.chapter,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          if (progress > 0) ...[
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    chapterLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF40DDEB),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '${(progress * 100).round()}% complete',
                   style: const TextStyle(
-                    color: Color(0xFF40DDEB),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFAAA5AD),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0,
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${(book.progress * 100).round()}% complete',
-                style: const TextStyle(
-                  color: Color(0xFFAAA5AD),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: book.progress,
-              minHeight: 7,
-              backgroundColor: Colors.white30,
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF40DDEB)),
+              ],
             ),
-          ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 7,
+                backgroundColor: Colors.white30,
+                valueColor: const AlwaysStoppedAnimation(Color(0xFF40DDEB)),
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           Row(
             children: [
@@ -242,7 +225,7 @@ class _ActionPanel extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.play_arrow_rounded, size: 28),
-                    label: const Text('Listen Now'),
+                    label: Text(progress > 0 ? 'Resume' : 'Listen Now'),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF40DDEB),
                       foregroundColor: const Color(0xFF111315),
@@ -283,14 +266,19 @@ class _ActionPanel extends StatelessWidget {
 }
 
 class _RatingsBlock extends StatelessWidget {
-  const _RatingsBlock();
+  const _RatingsBlock({required this.book});
+
+  final Audiobook book;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final rating = book.ratingAverage;
+    final duration = book.formattedDuration;
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Ratings',
           style: TextStyle(
             color: Color(0xFFAAA5AD),
@@ -299,14 +287,14 @@ class _RatingsBlock extends StatelessWidget {
             letterSpacing: 0,
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Row(
           children: [
-            Icon(Icons.star_rounded, color: Color(0xFFFFC400), size: 28),
-            SizedBox(width: 6),
+            const Icon(Icons.star_rounded, color: Color(0xFFFFC400), size: 28),
+            const SizedBox(width: 6),
             Text(
-              '4.9 (24.5k reviews)',
-              style: TextStyle(
+              rating > 0 ? rating.toStringAsFixed(1) : 'Not rated yet',
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
@@ -315,14 +303,20 @@ class _RatingsBlock extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: _StatBlock(label: 'Total Duration', value: '16h 10m'),
+              child: _StatBlock(
+                label: 'Total Duration',
+                value: duration.isEmpty ? '--' : duration,
+              ),
             ),
             Expanded(
-              child: _StatBlock(label: 'Language', value: 'English'),
+              child: _StatBlock(
+                label: 'Chapters',
+                value: book.totalChapters > 0 ? '${book.totalChapters}' : '--',
+              ),
             ),
           ],
         ),
@@ -410,145 +404,41 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _UniverseHeader extends StatelessWidget {
-  const _UniverseHeader();
+class _ChaptersBlock extends StatelessWidget {
+  const _ChaptersBlock({required this.totalChapters});
 
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(child: _SectionTitle(title: 'In this Universe')),
-        Text(
-          '2 Books',
-          style: TextStyle(
-            color: Color(0xFFD7F2B8),
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _UniverseBookCard extends StatelessWidget {
-  const _UniverseBookCard({
-    required this.label,
-    required this.labelColor,
-    required this.expanded,
-    required this.chapters,
-  });
-
-  final String label;
-  final Color labelColor;
-  final bool expanded;
-  final List<String> chapters;
+  final int totalChapters;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF202020),
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.asset(
-                  'assets/image/audiobook_hail_mary_cover.png',
-                  width: 78,
-                  height: 78,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.topLeft,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: labelColor,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        label,
-                        style: const TextStyle(
-                          color: Color(0xFFDDF5FF),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Project Hali Mary',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '4h 22m - Narrated by Ray Porter',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Color(0xFFAAA5AD),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ],
+              const Expanded(child: _SectionTitle(title: 'Chapters')),
+              Text(
+                totalChapters > 0 ? '$totalChapters Chapters' : 'Coming soon',
+                style: const TextStyle(
+                  color: Color(0xFFD7F2B8),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'View Chapters',
-                  style: TextStyle(
-                    color: Color(0xFFAAA5AD),
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-              Icon(
-                expanded
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                color: const Color(0xFFAAA5AD),
-                size: 30,
-              ),
-            ],
-          ),
-          if (expanded) ...[
+          if (totalChapters > 0) ...[
             const SizedBox(height: 22),
-            for (var i = 0; i < chapters.length; i++) ...[
-              _UniverseChapterRow(index: i + 1, title: chapters[i]),
-              if (i != chapters.length - 1) const SizedBox(height: 30),
+            for (var i = 1; i <= totalChapters; i++) ...[
+              _ChapterRow(index: i),
+              if (i != totalChapters) const SizedBox(height: 24),
             ],
           ],
         ],
@@ -557,11 +447,10 @@ class _UniverseBookCard extends StatelessWidget {
   }
 }
 
-class _UniverseChapterRow extends StatelessWidget {
-  const _UniverseChapterRow({required this.index, required this.title});
+class _ChapterRow extends StatelessWidget {
+  const _ChapterRow({required this.index});
 
   final int index;
-  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -581,7 +470,7 @@ class _UniverseChapterRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            title,
+            'Chapter $index',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
