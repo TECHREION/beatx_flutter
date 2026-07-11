@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
+import '../../controller/audio_book_details_controller.dart';
+import '../../model/audio_book_details_model.dart' as details_model;
 import '../../model/audiobook_model.dart';
 import '../widget/book_cover.dart';
 
@@ -11,6 +14,12 @@ class AudiobookDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final detailsController = Get.put(
+      AudioBookDetailsController(),
+      tag: book.id,
+    );
+    detailsController.loadDetails(book.id);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
@@ -40,9 +49,20 @@ class AudiobookDetailScreen extends StatelessWidget {
                         const SizedBox(height: 20),
                         _RatingsBlock(book: book),
                         const SizedBox(height: 10),
-                        const _SynopsisBlock(),
+                        Obx(
+                          () => _SynopsisBlock(
+                            synopsis:
+                                detailsController.details.value?.book?.synopsis,
+                          ),
+                        ),
                         const SizedBox(height: 20),
-                        _ChaptersBlock(totalChapters: book.totalChapters),
+                        Obx(
+                          () => _ChaptersBlock(
+                            chapters:
+                                detailsController.details.value?.chapters ??
+                                const [],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -361,18 +381,21 @@ class _StatBlock extends StatelessWidget {
 }
 
 class _SynopsisBlock extends StatelessWidget {
-  const _SynopsisBlock();
+  const _SynopsisBlock({this.synopsis});
+
+  final String? synopsis;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final text = synopsis?.trim();
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(title: 'Synopsis'),
-        SizedBox(height: 10),
+        const _SectionTitle(title: 'Synopsis'),
+        const SizedBox(height: 10),
         Text(
-          'Ryland grace is the sole survivor on a desperate, last-chance mission-and if he fails, humanity and the earth itself will perish. Except that right now, he does not know that. He cannot even remember his own name, let alone the nature of his assignment or how to complete it.',
-          style: TextStyle(
+          text?.isNotEmpty == true ? text! : 'No synopsis available.',
+          style: const TextStyle(
             color: Color(0xFFB9B5BE),
             fontSize: 13,
             height: 1.28,
@@ -405,9 +428,9 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ChaptersBlock extends StatelessWidget {
-  const _ChaptersBlock({required this.totalChapters});
+  const _ChaptersBlock({required this.chapters});
 
-  final int totalChapters;
+  final List<details_model.Chapter> chapters;
 
   @override
   Widget build(BuildContext context) {
@@ -424,7 +447,9 @@ class _ChaptersBlock extends StatelessWidget {
             children: [
               const Expanded(child: _SectionTitle(title: 'Chapters')),
               Text(
-                totalChapters > 0 ? '$totalChapters Chapters' : 'Coming soon',
+                chapters.isNotEmpty
+                    ? '${chapters.length} Chapters'
+                    : 'Coming soon',
                 style: const TextStyle(
                   color: Color(0xFFD7F2B8),
                   fontSize: 15,
@@ -434,11 +459,11 @@ class _ChaptersBlock extends StatelessWidget {
               ),
             ],
           ),
-          if (totalChapters > 0) ...[
+          if (chapters.isNotEmpty) ...[
             const SizedBox(height: 22),
-            for (var i = 1; i <= totalChapters; i++) ...[
-              _ChapterRow(index: i),
-              if (i != totalChapters) const SizedBox(height: 24),
+            for (var i = 0; i < chapters.length; i++) ...[
+              _ChapterRow(chapter: chapters[i]),
+              if (i != chapters.length - 1) const SizedBox(height: 24),
             ],
           ],
         ],
@@ -448,9 +473,9 @@ class _ChaptersBlock extends StatelessWidget {
 }
 
 class _ChapterRow extends StatelessWidget {
-  const _ChapterRow({required this.index});
+  const _ChapterRow({required this.chapter});
 
-  final int index;
+  final details_model.Chapter chapter;
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +484,7 @@ class _ChapterRow extends StatelessWidget {
         SizedBox(
           width: 58,
           child: Text(
-            index.toString().padLeft(2, '0'),
+            (chapter.chapterNumber ?? 0).toString().padLeft(2, '0'),
             style: const TextStyle(
               color: Color(0xFF6E6A72),
               fontSize: 29,
@@ -470,7 +495,9 @@ class _ChapterRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            'Chapter $index',
+            chapter.title?.isNotEmpty == true
+                ? chapter.title!
+                : 'Chapter ${chapter.chapterNumber ?? ''}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(

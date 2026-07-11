@@ -26,13 +26,11 @@ base class ApiEndpoints {
   static String changePassword = _User.changePassword;
   static String userPreferences = _User.preferences;
 
-
   //---------------------- Audiobook -----------------------------
   static const String audiobookhome = _Audiobook._audiobookhome;
-
+  static String audiobookDetails({required String audiobookId}) =>
+      _Audiobook._audiobookDetails(audiobookId);
 }
-
-
 
 //arrow360degree@gmail.com
 
@@ -78,96 +76,57 @@ class _User {
 class _Audiobook {
   static const String _audiobookRoute = '${ApiEndpoints.baseUrl}/audiobooks';
   static const String _audiobookhome = '$_audiobookRoute/home';
-
+  static String _audiobookDetails(String audiobookId) =>
+      '$_audiobookRoute/$audiobookId';
 }
 
 // ---------------------- Verification -----------------------------
-class _Verification {
-
-}
+class _Verification {}
 
 // ---------------------- Report -----------------------------
-class _Report {
-
-}
+class _Report {}
 
 // ---------------------- Notification -----------------------------
-class _Notification {
+class _Notification {}
 
-}
-
-class _Checklist {
-
-}
+class _Checklist {}
 
 //---------------------- Safety Tips -----------------------------
-class _SafetyTips {
-
-}
-
-
+class _SafetyTips {}
 
 //-----------------------chat----------------
-class _Chat {
-
-}
+class _Chat {}
 
 // ---------------------- Products -----------------------------
-class _Product {
+class _Product {}
 
-}
+class _Search {}
 
-class _Search {
-
-}
-
-class _Filter {
-
-}
+class _Filter {}
 
 //---------------------- Category -----------------------------
-class _Category {
-
-}
+class _Category {}
 
 //---------------------- Cart -----------------------------
-class _Cart {
-
-}
+class _Cart {}
 
 //---------------------- Shop -----------------------------
-class _Shop {
-
-}
+class _Shop {}
 
 //---------------------- Order -----------------------------
-class _Order {
-
-}
+class _Order {}
 
 //---------------------- Review -----------------------------
-class _Review {
-
-}
+class _Review {}
 
 //---------------------- WishList -----------------------------
-class _WishList {
-
-}
+class _WishList {}
 
 //----------------------Message -----------------------------
-class _Messaging {
+class _Messaging {}
 
-}
+class _Supplier {}
 
-class _Supplier {
+class _Service {}
 
-}
-
-class _Service {
-
-}
-
-class _Banner {
-
-}
+class _Banner {}
