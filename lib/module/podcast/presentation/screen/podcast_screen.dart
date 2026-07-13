@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../../core/common/widget/app_header.dart';
 import '../../../../../core/player/player_controller.dart';
+import '../../../../../core/theme/app_sizes.dart';
 import '../../../home/presentation/screens/audio_play_screen.dart';
 import '../../controller/podcast_controller.dart';
 import '../widget/category_card.dart';
@@ -29,90 +30,99 @@ class PodcastScreen extends StatelessWidget {
             const _PodcastGlow(),
             SafeArea(
               bottom: false,
-              child: CustomScrollView(
-                slivers: [
-                  const SliverToBoxAdapter(
-                    child: AppHeader(title: 'Podcasts', notificationBadge: '3'),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-                    sliver: SliverList.list(
-                      children: [
-                        const SizedBox(height: 28),
-                        const Text(
-                          'CURATION',
-                          style: TextStyle(
-                            color: Color(0xFF9BFF4D),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0,
+              child: Column(
+                children: [
+                  const AppHeader(title: 'Podcasts', notificationBadge: '3'),
+                  Expanded(
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSizes.screenHorizontalPadding,
+                            18,
+                            AppSizes.screenHorizontalPadding,
+                            0,
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Featured Voices',
+                          sliver: SliverList.list(
+                            children: [
+                              const SizedBox(height: 28),
+                              const Text(
+                                'CURATION',
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
+                                  color: Color(0xFF9BFF4D),
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0,
                                 ),
                               ),
-                            ),
-                            _RoundArrowButton(
-                              icon: Icons.chevron_left_rounded,
-                              onTap: controller.showPreviousFeatured,
-                            ),
-                            const SizedBox(width: 12),
-                            _RoundArrowButton(
-                              icon: Icons.chevron_right_rounded,
-                              onTap: controller.showNextFeatured,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Obx(
-                          () => FeaturedPodcastCard(
-                            podcast: controller.featuredPodcast,
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Featured Voices',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0,
+                                      ),
+                                    ),
+                                  ),
+                                  _RoundArrowButton(
+                                    icon: Icons.chevron_left_rounded,
+                                    onTap: controller.showPreviousFeatured,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _RoundArrowButton(
+                                    icon: Icons.chevron_right_rounded,
+                                    onTap: controller.showNextFeatured,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              Obx(
+                                () => FeaturedPodcastCard(
+                                  podcast: controller.featuredPodcast,
+                                ),
+                              ),
+                              const SizedBox(height: 26),
+                              const _SectionTitle(title: 'Top Categories'),
+                              const SizedBox(height: 14),
+                              for (final category in controller.categories) ...[
+                                CategoryCard(category: category),
+                                const SizedBox(height: 15),
+                              ],
+                              const SizedBox(height: 8),
+                              const _SectionTitle(title: 'Top Podcasters'),
+                              const SizedBox(height: 16),
+                              PodcasterCard(podcasters: controller.podcasters),
+                              const SizedBox(height: 28),
+                              const _RecentHeader(),
+                              const SizedBox(height: 14),
+                              for (final episode in controller.episodes) ...[
+                                EpisodeTile(
+                                  episode: episode,
+                                  onTap: () {
+                                    Get.find<PlayerController>().play(
+                                      title: episode.title,
+                                      artist: episode.meta.split(' - ').last,
+                                      imageAsset: episode.image,
+                                      audioAsset: episode.audioAsset,
+                                    );
+                                    Get.to(
+                                      () => const PlayerScreen(),
+                                      transition: Transition.downToUp,
+                                      preventDuplicates: true,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              const SizedBox(height: 28),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 26),
-                        const _SectionTitle(title: 'Top Categories'),
-                        const SizedBox(height: 14),
-                        for (final category in controller.categories) ...[
-                          CategoryCard(category: category),
-                          const SizedBox(height: 15),
-                        ],
-                        const SizedBox(height: 8),
-                        const _SectionTitle(title: 'Top Podcasters'),
-                        const SizedBox(height: 16),
-                        PodcasterCard(podcasters: controller.podcasters),
-                        const SizedBox(height: 28),
-                        const _RecentHeader(),
-                        const SizedBox(height: 14),
-                        for (final episode in controller.episodes) ...[
-                          EpisodeTile(
-                            episode: episode,
-                            onTap: () {
-                              Get.find<PlayerController>().play(
-                                title: episode.title,
-                                artist: episode.meta.split(' - ').last,
-                                imageAsset: episode.image,
-                                audioAsset: episode.audioAsset,
-                              );
-                              Get.to(
-                                () => const PlayerScreen(),
-                                transition: Transition.downToUp,
-                                preventDuplicates: true,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        const SizedBox(height: 28),
                       ],
                     ),
                   ),

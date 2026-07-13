@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/theme/app_sizes.dart';
 import '../../controller/explore_controller.dart';
 
 class ExploreScreen extends StatelessWidget {
@@ -27,7 +28,12 @@ class ExploreScreen extends StatelessWidget {
                 children: [
                   _ExploreHeader(onBack: () => Navigator.maybePop(context)),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSizes.screenHorizontalPadding,
+                      10,
+                      AppSizes.screenHorizontalPadding,
+                      0,
+                    ),
                     child: _SearchField(onChanged: controller.updateSearch),
                   ),
                   const SizedBox(height: 22),
@@ -35,7 +41,9 @@ class ExploreScreen extends StatelessWidget {
                     child: CustomScrollView(
                       slivers: [
                         const SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSizes.screenHorizontalPadding,
+                          ),
                           sliver: SliverToBoxAdapter(
                             child: _SectionHeader(
                               title: 'Browse Genres',
@@ -47,7 +55,9 @@ class ExploreScreen extends StatelessWidget {
                         const SliverToBoxAdapter(child: SizedBox(height: 18)),
                         Obx(
                           () => SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.screenHorizontalPadding,
+                            ),
                             sliver: SliverGrid(
                               delegate: SliverChildBuilderDelegate((
                                 context,
@@ -71,7 +81,9 @@ class ExploreScreen extends StatelessWidget {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 30)),
                         SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.screenHorizontalPadding,
+                          ),
                           sliver: SliverToBoxAdapter(
                             child: _SectionHeader(
                               title: 'Recent Searches',
@@ -86,7 +98,12 @@ class ExploreScreen extends StatelessWidget {
                           if (controller.recentTracks.isEmpty) {
                             return const SliverToBoxAdapter(
                               child: Padding(
-                                padding: EdgeInsets.fromLTRB(20, 18, 20, 0),
+                                padding: EdgeInsets.fromLTRB(
+                                  AppSizes.screenHorizontalPadding,
+                                  18,
+                                  AppSizes.screenHorizontalPadding,
+                                  0,
+                                ),
                                 child: Text(
                                   'No recent searches',
                                   style: TextStyle(

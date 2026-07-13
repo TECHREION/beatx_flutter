@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
+import '../../../../core/theme/app_sizes.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,59 +21,70 @@ class HomeScreen extends StatelessWidget {
       body: AppBackgroundImage(
         child: SafeArea(
           bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: AppHeader(
-                  showLogo: true,
-                  onSearchTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExploreScreen()),
-                  ),
-                  notificationBadge: '3',
+          child: Column(
+            children: [
+              AppHeader(
+                showLogo: true,
+                onSearchTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ExploreScreen()),
                 ),
+                notificationBadge: '3',
               ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                sliver: SliverList.list(
-                  children: [
-                    const _SectionTitle(
-                        title: 'Trending Now', action: 'See all'),
-                    const SizedBox(height: 16),
-                    _TrendingCard(
-                      onPlay: () {
-                        Get.find<PlayerController>().play(
-                          title: 'Tumi Acho Bole',
-                          artist: 'Imran Mahmudul',
-                          imageAsset: 'assets/image/a4.png',
-                          audioAsset: 'audio/music1.m4a',
-                        );
-                        Get.to(
-                          () => const PlayerScreen(),
-                          transition: Transition.downToUp,
-                          preventDuplicates: true,
-                        );
-                      },
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSizes.screenHorizontalPadding,
+                        20,
+                        AppSizes.screenHorizontalPadding,
+                        0,
+                      ),
+                      sliver: SliverList.list(
+                        children: [
+                          const _SectionTitle(
+                            title: 'Trending Now',
+                            action: 'See all',
+                          ),
+                          const SizedBox(height: 16),
+                          _TrendingCard(
+                            onPlay: () {
+                              Get.find<PlayerController>().play(
+                                title: 'Tumi Acho Bole',
+                                artist: 'Imran Mahmudul',
+                                imageAsset: 'assets/image/a4.png',
+                                audioAsset: 'audio/music1.m4a',
+                              );
+                              Get.to(
+                                () => const PlayerScreen(),
+                                transition: Transition.downToUp,
+                                preventDuplicates: true,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 36),
+                          const _SectionTitle(title: 'Your Mix'),
+                          const SizedBox(height: 16),
+                          const _DailyDiscoverCard(),
+                          const SizedBox(height: 16),
+                          const _MixGrid(),
+                          const SizedBox(height: 16),
+                          const _SectionTitle(title: 'Explore More'),
+                          const SizedBox(height: 16),
+                          const _ExploreRow(),
+                          const SizedBox(height: 32),
+                          const _NewReleaseHeader(),
+                          const SizedBox(height: 16),
+                          const _NewReleaseList(),
+                          const SizedBox(height: 28),
+                          const _SectionTitle(title: 'Artists to Watch'),
+                          const SizedBox(height: 14),
+                          const _ArtistWatchList(),
+                          const SizedBox(height: 104),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 36),
-                    const _SectionTitle(title: 'Your Mix'),
-                    const SizedBox(height: 16),
-                    const _DailyDiscoverCard(),
-                    const SizedBox(height: 16),
-                    const _MixGrid(),
-                    const SizedBox(height: 16),
-                    const _SectionTitle(title: 'Explore More'),
-                    const SizedBox(height: 16),
-                    const _ExploreRow(),
-                    const SizedBox(height: 32),
-                    const _NewReleaseHeader(),
-                    const SizedBox(height: 16),
-                    const _NewReleaseList(),
-                    const SizedBox(height: 28),
-                    const _SectionTitle(title: 'Artists to Watch'),
-                    const SizedBox(height: 14),
-                    const _ArtistWatchList(),
-                    const SizedBox(height: 104),
                   ],
                 ),
               ),
@@ -83,7 +95,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title, this.action});
@@ -191,8 +202,9 @@ class _TrendingCard extends StatelessWidget {
                                   Text(
                                     'Imran Mahmudul',
                                     style: TextStyle(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.58),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.58,
+                                      ),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                       letterSpacing: 0,
@@ -216,8 +228,9 @@ class _TrendingCard extends StatelessWidget {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF64FF8F)
-                                        .withValues(alpha: 0.35),
+                                    color: const Color(
+                                      0xFF64FF8F,
+                                    ).withValues(alpha: 0.35),
                                     blurRadius: 14,
                                     spreadRadius: 1,
                                   ),
@@ -623,75 +636,75 @@ class _ReleaseTile extends StatelessWidget {
         );
       },
       child: Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: SizedBox(
-            width: 72,
-            height: 72,
-            child: _ArtworkBackground(
-              asset: item.asset,
-              colors: const [Color(0xFF5AE6D0), Color(0xFF473E96)],
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: SizedBox(
+              width: 72,
+              height: 72,
+              child: _ArtworkBackground(
+                asset: item.asset,
+                colors: const [Color(0xFF5AE6D0), Color(0xFF473E96)],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 22),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 22),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  item.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFA7A3AA),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
+                item.meta,
+                style: TextStyle(
+                  color: item.meta == 'NEW'
+                      ? const Color(0xFF64FF8F)
+                      : const Color(0xFF40DDEB),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                item.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFA7A3AA),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0,
-                ),
+              const SizedBox(height: 10),
+              const Icon(
+                Icons.more_vert_rounded,
+                color: Colors.white70,
+                size: 22,
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              item.meta,
-              style: TextStyle(
-                color: item.meta == 'NEW'
-                    ? const Color(0xFF64FF8F)
-                    : const Color(0xFF40DDEB),
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Icon(
-              Icons.more_vert_rounded,
-              color: Colors.white70,
-              size: 22,
-            ),
-          ],
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 }
@@ -728,9 +741,7 @@ class _ArtistWatchList extends StatelessWidget {
           return GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const ArtistProfileScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const ArtistProfileScreen()),
             ),
             child: SizedBox(
               width: 86,

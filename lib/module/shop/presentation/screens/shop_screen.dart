@@ -19,26 +19,30 @@ class ShopScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         body: SafeArea(
           bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              const SliverToBoxAdapter(
-                child: AppHeader(title: 'Shop', notificationBadge: '3'),
-              ),
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    _BannersSection(banners: controller.banners),
-                    const SizedBox(height: 20),
-                    _CategoryChipsSection(controller: controller),
-                    const SizedBox(height: 20),
-                    _ProductGridSection(products: controller.products),
-                    const SizedBox(height: 32),
-                    _ArtistCollectionsSection(
-                      collections: controller.artistCollections,
+          child: Column(
+            children: [
+              const AppHeader(title: 'Shop', notificationBadge: '3'),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          _BannersSection(banners: controller.banners),
+                          const SizedBox(height: 20),
+                          _CategoryChipsSection(controller: controller),
+                          const SizedBox(height: 20),
+                          _ProductGridSection(products: controller.products),
+                          const SizedBox(height: 32),
+                          _ArtistCollectionsSection(
+                            collections: controller.artistCollections,
+                          ),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 100),
                   ],
                 ),
               ),

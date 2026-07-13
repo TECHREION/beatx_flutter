@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../../core/common/widget/app_header.dart';
 import '../../../../core/common/background_image.dart';
+import '../../../../core/theme/app_sizes.dart';
 import '../../controller/watch_controller.dart';
 import '../../model/featured_video_model.dart';
 import '../../model/music_video_model.dart';
@@ -19,37 +20,50 @@ class WatchScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: AppBackgroundImage(
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              const SliverToBoxAdapter(
-                child: AppHeader(title: 'Watch', notificationBadge: '3'),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
-                sliver: SliverList.list(
-                  children: [
-                    const SizedBox(height: 22),
-                    Obx(
-                      () => _HeroVideo(video: controller.featuredVideo.value),
-                    ),
-                    const SizedBox(height: 24),
-                    const _TrendingHeader(),
-                    const SizedBox(height: 8),
-                    Obx(
-                      () => Column(
+          child: Column(
+            children: [
+              const AppHeader(title: 'Watch', notificationBadge: '3'),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSizes.screenHorizontalPadding,
+                        16,
+                        AppSizes.screenHorizontalPadding,
+                        26,
+                      ),
+                      sliver: SliverList.list(
                         children: [
-                          for (final video in controller.trendingVideos) ...[
-                            _VideoTile(
-                              video: video,
-                              onTap: () =>
-                                  Get.to(() => MusicPlayerScreen(video: video)),
+                          const SizedBox(height: 22),
+                          Obx(
+                            () => _HeroVideo(
+                              video: controller.featuredVideo.value,
                             ),
-                            const SizedBox(height: 18),
-                          ],
+                          ),
+                          const SizedBox(height: 24),
+                          const _TrendingHeader(),
+                          const SizedBox(height: 8),
+                          Obx(
+                            () => Column(
+                              children: [
+                                for (final video
+                                    in controller.trendingVideos) ...[
+                                  _VideoTile(
+                                    video: video,
+                                    onTap: () => Get.to(
+                                      () => MusicPlayerScreen(video: video),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 74),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 74),
                   ],
                 ),
               ),

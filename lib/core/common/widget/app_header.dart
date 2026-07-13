@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../theme/app_sizes.dart';
 import '../../../module/home/presentation/screens/explore_screen.dart';
 import '../../../module/onbording/common/app_logo.dart';
 import '../../../module/profile/presentation/screens/my_profile_screen.dart';
@@ -28,7 +29,12 @@ class AppHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.screenHorizontalPadding,
+        18,
+        AppSizes.screenHorizontalPadding,
+        0,
+      ),
       child: Row(
         children: [
           const _ProfileAvatar(),
@@ -48,8 +54,7 @@ class AppHeader extends StatelessWidget {
           const Spacer(),
           _ActionButton(
             icon: Icons.search_rounded,
-            onTap: onSearchTap ??
-                () => Get.to(() => ExploreScreen()),
+            onTap: onSearchTap ?? () => Get.to(() => ExploreScreen()),
           ),
           const SizedBox(width: 12),
           _ActionButton(
@@ -99,11 +104,7 @@ class _ProfileAvatar extends StatelessWidget {
 // ─── Action Button ────────────────────────────────────────────────────────────
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.onTap,
-    this.badge,
-  });
+  const _ActionButton({required this.icon, required this.onTap, this.badge});
 
   final IconData icon;
   final VoidCallback onTap;

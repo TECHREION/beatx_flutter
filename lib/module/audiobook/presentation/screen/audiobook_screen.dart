@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/common/widget/app_header.dart';
+import '../../../../../core/theme/app_sizes.dart';
 import '../../controller/audiobook_controller.dart';
 import '../../model/audiobook_model.dart';
 import '../widget/bestseller_tile.dart';
@@ -26,27 +27,23 @@ class AudiobookScreen extends StatelessWidget {
           const _AudiobookGlow(),
           SafeArea(
             bottom: false,
-            child: RefreshIndicator(
-              onRefresh: controller.fetchHome,
-              backgroundColor: const Color(0xFF202020),
-              color: const Color(0xFF40DDEB),
-              // Obx wraps the whole scroll view: it is a box widget, so it
-              // cannot sit in `slivers`, and every reactive read has to happen
-              // inside this builder to be tracked.
-              child: Obx(
-                () => CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    const SliverToBoxAdapter(
-                      child: AppHeader(
-                        title: 'Audiobook',
-                        notificationBadge: '3',
+            child: Column(
+              children: [
+                const AppHeader(title: 'Audiobook', notificationBadge: '3'),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: controller.fetchHome,
+                    backgroundColor: const Color(0xFF202020),
+                    color: const Color(0xFF40DDEB),
+                    child: Obx(
+                      () => CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [_buildBody(context, controller)],
                       ),
                     ),
-                    _buildBody(context, controller),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -90,7 +87,12 @@ Widget _buildContent(BuildContext context, AudiobookController controller) {
   final bestsellers = controller.bestsellers;
 
   return SliverPadding(
-    padding: const EdgeInsets.fromLTRB(16, 30, 16, 28),
+    padding: const EdgeInsets.fromLTRB(
+      AppSizes.screenHorizontalPadding,
+      30,
+      AppSizes.screenHorizontalPadding,
+      28,
+    ),
     sliver: SliverList.list(
       children: [
         if (currentBook != null) ...[

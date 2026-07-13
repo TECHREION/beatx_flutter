@@ -29,6 +29,9 @@ class AppSizes {
   static const double paddingXLarge = 32.0;
   static const double paddingXXLarge = 48.0;
 
+  /// Consistent horizontal inset for app screen content and headers.
+  static const double screenHorizontalPadding = paddingRegular;
+
   // Margin sizes
   static const double marginTiny = 4.0;
   static const double marginSmall = 8.0;
