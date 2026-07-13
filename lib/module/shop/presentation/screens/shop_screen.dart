@@ -16,35 +16,39 @@ class ShopScreen extends StatelessWidget {
     final controller = Get.put(ShopController());
     return AppBackgroundImage(
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CustomScrollView(
-        slivers: [
-          const SliverToBoxAdapter(
-            child: AppHeader(title: 'Shop', notificationBadge: '3'),
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(
+                child: AppHeader(title: 'Shop', notificationBadge: '3'),
+              ),
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _BannersSection(banners: controller.banners),
+                    const SizedBox(height: 20),
+                    _CategoryChipsSection(controller: controller),
+                    const SizedBox(height: 20),
+                    _ProductGridSection(products: controller.products),
+                    const SizedBox(height: 32),
+                    _ArtistCollectionsSection(
+                      collections: controller.artistCollections,
+                    ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                _BannersSection(banners: controller.banners),
-                const SizedBox(height: 20),
-                _CategoryChipsSection(controller: controller),
-                const SizedBox(height: 20),
-                _ProductGridSection(products: controller.products),
-                const SizedBox(height: 32),
-                _ArtistCollectionsSection(collections: controller.artistCollections),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
       ),
     );
   }
 }
-
 
 // ─── Promo Banners ─────────────────────────────────────────────────────────────
 
@@ -95,7 +99,8 @@ class _PromoBannerCard extends StatelessWidget {
               banner.image,
               fit: BoxFit.cover,
               alignment: Alignment.centerRight,
-              errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF16161C)),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: const Color(0xFF16161C)),
             ),
           ),
           // Gradient overlay (dark on left, fades to transparent on right)
@@ -159,7 +164,11 @@ class _PromoBannerCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded, color: banner.accentColor, size: 14),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: banner.accentColor,
+                      size: 14,
+                    ),
                   ],
                 ),
               ],
@@ -214,8 +223,7 @@ class _CategoryChipsSection extends StatelessWidget {
                         ? const Color(0xFF0B0B0C)
                         : const Color(0xFFA7A3AA),
                     fontSize: 13,
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.1,
                   ),
                 ),
@@ -355,7 +363,11 @@ class _ProductImageArea extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
               color: const Color(0xFF1E1E25),
-              child: const Icon(Icons.image_rounded, color: Colors.white24, size: 40),
+              child: const Icon(
+                Icons.image_rounded,
+                color: Colors.white24,
+                size: 40,
+              ),
             ),
           ),
           // NEW badge – top left
@@ -548,7 +560,8 @@ class _ArtistCollectionCard extends StatelessWidget {
             child: Image.asset(
               collection.cover,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF18181E)),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: const Color(0xFF18181E)),
             ),
           ),
           // Dark gradient overlay
@@ -575,11 +588,17 @@ class _ArtistCollectionCard extends StatelessWidget {
               children: [
                 // Genre label
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black45,
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFF3BDDEB).withValues(alpha: 0.5), width: 1),
+                    border: Border.all(
+                      color: const Color(0xFF3BDDEB).withValues(alpha: 0.5),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

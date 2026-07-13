@@ -16,49 +16,48 @@ class WatchScreen extends StatelessWidget {
     final controller = Get.put(WatchController());
 
     return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: AppBackgroundImage(
-          child: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
-                  sliver: SliverList.list(
-                    children: [
-                      const AppHeader(title: 'Watch', notificationBadge: '3'),
-                      const SizedBox(height: 22),
-                      Obx(
-                        () =>
-                            _HeroVideo(video: controller.featuredVideo.value),
-                      ),
-                      const SizedBox(height: 24),
-                      const _TrendingHeader(),
-                      const SizedBox(height: 8),
-                      Obx(
-                        () => Column(
-                          children: [
-                            for (final video
-                                in controller.trendingVideos) ...[
-                              _VideoTile(
-                                video: video,
-                                onTap: () =>
-                                    Get.to(() => MusicPlayerScreen(video: video)),
-                              ),
-                              const SizedBox(height: 18),
-                            ],
+      backgroundColor: Colors.transparent,
+      body: AppBackgroundImage(
+        child: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(
+                child: AppHeader(title: 'Watch', notificationBadge: '3'),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
+                sliver: SliverList.list(
+                  children: [
+                    const SizedBox(height: 22),
+                    Obx(
+                      () => _HeroVideo(video: controller.featuredVideo.value),
+                    ),
+                    const SizedBox(height: 24),
+                    const _TrendingHeader(),
+                    const SizedBox(height: 8),
+                    Obx(
+                      () => Column(
+                        children: [
+                          for (final video in controller.trendingVideos) ...[
+                            _VideoTile(
+                              video: video,
+                              onTap: () =>
+                                  Get.to(() => MusicPlayerScreen(video: video)),
+                            ),
+                            const SizedBox(height: 18),
                           ],
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 74),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 74),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      );
-
+      ),
+    );
   }
 }
 
@@ -131,7 +130,6 @@ class WatchScreen extends StatelessWidget {
 //     );
 //   }
 // }
-
 
 class _HeroVideo extends StatelessWidget {
   const _HeroVideo({required this.video});

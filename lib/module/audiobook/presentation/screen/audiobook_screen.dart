@@ -37,13 +37,10 @@ class AudiobookScreen extends StatelessWidget {
                 () => CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    const SliverPadding(
-                      padding: EdgeInsets.fromLTRB(16, 18, 16, 0),
-                      sliver: SliverToBoxAdapter(
-                        child: AppHeader(
-                          title: 'Audiobook',
-                          notificationBadge: '3',
-                        ),
+                    const SliverToBoxAdapter(
+                      child: AppHeader(
+                        title: 'Audiobook',
+                        notificationBadge: '3',
                       ),
                     ),
                     _buildBody(context, controller),

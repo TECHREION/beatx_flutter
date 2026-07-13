@@ -31,11 +31,13 @@ class PodcastScreen extends StatelessWidget {
               bottom: false,
               child: CustomScrollView(
                 slivers: [
+                  const SliverToBoxAdapter(
+                    child: AppHeader(title: 'Podcasts', notificationBadge: '3'),
+                  ),
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                     sliver: SliverList.list(
                       children: [
-                        const AppHeader(title: 'Podcasts', notificationBadge: '3'),
                         const SizedBox(height: 28),
                         const Text(
                           'CURATION',
@@ -151,7 +153,6 @@ class _PodcastGlow extends StatelessWidget {
     );
   }
 }
-
 
 class _RoundArrowButton extends StatelessWidget {
   const _RoundArrowButton({required this.icon, required this.onTap});
