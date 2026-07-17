@@ -165,6 +165,7 @@ class LabeledTextField extends StatefulWidget {
   final int maxLines;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
+  final bool readOnly;
 
   final bool isPassword;
 
@@ -196,6 +197,7 @@ class LabeledTextField extends StatefulWidget {
     this.maxLines = 1,
     this.validator,
     this.onChanged,
+    this.readOnly = false,
     this.isPassword = false,
     this.passwordVisibleColor = defaultFieldHint,
     this.passwordHiddenColor = defaultFieldHint,
@@ -238,6 +240,7 @@ class _LabeledTextFieldState extends State<LabeledTextField> {
             obscureText: widget.isPassword ? _obscureText : false,
             validator: widget.validator,
             onChanged: widget.onChanged,
+            readOnly: widget.readOnly,
             style: TextStyle(
               fontSize: widget.textSize,
               color: widget.textColor,

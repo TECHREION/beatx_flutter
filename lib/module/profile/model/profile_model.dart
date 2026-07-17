@@ -8,6 +8,7 @@ class UserProfileModel {
   final String email;
   final String role;
   final bool isVerified;
+  final String? avatar;
 
   const UserProfileModel({
     required this.id,
@@ -15,6 +16,7 @@ class UserProfileModel {
     required this.email,
     required this.role,
     required this.isVerified,
+    this.avatar,
   });
 
   factory UserProfileModel.fromMap(Map<String, dynamic> map) {
@@ -24,6 +26,7 @@ class UserProfileModel {
       email: (map['email'] ?? '').toString(),
       role: (map['role'] ?? 'user').toString(),
       isVerified: map['isVerified'] == true,
+      avatar: map['avatar']?.toString(),
     );
   }
 
@@ -31,6 +34,7 @@ class UserProfileModel {
     fullName: name,
     email: email,
     phoneNumber: '',
+    imageUrl: avatar,
   );
 }
 
@@ -72,15 +76,13 @@ class ProfileModel {
 
   Future<Map<String, dynamic>> toFormMap() async {
     return {
-      'fullName': fullName.trim(),
-      'email': email.trim(),
-      'phoneNumber': phoneNumber.trim(),
+      'name': fullName.trim(),
+      if (phoneNumber.trim().isNotEmpty) 'phoneNumber': phoneNumber.trim(),
       if (imageBytes != null)
         'avatar': MultipartFile.fromBytes(
           imageBytes!,
           filename: imageName ?? 'profile.jpg',
         ),
-      if ((imageUrl ?? '').trim().isNotEmpty) 'imageUrl': imageUrl!.trim(),
     };
   }
 }

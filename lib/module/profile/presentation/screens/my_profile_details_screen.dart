@@ -3,8 +3,7 @@ import 'dart:typed_data';
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
-import 'package:beatx_flutter/module/profile/controller/edit_profile_controller.dart';
-import 'package:beatx_flutter/module/profile/presentation/screens/change_password_screen.dart';
+import 'package:beatx_flutter/module/profile/controller/use_profile_update_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -110,211 +109,152 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             return const SizedBox.shrink();
           }),
           Obx(() {
-            if (_controller.isLoadingProfile.value) return const SizedBox.shrink();
+            if (_controller.isLoadingProfile.value) {
+              return const SizedBox.shrink();
+            }
             return SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Header
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: .06),
-                        ),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      const Text(
-                        "Edit Profile",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /// Profile Image
-                  Center(
-                    child: GestureDetector(
-                      onTap: _showImageSourceSheet,
-                      child: Stack(
-                        children: [
-                          Obx(
-                            () => _ProfileAvatar(
-                              imageBytes: _controller.profile.value.imageBytes,
-                              name: _controller.profile.value.fullName,
-                            ),
-                          ),
-
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF222222),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: const Icon(
-                                Icons.edit_outlined,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  Form(
-                    key: _formKey,
-                    child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// Header
+                    Row(
                       children: [
-                        LabeledTextField(
-                          title: 'Full Name',
-                          hintText: 'Enter full name',
-                          controller: _nameController,
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your name';
-                            }
-                            return null;
-                          },
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: .06),
+                          ),
+                          child: IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 6),
-                        LabeledTextField(
-                          title: 'Email Address',
-                          hintText: 'Enter email address',
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icons.email_outlined,
-                          validator: (value) {
-                            final email = value?.trim() ?? '';
-                            if (email.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!email.contains('@')) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 6),
-                        LabeledTextField(
-                          title: 'Phone',
-                          hintText: 'Enter phone number',
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          prefixIcon: Icons.phone_android_outlined,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your phone number';
-                            }
-                            return null;
-                          },
+
+                        const SizedBox(width: 12),
+
+                        const Text(
+                          "Edit Profile",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 24),
 
-                  const Text(
-                    "PASSWORD",
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Material(
-                    color: const Color(0xFF171717),
-                    borderRadius: BorderRadius.circular(22),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(22),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ChangePasswordScreen(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        height: 70,
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: Row(
+                    /// Profile Image
+                    Center(
+                      child: GestureDetector(
+                        onTap: _showImageSourceSheet,
+                        child: Stack(
                           children: [
-                            const Icon(Icons.lock_outline, color: Colors.white),
-
-                            const SizedBox(width: 12),
-
-                            const Expanded(
-                              child: Text(
-                                "Change Password",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
+                            Obx(
+                              () => _ProfileAvatar(
+                                imageBytes:
+                                    _controller.profile.value.imageBytes,
+                                imageUrl: _controller.profile.value.imageUrl,
+                                name: _controller.profile.value.fullName,
                               ),
                             ),
 
-                            const Icon(
-                              Icons.chevron_right,
-                              color: Colors.white,
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF222222),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: const Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 34),
+                    const SizedBox(height: 28),
 
-                  RSaveButton(
-                    key: const ValueKey('edit-profile-save-button'),
-                    height: 62,
-                    borderRadius: BorderRadius.circular(35),
-                    activeGradient: EditProfileScreen.buttonGradient,
-                    buttonStatusNotifier: _controller.processNotifier,
-                    saveText: 'Save Changes',
-                    doneText: 'Saved',
-                    style: const TextStyle(
-                      color: Color(0xFF111111),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          LabeledTextField(
+                            title: 'Full Name',
+                            hintText: 'Enter full name',
+                            controller: _nameController,
+                            prefixIcon: Icons.person_outline,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          LabeledTextField(
+                            title: 'Email Address',
+                            hintText: 'Enter email address',
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: Icons.email_outlined,
+                            readOnly: true,
+                          ),
+                          const SizedBox(height: 6),
+                          LabeledTextField(
+                            title: 'Phone',
+                            hintText: 'Enter phone number',
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            prefixIcon: Icons.phone_android_outlined,
+                          ),
+                        ],
+                      ),
                     ),
-                    onSaveTap: _saveProfile,
-                    onDone: _showSavedMessage,
-                  ),
-                ],
+
+                    const SizedBox(height: 34),
+
+                    RSaveButton(
+                      key: const ValueKey('edit-profile-save-button'),
+                      height: 62,
+                      borderRadius: BorderRadius.circular(35),
+                      activeGradient: EditProfileScreen.buttonGradient,
+                      buttonStatusNotifier: _controller.processNotifier,
+                      saveText: 'Save Changes',
+                      doneText: 'Saved',
+                      style: const TextStyle(
+                        color: Color(0xFF111111),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      onSaveTap: _saveProfile,
+                      onDone: _showSavedMessage,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
         ],
       ),
     );
@@ -386,20 +326,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 }
 
 class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({required this.imageBytes, required this.name});
+  const _ProfileAvatar({
+    required this.imageBytes,
+    required this.imageUrl,
+    required this.name,
+  });
 
   final Uint8List? imageBytes;
+  final String? imageUrl;
   final String name;
 
   @override
   Widget build(BuildContext context) {
     final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
+    final avatarUrl = imageUrl?.trim();
+    final ImageProvider? avatarImage = imageBytes != null
+        ? MemoryImage(imageBytes!)
+        : avatarUrl != null && avatarUrl.isNotEmpty
+        ? NetworkImage(avatarUrl)
+        : null;
 
     return CircleAvatar(
       radius: 42,
       backgroundColor: const Color(0xFF222222),
-      backgroundImage: imageBytes == null ? null : MemoryImage(imageBytes!),
-      child: imageBytes == null
+      backgroundImage: avatarImage,
+      child: avatarImage == null
           ? Text(
               initial,
               style: const TextStyle(

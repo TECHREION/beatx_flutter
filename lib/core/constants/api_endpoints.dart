@@ -67,8 +67,8 @@ class _Auth {
 class _User {
   static const String _userRoute = '${ApiEndpoints.baseUrl}/users';
   static String getuserbyId = '$_userRoute/me';
-  static String updateProfile = '$_userRoute/me';
-  static String changePassword = '$_userRoute/me/password';
+  static String updateProfile = '$_userRoute/profile';
+  static String changePassword = '$_userRoute/change-password';
   static String preferences = '$_userRoute/me/preferences';
 }
 

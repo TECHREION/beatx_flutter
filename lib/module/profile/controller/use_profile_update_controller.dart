@@ -2,11 +2,12 @@ import 'package:app_pigeon/app_pigeon.dart';
 import 'package:beatx_flutter/core/helpers/handle_fold.dart';
 import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
-import 'package:beatx_flutter/module/profile/model/profile_model.dart';
 import 'package:beatx_flutter/module/profile/services/profile_interface.dart';
 import 'package:beatx_flutter/module/profile/services/profile_interface_impl.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../model/update_profile_model.dart';
 
 class EditProfileController extends GetxController {
   final ProcessStatusNotifier processNotifier = ProcessStatusNotifier(
@@ -18,11 +19,7 @@ class EditProfileController extends GetxController {
   EditProfileController({ImagePicker? picker})
     : _picker = picker ?? ImagePicker();
 
-  final profile = const ProfileModel(
-    fullName: '',
-    email: '',
-    phoneNumber: '',
-  ).obs;
+  final profile = UserUpdateProfile.empty().obs;
 
   final isLoadingProfile = true.obs;
 
@@ -39,12 +36,14 @@ class EditProfileController extends GetxController {
   Future<void> fetchProfile() async {
     isLoadingProfile.value = true;
     final result = await _getOrCreateProfileInterface().getProfile();
-    result.fold(
-      (_) {},
-      (userProfile) {
-        profile.value = userProfile.toProfileModel();
-      },
-    );
+    result.fold((_) {}, (userProfile) {
+      profile.value = profile.value.copyWith(
+        fullName: userProfile.name,
+        email: userProfile.email,
+        imageUrl: userProfile.avatar,
+        clearImage: true,
+      );
+    });
     isLoadingProfile.value = false;
   }
 
@@ -86,6 +85,9 @@ class EditProfileController extends GetxController {
         either: result,
         processStatusNotifier: processNotifier,
         errorSnackbarNotifier: snackbarNotifier,
+        onSuccess: (response) {
+          profile.value = UserUpdateProfile.fromUser(response.data);
+        },
       );
     });
   }

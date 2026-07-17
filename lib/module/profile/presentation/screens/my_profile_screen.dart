@@ -182,8 +182,8 @@ class ProfileScreen extends StatelessWidget {
                         ),
 
                         _settingTile(
-                          icon: Icons.shield_outlined,
-                          title: "Account Security",
+                          icon: Icons.lock_outline,
+                          title: "Change Password",
                           onTap: () => _openScreen(
                             context,
                             const ChangePasswordScreen(),
@@ -196,18 +196,6 @@ class ProfileScreen extends StatelessWidget {
                           titleColor: Colors.red,
                           iconColor: Colors.red,
                           onTap: () => _showLogoutDialog(context),
-                        ),
-
-                        const SizedBox(height: 35),
-
-                        const Center(
-                          child: Text(
-                            "App version 1.0.0.1",
-                            style: TextStyle(
-                              color: Colors.white24,
-                              fontSize: 16,
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -226,10 +214,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => const LogoutDialog(),
-    );
+    showDialog<void>(context: context, builder: (_) => const LogoutDialog());
   }
 
   Widget _settingTile({
