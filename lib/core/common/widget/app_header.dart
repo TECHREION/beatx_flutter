@@ -44,9 +44,9 @@ class AppHeader extends StatelessWidget {
           else
             Text(
               title ?? '',
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFF40DDEB),
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,
               ),

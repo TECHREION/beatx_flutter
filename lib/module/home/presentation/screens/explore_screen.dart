@@ -47,7 +47,6 @@ class ExploreScreen extends StatelessWidget {
                           sliver: SliverToBoxAdapter(
                             child: _SectionHeader(
                               title: 'Browse Genres',
-                              action: 'View all',
                               actionColor: Color(0xFF9BFF4D),
                             ),
                           ),
@@ -250,15 +249,15 @@ class _SearchField extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
-    required this.title,
-    required this.action,
-    required this.actionColor,
+    this.title,
+    this.action,
+    this.actionColor,
     this.onActionTap,
   });
 
-  final String title;
-  final String action;
-  final Color actionColor;
+  final String? title;
+  final String? action;
+  final Color? actionColor;
   final VoidCallback? onActionTap;
 
   @override
@@ -267,7 +266,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            title,
+            title ?? '',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -282,7 +281,7 @@ class _SectionHeader extends StatelessWidget {
         GestureDetector(
           onTap: onActionTap,
           child: Text(
-            action,
+            action ?? '',
             style: TextStyle(
               color: actionColor,
               fontSize: 14,

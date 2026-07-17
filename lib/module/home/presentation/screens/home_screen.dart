@@ -138,50 +138,51 @@ class _TrendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPlay,
-      child: AspectRatio(
-        aspectRatio: 1.03,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.14),
-              width: 1.2,
-            ),
+    return AspectRatio(
+      aspectRatio: 1.03,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.14),
+            width: 1.2,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(29),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/image/a4.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const _ArtworkBackground(
-                        asset: 'assets/image/Container.png',
-                        colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
-                      ),
-                ),
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.40),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.10),
-                            width: 1,
-                          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(29),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                'assets/image/a4.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const _ArtworkBackground(
+                      asset: 'assets/image/Container.png',
+                      colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
+                    ),
+              ),
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.40),
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                          width: 1,
                         ),
+                      ),
+                      child: GestureDetector(
+                        onTap: onPlay,
+                        behavior: HitTestBehavior.opaque,
                         child: Row(
                           children: [
                             Expanded(
@@ -248,8 +249,8 @@ class _TrendingCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
