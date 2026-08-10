@@ -39,8 +39,8 @@ base class ApiEndpoints {
 // }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://13.206.25.95:3000/';
-  static const String baseUrl = 'http://13.206.25.95:3000/api/v1';
+  static const String socketUrl = 'http://13.200.168.40:3000/';
+  static const String baseUrl = 'http://13.200.168.40:3000/api/v1';
 }
 
 class _Auth {
