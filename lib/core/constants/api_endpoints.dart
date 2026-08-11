@@ -37,6 +37,10 @@ base class ApiEndpoints {
       _Video._videoDetails(videoId);
   static String videoStreamUrl({required String videoId}) =>
       _Video._videoStreamUrl(videoId);
+  static String relatedVideos({required String videoId}) =>
+      _Video._relatedVideos(videoId);
+  static String likeUnlike({required String videoId}) =>
+      _Video._likeUnlike(videoId);
 }
 
 //arrow360degree@gmail.com
@@ -94,6 +98,10 @@ class _Video {
       '$_videoRoute/$videoId';
   static String _videoStreamUrl(String videoId) =>
       '${_videoDetails(videoId)}/stream';
+  static String _relatedVideos(String videoId) =>
+      '${_videoDetails(videoId)}/related';
+  static String _likeUnlike(String videoId) =>
+      '${_videoDetails(videoId)}/like';
 }
 
 // ---------------------- Report -----------------------------

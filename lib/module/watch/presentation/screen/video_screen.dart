@@ -1,11 +1,17 @@
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
 import 'package:beatx_flutter/module/watch/model/get_stream_url_model.dart';
-import 'package:beatx_flutter/module/watch/model/watch_model.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
+
+String _formatDuration(int durationMs) {
+  final totalSeconds = (durationMs / 1000).round();
+  final minutes = totalSeconds ~/ 60;
+  final seconds = totalSeconds % 60;
+  return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+}
 
 class MusicPlayerScreen extends StatefulWidget {
   const MusicPlayerScreen({super.key, required this.videoId});
@@ -178,7 +184,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                               height: 10),
 
                           Text(
-                            '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays',
+                            '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
                             style:
                                 const TextStyle(
                               color:
@@ -199,21 +205,24 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                         mainAxisAlignment:
                             MainAxisAlignment
                                 .spaceEvenly,
-                        children: const [
+                        children: [
                           ActionCard(
-                            icon:
-                                Icons.favorite_border,
+                            icon: controller.isLiked.value
+                                ? Icons.favorite
+                                : Icons.favorite_border,
                             title: 'LIKE',
+                            active: controller.isLiked.value,
+                            onTap: controller.toggleLike,
                           ),
-                          ActionCard(
+                          const ActionCard(
                             icon: Icons.share,
                             title: 'SHARE',
                           ),
-                          ActionCard(
+                          const ActionCard(
                             icon: Icons.download,
                             title: 'GET',
                           ),
-                          ActionCard(
+                          const ActionCard(
                             icon:
                                 Icons.playlist_add,
                             title: 'SAVE',
@@ -255,43 +264,59 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                       ),
                     ),
 
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics:
-                          const NeverScrollableScrollPhysics(),
-                      itemCount: controller
-                          .upNextList.length,
-                      itemBuilder: (_, index) {
+                    if (controller.isLoading.value &&
+                        controller.upNextList.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.cyanAccent,
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics:
+                            const NeverScrollableScrollPhysics(),
+                        itemCount: controller
+                            .upNextList.length,
+                        itemBuilder: (_, index) {
 
-                        MusicModel music =
-                            controller
-                                .upNextList[index];
+                          final relatedVideo =
+                              controller
+                                  .upNextList[index];
 
-                        return ListTile(
-                          leading: ClipRRect(
-                            borderRadius:
-                                BorderRadius
-                                    .circular(12),
-                            child: Image.network(
-                              music.image,
-                              width: 90,
-                              height: 70,
-                              fit: BoxFit.cover,
+                          return ListTile(
+                            onTap: () => Get.off(
+                              () => MusicPlayerScreen(
+                                videoId: relatedVideo.id,
+                              ),
                             ),
-                          ),
-                          title: Text(
-                            music.title,
-                            maxLines: 2,
-                            overflow:
-                                TextOverflow
-                                    .ellipsis,
-                          ),
-                          subtitle: Text(
-                            music.artist,
-                          ),
-                        );
-                      },
-                    ),
+                            leading: ClipRRect(
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(12),
+                              child: Image.network(
+                                relatedVideo.coverUrl,
+                                width: 90,
+                                height: 70,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            title: Text(
+                              relatedVideo.title,
+                              maxLines: 2,
+                              overflow:
+                                  TextOverflow
+                                      .ellipsis,
+                            ),
+                            subtitle: Text(
+                              '${relatedVideo.ownerId.name} • ${_formatDuration(relatedVideo.durationMs)}',
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -306,34 +331,43 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 class ActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
+  final bool active;
+  final VoidCallback? onTap;
 
   const ActionCard({
     super.key,
     required this.icon,
     required this.title,
+    this.active = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 75,
-      height: 85,
-      decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius:
-            BorderRadius.circular(18),
-      ),
-      child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: Colors.cyanAccent,
-          ),
-          const SizedBox(height: 8),
-          Text(title),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 75,
+        height: 85,
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius:
+              BorderRadius.circular(18),
+        ),
+        child: Column(
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: active
+                  ? Colors.redAccent
+                  : Colors.cyanAccent,
+            ),
+            const SizedBox(height: 8),
+            Text(title),
+          ],
+        ),
       ),
     );
   }

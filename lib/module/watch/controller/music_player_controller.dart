@@ -13,6 +13,9 @@ class MusicPlayerController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
+  final isLiked = false.obs;
+  final likeCount = 0.obs;
+
   RxDouble progress = 0.0.obs;
 
   RxBool autoPlay = true.obs;
@@ -21,37 +24,7 @@ class MusicPlayerController extends GetxController {
 
   String? _loadedVideoId;
 
-  final upNextList = <MusicModel>[
-    MusicModel(
-      title: 'Neon Dreams: The Making of Pulse',
-      artist: 'Lumina Synthesis',
-      image:
-          'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f',
-      duration: '03:42',
-      description: '',
-      views: 'NEW VIDEO',
-    ),
-
-    MusicModel(
-      title: 'Cybernetic Resonance (Official Audio)',
-      artist: 'Vector Soul',
-      image:
-          'https://images.unsplash.com/photo-1511379938547-c1f69419868d',
-      duration: '05:18',
-      description: '',
-      views: '450K views',
-    ),
-
-    MusicModel(
-      title: 'The Architecture of Sound: Synthesis 101',
-      artist: 'BeatX Labs',
-      image:
-          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee',
-      duration: '04:01',
-      description: '',
-      views: '12K views',
-    ),
-  ].obs;
+  final upNextList = <VideoModel>[].obs;
 
   VideoInterface _videoInterface() {
     if (!Get.isRegistered<VideoInterface>() &&
@@ -73,13 +46,19 @@ class MusicPlayerController extends GetxController {
     final videoInterface = _videoInterface();
     final detailsRequest = videoInterface.videoDetails(videoId);
     final streamUrlRequest = videoInterface.getStreamUrl(videoId);
+    final relatedRequest = videoInterface.relatedVideos(videoId);
 
     final detailsResult = await detailsRequest;
     final streamUrlResult = await streamUrlRequest;
+    final relatedResult = await relatedRequest;
 
     detailsResult.fold(
       (failure) => errorMessage.value = failure.uiMessage,
-      (success) => details.value = success.data,
+      (success) {
+        details.value = success.data;
+        isLiked.value = success.data?.isLiked ?? false;
+        likeCount.value = success.data?.likeCount ?? 0;
+      },
     );
 
     streamUrlResult.fold(
@@ -87,7 +66,27 @@ class MusicPlayerController extends GetxController {
       (success) => streamUrlData.value = success.data,
     );
 
+    relatedResult.fold(
+      (failure) => errorMessage.value = failure.uiMessage,
+      (success) => upNextList.assignAll(success.data ?? const []),
+    );
+
     isLoading.value = false;
+  }
+
+  Future<void> toggleLike() async {
+    final videoId = _loadedVideoId;
+    if (videoId == null) return;
+
+    final result = await _videoInterface().likeUnlike(videoId);
+
+    result.fold(
+      (failure) => errorMessage.value = failure.uiMessage,
+      (success) {
+        isLiked.value = success.data?.liked ?? isLiked.value;
+        likeCount.value = success.data?.likeCount ?? likeCount.value;
+      },
+    );
   }
 
   void togglePlay() {
