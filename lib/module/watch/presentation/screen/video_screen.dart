@@ -1,14 +1,16 @@
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
+import 'package:beatx_flutter/module/watch/model/get_stream_url_model.dart';
 import 'package:beatx_flutter/module/watch/model/watch_model.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
 class MusicPlayerScreen extends StatefulWidget {
-  const MusicPlayerScreen({super.key, required this.video});
+  const MusicPlayerScreen({super.key, required this.videoId});
 
-  final MusicVideoModel video;
+  final String videoId;
 
   @override
   State<MusicPlayerScreen> createState() => _MusicPlayerScreenState();
@@ -17,21 +19,45 @@ class MusicPlayerScreen extends StatefulWidget {
 class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   final MusicPlayerController controller = Get.put(MusicPlayerController());
 
-  late final VideoPlayerController _videoController;
+  VideoPlayerController? _videoController;
   ChewieController? _chewieController;
+  Worker? _streamUrlWorker;
 
   @override
   void initState() {
     super.initState();
-    _videoController = VideoPlayerController.asset(widget.video.videoAsset)
+    controller.loadVideo(widget.videoId);
+    _streamUrlWorker = ever<VideoStreamUrlModel?>(
+      controller.streamUrlData,
+      (streamUrlData) {
+        if (streamUrlData != null && streamUrlData.streamUrl.isNotEmpty) {
+          _initializePlayer(streamUrlData.streamUrl);
+        }
+      },
+    );
+  }
+
+  void _initializePlayer(String streamUrl) {
+    if (_videoController != null) return;
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(streamUrl))
       ..initialize().then((_) {
         if (!mounted) return;
         setState(() {
           _chewieController = ChewieController(
-            videoPlayerController: _videoController,
+            videoPlayerController: _videoController!,
             autoPlay: true,
             looping: false,
-            aspectRatio: _videoController.value.aspectRatio,
+            aspectRatio: _videoController!.value.aspectRatio,
+            allowFullScreen: true,
+            allowMuting: true,
+            deviceOrientationsOnEnterFullScreen: const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+            deviceOrientationsAfterFullScreen: const [
+              DeviceOrientation.portraitUp,
+            ],
+            systemOverlaysAfterFullScreen: SystemUiOverlay.values,
             materialProgressColors: ChewieProgressColors(
               playedColor: Colors.cyanAccent,
               handleColor: Colors.cyanAccent,
@@ -45,8 +71,9 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 
   @override
   void dispose() {
+    _streamUrlWorker?.dispose();
     _chewieController?.dispose();
-    _videoController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -105,17 +132,25 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 
                     /// Video Player
                     AspectRatio(
-                      aspectRatio: _videoController.value.isInitialized
-                          ? _videoController.value.aspectRatio
-                          : 16 / 9,
+                      aspectRatio: 16 / 9,
                       child: _chewieController != null
                           ? Chewie(controller: _chewieController!)
-                          : const ColoredBox(
+                          : ColoredBox(
                               color: Colors.black,
                               child: Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.cyanAccent,
-                                ),
+                                child: controller.errorMessage.value.isNotEmpty
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Text(
+                                          controller.errorMessage.value,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                              color: Colors.white70),
+                                        ),
+                                      )
+                                    : const CircularProgressIndicator(
+                                        color: Colors.cyanAccent,
+                                      ),
                               ),
                             ),
                     ),
@@ -130,7 +165,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                                 .start,
                         children: [
                           Text(
-                            widget.video.title,
+                            controller.details.value?.title ?? '',
                             style:
                                 const TextStyle(
                               fontSize: 20,
@@ -143,7 +178,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                               height: 10),
 
                           Text(
-                            '${widget.video.artist} • ${widget.video.meta}',
+                            '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays',
                             style:
                                 const TextStyle(
                               color:

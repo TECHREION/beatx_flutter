@@ -1,13 +1,25 @@
-import 'package:beatx_flutter/module/watch/model/watch_model.dart';
+import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
-class MusicPlayerController extends GetxController {
+import '../model/get_stream_url_model.dart';
+import '../model/video_details_model.dart';
+import '../model/watch_model.dart';
+import '../services/watch_interface.dart';
+import '../services/watch_interface_impl.dart';
 
-  RxDouble progress = 102.0.obs;
+class MusicPlayerController extends GetxController {
+  final details = Rxn<VideoDetailsModel>();
+  final streamUrlData = Rxn<VideoStreamUrlModel>();
+  final isLoading = false.obs;
+  final errorMessage = ''.obs;
+
+  RxDouble progress = 0.0.obs;
 
   RxBool autoPlay = true.obs;
 
   RxBool isPlaying = false.obs;
+
+  String? _loadedVideoId;
 
   final upNextList = <MusicModel>[
     MusicModel(
@@ -40,6 +52,43 @@ class MusicPlayerController extends GetxController {
       views: '12K views',
     ),
   ].obs;
+
+  VideoInterface _videoInterface() {
+    if (!Get.isRegistered<VideoInterface>() &&
+        Get.isRegistered<AuthorizedPigeon>()) {
+      Get.put<VideoInterface>(
+        VideoInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      );
+    }
+    return Get.find<VideoInterface>();
+  }
+
+  Future<void> loadVideo(String videoId) async {
+    if (videoId.isEmpty || _loadedVideoId == videoId) return;
+    _loadedVideoId = videoId;
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    final videoInterface = _videoInterface();
+    final detailsRequest = videoInterface.videoDetails(videoId);
+    final streamUrlRequest = videoInterface.getStreamUrl(videoId);
+
+    final detailsResult = await detailsRequest;
+    final streamUrlResult = await streamUrlRequest;
+
+    detailsResult.fold(
+      (failure) => errorMessage.value = failure.uiMessage,
+      (success) => details.value = success.data,
+    );
+
+    streamUrlResult.fold(
+      (failure) => errorMessage.value = failure.uiMessage,
+      (success) => streamUrlData.value = success.data,
+    );
+
+    isLoading.value = false;
+  }
 
   void togglePlay() {
     isPlaying.value = !isPlaying.value;

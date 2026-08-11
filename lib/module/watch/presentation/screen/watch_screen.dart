@@ -8,30 +8,11 @@ import '../../controller/watch_controller.dart';
 import '../../model/watch_model.dart';
 import 'video_screen.dart';
 
-/// Bundled sample clips used for playback until the backend exposes a
-/// real streamable video URL per video.
-const _sampleVideoAssets = [
-  'assets/video/mixkit-countryside-meadow-4075-hd-ready.mp4',
-  'assets/video/mixkit-highway-in-the-middle-of-a-mountain-range-4633-hd-ready.mp4',
-  'assets/video/mixkit-raft-going-slowly-down-a-river-1218-hd-ready.mp4',
-];
-
 String _formatDuration(int durationMs) {
   final totalSeconds = (durationMs / 1000).round();
   final minutes = totalSeconds ~/ 60;
   final seconds = totalSeconds % 60;
   return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-}
-
-MusicVideoModel _toMusicVideoModel(VideoModel video, int index) {
-  return MusicVideoModel(
-    title: video.title,
-    artist: video.ownerId.name,
-    meta: '${video.playCount} plays',
-    duration: _formatDuration(video.durationMs),
-    image: video.coverUrl,
-    videoAsset: _sampleVideoAssets[index % _sampleVideoAssets.length],
-  );
 }
 
 class WatchScreen extends StatelessWidget {
@@ -95,10 +76,7 @@ class WatchScreen extends StatelessWidget {
                                     video: entry.$2,
                                     onTap: () => Get.to(
                                       () => MusicPlayerScreen(
-                                        video: _toMusicVideoModel(
-                                          entry.$2,
-                                          entry.$1,
-                                        ),
+                                        videoId: entry.$2.id,
                                       ),
                                     ),
                                   ),
@@ -121,76 +99,6 @@ class WatchScreen extends StatelessWidget {
     );
   }
 }
-
-// class _WatchBackdrop extends StatelessWidget {
-//   const _WatchBackdrop();
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Stack(
-//       children: [
-//         Positioned(
-//           top: -38,
-//           left: 56,
-//           right: 10,
-//           child: Container(
-//             height: 240,
-//             decoration: BoxDecoration(
-//               gradient: RadialGradient(
-//                 colors: [
-//                   const Color(0xFFFF2ED7).withValues(alpha: 0.82),
-//                   const Color(0xFF5924C6).withValues(alpha: 0.48),
-//                   Colors.transparent,
-//                 ],
-//                 stops: const [0, 0.46, 1],
-//               ),
-//             ),
-//           ),
-//         ),
-//         Positioned(
-//           top: 50,
-//           right: -40,
-//           child: Transform.rotate(
-//             angle: -0.42,
-//             child: Container(
-//               width: 260,
-//               height: 90,
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   colors: [
-//                     Colors.transparent,
-//                     const Color(0xFF40DDEB).withValues(alpha: 0.42),
-//                     Colors.transparent,
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//         Positioned(
-//           top: 22,
-//           right: -22,
-//           child: Transform.rotate(
-//             angle: 0.66,
-//             child: Container(
-//               width: 220,
-//               height: 70,
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   colors: [
-//                     Colors.transparent,
-//                     const Color(0xFF9BFF4D).withValues(alpha: 0.28),
-//                     Colors.transparent,
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
 
 class _HeroVideo extends StatelessWidget {
   const _HeroVideo({required this.video});
@@ -262,7 +170,9 @@ class _HeroVideo extends StatelessWidget {
             SizedBox(
               height: 43,
               child: FilledButton.icon(
-                onPressed: () {},
+                onPressed: () => Get.to(
+                  () => MusicPlayerScreen(videoId: video.id),
+                ),
                 icon: const Icon(Icons.play_arrow_rounded, size: 23),
                 label: const Text('WATCH NOW'),
                 style: FilledButton.styleFrom(

@@ -35,6 +35,8 @@ base class ApiEndpoints {
   static const String videoHome = _Video._videoHome;
   static String videoDetails({required String videoId}) =>
       _Video._videoDetails(videoId);
+  static String videoStreamUrl({required String videoId}) =>
+      _Video._videoStreamUrl(videoId);
 }
 
 //arrow360degree@gmail.com
@@ -90,6 +92,8 @@ class _Video {
   static const String _videoHome = '$_videoRoute/home';
   static String _videoDetails(String videoId) =>
       '$_videoRoute/$videoId';
+  static String _videoStreamUrl(String videoId) =>
+      '${_videoDetails(videoId)}/stream';
 }
 
 // ---------------------- Report -----------------------------
