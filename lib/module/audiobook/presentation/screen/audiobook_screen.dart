@@ -37,7 +37,7 @@ class AudiobookScreen extends StatelessWidget {
                     color: const Color(0xFF40DDEB),
                     child: Obx(
                       () => CustomScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics: AlwaysScrollableScrollPhysics(),
                         slivers: [_buildBody(context, controller)],
                       ),
                     ),

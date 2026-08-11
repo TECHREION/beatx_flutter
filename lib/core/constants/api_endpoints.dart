@@ -30,6 +30,11 @@ base class ApiEndpoints {
   static const String audiobookhome = _Audiobook._audiobookhome;
   static String audiobookDetails({required String audiobookId}) =>
       _Audiobook._audiobookDetails(audiobookId);
+  
+  //----------------------- watch -----------------------------
+  static const String videoHome = _Video._videoHome;
+  static String videoDetails({required String videoId}) =>
+      _Video._videoDetails(videoId);
 }
 
 //arrow360degree@gmail.com
@@ -43,8 +48,8 @@ base class ApiEndpoints {
 // }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://13.206.25.95:3000/';
-  static const String baseUrl = 'http://13.206.25.95:3000/api/v1';
+  static const String socketUrl = 'http://13.200.168.40:3000/';
+  static const String baseUrl = 'http://13.200.168.40:3000/api/v1';
 }
 
 class _Auth {
@@ -63,7 +68,6 @@ class _Auth {
 }
 
 //------------------------------ User -----------------------------
-// ---------------------- USER -----------------------------
 class _User {
   static const String _userRoute = '${ApiEndpoints.baseUrl}/users';
   static String getuserbyId = '$_userRoute/me';
@@ -80,8 +84,13 @@ class _Audiobook {
       '$_audiobookRoute/$audiobookId';
 }
 
-// ---------------------- Verification -----------------------------
-class _Verification {}
+// ---------------------- watch -----------------------------
+class _Video {
+  static const String _videoRoute = '${ApiEndpoints.baseUrl}/videos';
+  static const String _videoHome = '$_videoRoute/home';
+  static String _videoDetails(String videoId) =>
+      '$_videoRoute/$videoId';
+}
 
 // ---------------------- Report -----------------------------
 class _Report {}

@@ -1,42 +1,47 @@
+import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
-import '../model/featured_video_model.dart';
-import '../model/music_video_model.dart';
+import '../model/watch_model.dart';
+import '../services/watch_interface.dart';
+import '../services/watch_interface_impl.dart';
 
 class WatchController extends GetxController {
-  final featuredVideo = const FeaturedVideoModel(
-    title: 'NEON\nREFRACTIONS',
-    description:
-        'Experience the visual odyssey of the year. Directed by Aethereal, starring the Prism collective.',
-    tag: 'FEATURED PREMIERE',
-  ).obs;
+  final home = Rx<HomeData?>(null);
+  final isLoading = true.obs;
+  final errorMessage = ''.obs;
 
-  final trendingVideos = const <MusicVideoModel>[
-    MusicVideoModel(
-      title: 'DeadLine Music',
-      artist: 'Jukebox',
-      meta: '1.2M views - 2 days ago',
-      duration: '04:20',
-      image: 'assets/image/image.png',
-      videoAsset:
-          'assets/video/mixkit-countryside-meadow-4075-hd-ready.mp4',
-    ),
-    MusicVideoModel(
-      title: 'Bhalo Thake Mon',
-      artist: 'Fahim Islam',
-      meta: '890K views',
-      duration: '04:20',
-      image: 'assets/image/onboarding1.png',
-      videoAsset:
-          'assets/video/mixkit-highway-in-the-middle-of-a-mountain-range-4633-hd-ready.mp4',
-    ),
-    MusicVideoModel(
-      title: 'Tor Lagiya',
-      artist: 'Shomz Vai',
-      meta: '450K views',
-      duration: '04:20',
-      image: 'assets/image/blackout.png',
-      videoAsset: 'assets/video/mixkit-raft-going-slowly-down-a-river-1218-hd-ready.mp4',
-    ),
-  ].obs;
+  @override
+  void onInit() {
+    super.onInit();
+    fetchHome();
+  }
+
+  VideoInterface _videoInterface() {
+    if (!Get.isRegistered<VideoInterface>() &&
+        Get.isRegistered<AuthorizedPigeon>()) {
+      Get.put<VideoInterface>(
+        VideoInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      );
+    }
+    return Get.find<VideoInterface>();
+  }
+
+  Future<void> fetchHome() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    final result = await _videoInterface().videoHome();
+
+    result.fold(
+      (failure) => errorMessage.value = failure.uiMessage,
+      (success) => home.value = success.data,
+    );
+
+    isLoading.value = false;
+  }
+
+  VideoModel? get featuredVideo =>
+      home.value?.featured.isNotEmpty == true ? home.value!.featured.first : null;
+
+  List<VideoModel> get trendingVideos => home.value?.recent ?? const [];
 }

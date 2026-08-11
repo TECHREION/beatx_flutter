@@ -1,4 +1,4 @@
-import 'package:beatx_flutter/module/watch/model/music_video_model.dart';
+import 'package:beatx_flutter/module/watch/model/watch_model.dart';
 import 'package:get/get.dart';
 
 class MusicPlayerController extends GetxController {

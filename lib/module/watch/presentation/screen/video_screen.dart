@@ -1,5 +1,5 @@
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
-import 'package:beatx_flutter/module/watch/model/music_video_model.dart';
+import 'package:beatx_flutter/module/watch/model/watch_model.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

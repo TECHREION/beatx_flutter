@@ -5,9 +5,34 @@ import '../../../../../core/common/widget/app_header.dart';
 import '../../../../core/common/background_image.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../controller/watch_controller.dart';
-import '../../model/featured_video_model.dart';
-import '../../model/music_video_model.dart';
+import '../../model/watch_model.dart';
 import 'video_screen.dart';
+
+/// Bundled sample clips used for playback until the backend exposes a
+/// real streamable video URL per video.
+const _sampleVideoAssets = [
+  'assets/video/mixkit-countryside-meadow-4075-hd-ready.mp4',
+  'assets/video/mixkit-highway-in-the-middle-of-a-mountain-range-4633-hd-ready.mp4',
+  'assets/video/mixkit-raft-going-slowly-down-a-river-1218-hd-ready.mp4',
+];
+
+String _formatDuration(int durationMs) {
+  final totalSeconds = (durationMs / 1000).round();
+  final minutes = totalSeconds ~/ 60;
+  final seconds = totalSeconds % 60;
+  return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+}
+
+MusicVideoModel _toMusicVideoModel(VideoModel video, int index) {
+  return MusicVideoModel(
+    title: video.title,
+    artist: video.ownerId.name,
+    meta: '${video.playCount} plays',
+    duration: _formatDuration(video.durationMs),
+    image: video.coverUrl,
+    videoAsset: _sampleVideoAssets[index % _sampleVideoAssets.length],
+  );
+}
 
 class WatchScreen extends StatelessWidget {
   const WatchScreen({super.key});
@@ -24,48 +49,70 @@ class WatchScreen extends StatelessWidget {
             children: [
               const AppHeader(title: 'Watch', notificationBadge: '3'),
               Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSizes.screenHorizontalPadding,
-                        16,
-                        AppSizes.screenHorizontalPadding,
-                        26,
+                child: Obx(() {
+                  if (controller.isLoading.value && controller.home.value == null) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  }
+
+                  if (controller.errorMessage.value.isNotEmpty &&
+                      controller.home.value == null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          controller.errorMessage.value,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                       ),
-                      sliver: SliverList.list(
-                        children: [
-                          const SizedBox(height: 22),
-                          Obx(
-                            () => _HeroVideo(
-                              video: controller.featuredVideo.value,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          const _TrendingHeader(),
-                          const SizedBox(height: 8),
-                          Obx(
-                            () => Column(
+                    );
+                  }
+
+                  return CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSizes.screenHorizontalPadding,
+                          16,
+                          AppSizes.screenHorizontalPadding,
+                          26,
+                        ),
+                        sliver: SliverList.list(
+                          children: [
+                            const SizedBox(height: 22),
+                            if (controller.featuredVideo != null)
+                              _HeroVideo(video: controller.featuredVideo!),
+                            const SizedBox(height: 24),
+                            const _TrendingHeader(),
+                            const SizedBox(height: 8),
+                            Column(
                               children: [
-                                for (final video
-                                    in controller.trendingVideos) ...[
+                                for (final entry
+                                    in controller.trendingVideos.indexed) ...[
                                   _VideoTile(
-                                    video: video,
+                                    video: entry.$2,
                                     onTap: () => Get.to(
-                                      () => MusicPlayerScreen(video: video),
+                                      () => MusicPlayerScreen(
+                                        video: _toMusicVideoModel(
+                                          entry.$2,
+                                          entry.$1,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 18),
                                 ],
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 74),
-                        ],
+                            const SizedBox(height: 74),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                }),
               ),
             ],
           ),
@@ -148,7 +195,7 @@ class WatchScreen extends StatelessWidget {
 class _HeroVideo extends StatelessWidget {
   const _HeroVideo({required this.video});
 
-  final FeaturedVideoModel video;
+  final VideoModel video;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +221,7 @@ class _HeroVideo extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                video.tag,
+                video.genre.name.toUpperCase(),
                 style: const TextStyle(
                   color: Color(0xFFBD89FF),
                   fontSize: 9,
@@ -312,7 +359,7 @@ class _TrendingHeader extends StatelessWidget {
 class _VideoTile extends StatelessWidget {
   const _VideoTile({required this.video, this.onTap});
 
-  final MusicVideoModel video;
+  final VideoModel video;
   final VoidCallback? onTap;
 
   @override
@@ -329,8 +376,8 @@ class _VideoTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    video.image,
+                  Image.network(
+                    video.coverUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
                         const ColoredBox(
@@ -358,7 +405,7 @@ class _VideoTile extends StatelessWidget {
                     right: 6,
                     bottom: 5,
                     child: Text(
-                      video.duration,
+                      _formatDuration(video.durationMs),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 9,
@@ -385,7 +432,7 @@ class _VideoTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${video.artist} - ${video.meta}',
+            '${video.ownerId.name} - ${video.playCount} plays',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(

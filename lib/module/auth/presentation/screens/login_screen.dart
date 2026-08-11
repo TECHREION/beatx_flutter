@@ -216,11 +216,11 @@ class _LoginCard extends StatelessWidget {
                 );
               },
               onDone: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => AppGround()),
-                  (route) => false,
-                );
+                // Navigator.pushAndRemoveUntil(
+                //   context,
+                //   MaterialPageRoute(builder: (_) => AppGround()),
+                //   (route) => false,
+                // );
               },
             ),
             Gap.h16,

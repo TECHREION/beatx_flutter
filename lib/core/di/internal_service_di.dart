@@ -6,6 +6,8 @@ import '../../module/audiobook/services/audio_book_interface.dart';
 import '../../module/audiobook/services/audio_book_interface_impl.dart';
 import '../../module/auth/services/auth_interface.dart';
 import '../../module/auth/services/auth_interface_impl.dart';
+import '../../module/watch/services/watch_interface.dart';
+import '../../module/watch/services/watch_interface_impl.dart';
 
 void internalServiceDI() {
   Get.lazyPut<AuthInterface>(
@@ -15,6 +17,11 @@ void internalServiceDI() {
 
   Get.lazyPut<AudioBookInterface>(
     () => AudioBookInterfaceImpl(Get.find<AuthorizedPigeon>()),
+    fenix: true,
+  );
+
+  Get.lazyPut<VideoInterface>(
+    () => VideoInterfaceImpl(Get.find<AuthorizedPigeon>()),
     fenix: true,
   );
 
