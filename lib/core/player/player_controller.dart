@@ -41,7 +41,11 @@ class PlayerController extends GetxController {
     duration.value = Duration.zero;
     isPlaying.value = true;
     await _player.stop();
-    await _player.play(AssetSource(audioAsset));
+    final isNetworkSource =
+        audioAsset.startsWith('http://') || audioAsset.startsWith('https://');
+    await _player.play(
+      isNetworkSource ? UrlSource(audioAsset) : AssetSource(audioAsset),
+    );
   }
 
   Future<void> seek(Duration position) async {

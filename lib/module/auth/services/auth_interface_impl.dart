@@ -2,11 +2,9 @@
 import 'package:beatx_flutter/module/auth/services/auth_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:app_pigeon/app_pigeon.dart';
-import 'package:get/get.dart' hide FormData;
 import '../../../core/api_handler/success.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/helpers/typedefs.dart';
-import '../../../core/localization/app_language_controller.dart';
 import '../../../core/network/app_language_options.dart';
 import '../model/create_new_password_model.dart';
 import '../model/forget_password_model.dart';

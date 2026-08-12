@@ -27,12 +27,12 @@ base class ApiEndpoints {
   static String userPreferences = _User.preferences;
 
   //---------------------- Audiobook -----------------------------
-  static const String audiobookhome = _Audiobook._audiobookhome;
+  static const String audiobookhome = _Audiobook.audiobookhome;
   static String audiobookDetails({required String audiobookId}) =>
       _Audiobook._audiobookDetails(audiobookId);
   
   //----------------------- watch -----------------------------
-  static const String videoHome = _Video._videoHome;
+  static const String videoHome = _Video.videoHome;
   static String videoDetails({required String videoId}) =>
       _Video._videoDetails(videoId);
   static String videoStreamUrl({required String videoId}) =>
@@ -41,6 +41,13 @@ base class ApiEndpoints {
       _Video._relatedVideos(videoId);
   static String likeUnlike({required String videoId}) =>
       _Video._likeUnlike(videoId);
+
+  //---------------------- home/listen -----------------------------
+  static const String listenHome = _Listen.listenHome;
+  static String listenDetails({required String listenId}) =>
+      _Listen._listenDetails(listenId);
+  static String listenStreamUrl({required String listenId}) =>
+      _Listen._listenStreamUrl(listenId);
 }
 
 //arrow360degree@gmail.com
@@ -85,17 +92,17 @@ class _User {
 //------------------------------ Audiobook -----------------------------
 class _Audiobook {
   static const String _audiobookRoute = '${ApiEndpoints.baseUrl}/audiobooks';
-  static const String _audiobookhome = '$_audiobookRoute/home';
+  static const String audiobookhome = '$_audiobookRoute/home';
   static String _audiobookDetails(String audiobookId) =>
       '$_audiobookRoute/$audiobookId';
 }
 
 // ---------------------- watch -----------------------------
 class _Video {
-  static const String _videoRoute = '${ApiEndpoints.baseUrl}/videos';
-  static const String _videoHome = '$_videoRoute/home';
+  static const String videoRoute = '${ApiEndpoints.baseUrl}/videos';
+  static const String videoHome = '$videoRoute/home';
   static String _videoDetails(String videoId) =>
-      '$_videoRoute/$videoId';
+      '$videoRoute/$videoId';
   static String _videoStreamUrl(String videoId) =>
       '${_videoDetails(videoId)}/stream';
   static String _relatedVideos(String videoId) =>
@@ -104,8 +111,15 @@ class _Video {
       '${_videoDetails(videoId)}/like';
 }
 
-// ---------------------- Report -----------------------------
-class _Report {}
+// ---------------------- Listen/Home -----------------------------
+class _Listen {
+  static const String listen = '${ApiEndpoints.baseUrl}/songs';
+  static const String listenHome = '$listen/home';
+  static String _listenDetails(String listenId) =>
+      '$listen/$listenId';
+  static String _listenStreamUrl(String listenId) =>
+      '${_listenDetails(listenId)}/stream';
+}
 
 // ---------------------- Notification -----------------------------
 class _Notification {}

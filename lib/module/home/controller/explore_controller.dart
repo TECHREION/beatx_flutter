@@ -1,10 +1,63 @@
+import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
 import '../model/genre_model.dart';
-import '../model/recent_track_model.dart';
+import '../model/listen_model.dart';
+import '../services/listen_interface.dart';
+import '../services/linter_interface_impl.dart';
 
 class ExploreController extends GetxController {
   final searchText = ''.obs;
+
+  final isLoading = true.obs;
+  final errorMessage = ''.obs;
+  final listenData = ListenMusicModel().obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchListenData();
+  }
+
+  ListenInterface _listenInterface() {
+    if (!Get.isRegistered<ListenInterface>() &&
+        Get.isRegistered<AuthorizedPigeon>()) {
+      Get.put<ListenInterface>(
+        ListenInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      );
+    }
+    return Get.find<ListenInterface>();
+  }
+
+  Future<void> fetchListenData() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    final result = await _listenInterface().getListen();
+
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (
+      success,
+    ) {
+      listenData.value = success.data ?? ListenMusicModel();
+    });
+
+    isLoading.value = false;
+  }
+
+  List<FeaturedSong> get featured => listenData.value.featured;
+
+  List<TrendingSong> get trending => listenData.value.trending;
+
+  List<NewReleaseSong> get newReleases => listenData.value.newReleases;
+
+  List<TopCategory> get topCategories => listenData.value.topCategories;
+
+  List<DailyDiscoverySong> get dailyDiscovery =>
+      listenData.value.dailyDiscovery;
+
+  PaginatedSongs get onRepeat => listenData.value.onRepeat;
+
+  PaginatedSongs get recentlyPlayed => listenData.value.recentlyPlayed;
 
   final genres = const <GenreModel>[
     GenreModel(title: 'Pop', image: 'assets/image/genre_pop.png'),

@@ -124,8 +124,15 @@ class PlayerScreen extends StatelessWidget {
                                 color: const Color(0xFF1A1A1D),
                                 image: ctrl.imageAsset.value.isNotEmpty
                                     ? DecorationImage(
-                                        image: AssetImage(
-                                            ctrl.imageAsset.value),
+                                        image: ctrl.imageAsset.value
+                                                .startsWith('http')
+                                            ? NetworkImage(
+                                                ctrl.imageAsset.value,
+                                              )
+                                            : AssetImage(
+                                                    ctrl.imageAsset.value,
+                                                  )
+                                                  as ImageProvider,
                                         fit: BoxFit.cover,
                                       )
                                     : null,

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
+import 'package:beatx_flutter/module/home/controller/home_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,9 @@ import '../../../../core/common/widget/app_header.dart';
 import '../../../../core/theme/app_sizes.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+
+  final HomeController controller = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
@@ -48,21 +51,36 @@ class HomeScreen extends StatelessWidget {
                             action: 'See all',
                           ),
                           const SizedBox(height: 16),
-                          _TrendingCard(
-                            onPlay: () {
-                              Get.find<PlayerController>().play(
-                                title: 'Tumi Acho Bole',
-                                artist: 'Imran Mahmudul',
-                                imageAsset: 'assets/image/a4.png',
-                                audioAsset: 'audio/music1.m4a',
-                              );
-                              Get.to(
-                                () => const PlayerScreen(),
-                                transition: Transition.downToUp,
-                                preventDuplicates: true,
-                              );
-                            },
-                          ),
+                          Obx(() {
+                            final item = controller.trending.isNotEmpty
+                                ? controller.trending.first
+                                : null;
+                            final title = item?.title ?? 'Tumi Acho Bole';
+                            final artist = item?.artist ?? 'Imran Mahmudul';
+
+                            return _TrendingCard(
+                              title: title,
+                              artist: artist,
+                              coverUrl: item?.coverUrl,
+                              onPlay: () {
+                                if (item != null) {
+                                  controller.playSong(item.id);
+                                  return;
+                                }
+                                Get.find<PlayerController>().play(
+                                  title: title,
+                                  artist: artist,
+                                  imageAsset: 'assets/image/a4.png',
+                                  audioAsset: 'audio/music1.m4a',
+                                );
+                                Get.to(
+                                  () => const PlayerScreen(),
+                                  transition: Transition.downToUp,
+                                  preventDuplicates: true,
+                                );
+                              },
+                            );
+                          }),
                           const SizedBox(height: 36),
                           const _SectionTitle(title: 'Your Mix'),
                           const SizedBox(height: 16),
@@ -76,12 +94,45 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: 32),
                           const _NewReleaseHeader(),
                           const SizedBox(height: 16),
-                          const _NewReleaseList(),
+                          Obx(() {
+                            final releases = controller.newReleases;
+                            final items = releases.isEmpty
+                                ? _defaultNewReleases
+                                : [
+                                    for (
+                                      var i = 0;
+                                      i < releases.length;
+                                      i++
+                                    )
+                                      _ReleaseData(
+                                        title: releases[i].title,
+                                        subtitle:
+                                            '${releases[i].artist} - Single',
+                                        artist: releases[i].artist,
+                                        meta: _formatDurationMs(
+                                          releases[i].durationMs,
+                                        ),
+                                        asset: 'assets/image/Container.png',
+                                        audioAsset: _placeholderAudioAssets[i %
+                                            _placeholderAudioAssets.length],
+                                        coverUrl: releases[i].coverUrl,
+                                        listenId: releases[i].id,
+                                      ),
+                                  ];
+
+                            return _NewReleaseList(items: items);
+                          }),
                           const SizedBox(height: 28),
                           const _SectionTitle(title: 'Artists to Watch'),
                           const SizedBox(height: 14),
                           const _ArtistWatchList(),
-                          const SizedBox(height: 104),
+                          Obx(() {
+                            final hasActiveTrack = Get.find<PlayerController>()
+                                .title
+                                .value
+                                .isNotEmpty;
+                            return SizedBox(height: hasActiveTrack ? 196 : 104);
+                          }),
                         ],
                       ),
                     ),
@@ -132,8 +183,16 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _TrendingCard extends StatelessWidget {
-  const _TrendingCard({this.onPlay});
+  const _TrendingCard({
+    this.title = 'Tumi Acho Bole',
+    this.artist = 'Imran Mahmudul',
+    this.coverUrl,
+    this.onPlay,
+  });
 
+  final String title;
+  final String artist;
+  final String? coverUrl;
   final VoidCallback? onPlay;
 
   @override
@@ -153,14 +212,10 @@ class _TrendingCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(
-                'assets/image/a4.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const _ArtworkBackground(
-                      asset: 'assets/image/Container.png',
-                      colors: [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
-                    ),
+              _ArtworkBackground(
+                asset: 'assets/image/a4.png',
+                imageUrl: coverUrl,
+                colors: const [Color(0xFFE7E7E7), Color(0xFF8C8C8C)],
               ),
               Positioned(
                 bottom: 16,
@@ -190,9 +245,11 @@ class _TrendingCard extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text(
-                                    'Tumi Acho Bole',
-                                    style: TextStyle(
+                                  Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 19,
                                       fontWeight: FontWeight.w700,
@@ -201,7 +258,9 @@ class _TrendingCard extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 3),
                                   Text(
-                                    'Imran Mahmudul',
+                                    artist,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.58,
@@ -352,41 +411,68 @@ class _StackedAvatars extends StatelessWidget {
 class _MixGrid extends StatelessWidget {
   const _MixGrid();
 
+  static const _tileAspectRatio = 1.23;
+
   @override
   Widget build(BuildContext context) {
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 1.23,
-      ),
-      children: const [
-        _MixTile(
-          icon: Icons.favorite_rounded,
-          title: 'Liked Songs',
-          subtitle: '128 tracks',
-          iconColor: Color(0xFF4DEBFF),
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: _tileAspectRatio,
+                child: _MixTile(
+                  icon: Icons.favorite_rounded,
+                  title: 'Liked Songs',
+                  subtitle: '128 tracks',
+                  iconColor: Color(0xFF4DEBFF),
+                ),
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: _tileAspectRatio,
+                child: _MixTile(
+                  icon: Icons.bolt_rounded,
+                  title: 'On Repeat',
+                  subtitle: 'Top played',
+                  iconColor: Color(0xFF6CFF8B),
+                ),
+              ),
+            ),
+          ],
         ),
-        _MixTile(
-          icon: Icons.bolt_rounded,
-          title: 'On Repeat',
-          subtitle: 'Top played',
-          iconColor: Color(0xFF6CFF8B),
-        ),
-        _MixTile(
-          icon: Icons.access_time_filled_rounded,
-          title: 'Recent',
-          subtitle: 'History',
-          iconColor: Color(0xFFC88BFF),
-        ),
-        _MixTile(
-          icon: Icons.add_rounded,
-          title: 'New Mix',
-          subtitle: 'Create',
-          iconColor: Color(0xFFAFAFAF),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: _tileAspectRatio,
+                child: _MixTile(
+                  icon: Icons.access_time_filled_rounded,
+                  title: 'Recent',
+                  subtitle: 'History',
+                  iconColor: Color(0xFFC88BFF),
+                ),
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: _tileAspectRatio,
+                child: _MixTile(
+                  icon: Icons.add_rounded,
+                  title: 'New Mix',
+                  subtitle: 'Create',
+                  iconColor: Color(0xFFAFAFAF),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -573,38 +659,57 @@ class _PagerLine extends StatelessWidget {
   }
 }
 
+const _defaultNewReleases = [
+  _ReleaseData(
+    title: 'Tumi Onek Dami',
+    subtitle: 'Fahim Islam - Single',
+    artist: 'Fahim Islam',
+    meta: 'NEW',
+    asset: 'assets/image/Container.png',
+    audioAsset: 'audio/music2.mp3',
+  ),
+  _ReleaseData(
+    title: 'Amar Hote Hote Mokhlesul Islam Nilu',
+    subtitle: 'Amar Hote Hote - Single',
+    artist: 'Mokhlesul Islam Nilu',
+    meta: '4:20',
+    asset: 'assets/image/Album Art.png',
+    audioAsset: 'audio/music3.m4a',
+  ),
+  _ReleaseData(
+    title: 'Emon Ekta Golpo',
+    subtitle: 'Nabila - Single',
+    artist: 'Nabila',
+    meta: '3:15',
+    asset: 'assets/image/Album Art (1).png',
+    audioAsset: 'audio/music4.mp3',
+  ),
+];
+
+/// Local demo audio bundled with the app — the `songs/home` API has no
+/// audio stream url yet, so playback still cycles through these assets.
+const _placeholderAudioAssets = [
+  'audio/music1.m4a',
+  'audio/music2.mp3',
+  'audio/music3.m4a',
+  'audio/music4.mp3',
+];
+
+String _formatDurationMs(int durationMs) {
+  if (durationMs <= 0) return 'NEW';
+  final totalSeconds = durationMs ~/ 1000;
+  final minutes = totalSeconds ~/ 60;
+  final seconds = totalSeconds % 60;
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
+
 class _NewReleaseList extends StatelessWidget {
-  const _NewReleaseList();
+  const _NewReleaseList({required this.items});
+
+  final List<_ReleaseData> items;
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      _ReleaseData(
-        title: 'Tumi Onek Dami',
-        subtitle: 'Fahim Islam - Single',
-        artist: 'Fahim Islam',
-        meta: 'NEW',
-        asset: 'assets/image/Container.png',
-        audioAsset: 'audio/music2.mp3',
-      ),
-      _ReleaseData(
-        title: 'Amar Hote Hote Mokhlesul Islam Nilu',
-        subtitle: 'Amar Hote Hote - Single',
-        artist: 'Mokhlesul Islam Nilu',
-        meta: '4:20',
-        asset: 'assets/image/Album Art.png',
-        audioAsset: 'audio/music3.m4a',
-      ),
-      _ReleaseData(
-        title: 'Emon Ekta Golpo',
-        subtitle: 'Nabila - Single',
-        artist: 'Nabila',
-        meta: '3:15',
-        asset: 'assets/image/Album Art (1).png',
-        audioAsset: 'audio/music4.mp3',
-      ),
-    ];
-
     return Column(
       children: [
         for (final item in items) ...[
@@ -625,6 +730,10 @@ class _ReleaseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        if (item.listenId != null) {
+          Get.find<HomeController>().playSong(item.listenId!);
+          return;
+        }
         Get.find<PlayerController>().play(
           title: item.title,
           artist: item.artist,
@@ -645,6 +754,7 @@ class _ReleaseTile extends StatelessWidget {
               height: 72,
               child: _ArtworkBackground(
                 asset: item.asset,
+                imageUrl: item.coverUrl,
                 colors: const [Color(0xFF5AE6D0), Color(0xFF473E96)],
               ),
             ),
@@ -788,10 +898,15 @@ class _ArtistWatchList extends StatelessWidget {
 }
 
 class _ArtworkBackground extends StatelessWidget {
-  const _ArtworkBackground({required this.asset, required this.colors});
+  const _ArtworkBackground({
+    required this.asset,
+    required this.colors,
+    this.imageUrl,
+  });
 
   final String asset;
   final List<Color> colors;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -807,15 +922,30 @@ class _ArtworkBackground extends StatelessWidget {
             ),
           ),
         ),
-        Image.asset(
-          asset,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const Icon(
-            Icons.music_note_rounded,
-            color: Colors.white,
-            size: 42,
+        if (imageUrl != null && imageUrl!.isNotEmpty)
+          Image.network(
+            imageUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              asset,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.music_note_rounded,
+                color: Colors.white,
+                size: 42,
+              ),
+            ),
+          )
+        else
+          Image.asset(
+            asset,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.music_note_rounded,
+              color: Colors.white,
+              size: 42,
+            ),
           ),
-        ),
       ],
     );
   }
@@ -829,6 +959,8 @@ class _ReleaseData {
     required this.meta,
     required this.asset,
     required this.audioAsset,
+    this.coverUrl,
+    this.listenId,
   });
 
   final String title;
@@ -837,6 +969,8 @@ class _ReleaseData {
   final String meta;
   final String asset;
   final String audioAsset;
+  final String? coverUrl;
+  final String? listenId;
 }
 
 class _ArtistData {

@@ -99,7 +99,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                     /// AppBar
                     Padding(
                       padding:
-                          const EdgeInsets.all(16),
+                          EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
                           CircleAvatar(

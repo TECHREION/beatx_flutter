@@ -14,12 +14,12 @@ class AppGround extends StatelessWidget {
   final int initialIndex;
   final RxInt currentIndex;
 
-  final List<Widget> pages = const [
+  final List<Widget> pages = [
     HomeScreen(),
-    WatchScreen(),
-    PodcastScreen(),
-    AudiobookScreen(),
-    ShopScreen(),
+    const WatchScreen(),
+    const PodcastScreen(),
+    const AudiobookScreen(),
+    const ShopScreen(),
   ];
 
   final List<_NavItemData> _navItems = const [
