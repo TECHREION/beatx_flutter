@@ -25,7 +25,7 @@ void internalServiceDI() {
     fenix: true,
   );
 
-  Get.put<AppManager>(AppManager(Get.find<AuthorizedPigeon>()));
+  Get.put<AppManager>(AppManager());
 
   Get.put<PlayerController>(PlayerController(), permanent: true);
 }
