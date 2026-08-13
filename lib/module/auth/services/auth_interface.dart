@@ -27,8 +27,6 @@ abstract base class AuthInterface extends BaseRepository {
 
   FutureRequest<Success> resetPassword(ResetPasswordModel params);
 
-  // FutureRequest<Success> changePassword(ChangePasswordModel param);
-
   Future<Either<DataCRUDFailure, Success>> logout();
 
   FutureRequest<Success> googleLogin();

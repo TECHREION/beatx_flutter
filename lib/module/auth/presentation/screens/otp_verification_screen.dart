@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../onbording/common/app_logo.dart';
+import 'create_new_password_screen.dart';
 
 enum OtpMode { emailVerification, forgetPassword }
 
@@ -135,6 +136,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     onDigitChanged: _onDigitChanged,
                     onBackspace: _onBackspace,
                     onVerified: widget.onVerified,
+                    mode: widget.mode,
+                    email: widget.email,
                   ),
                 ),
               ),
@@ -155,6 +158,8 @@ class _OtpCard extends StatelessWidget {
     required this.onDigitChanged,
     required this.onBackspace,
     required this.onVerified,
+    required this.mode,
+    required this.email,
   });
 
   final VerifyOtpController controller;
@@ -163,6 +168,8 @@ class _OtpCard extends StatelessWidget {
   final void Function(String value, int index) onDigitChanged;
   final void Function(int index, KeyEvent event) onBackspace;
   final VoidCallback? onVerified;
+  final OtpMode mode;
+  final String email;
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +260,17 @@ class _OtpCard extends StatelessWidget {
             buttonStatusNotifier: controller.prcessNotifier,
             onSaveTap: controller.verify,
             onDone: () {
-              if (onVerified != null) {
+              if (mode == OtpMode.forgetPassword) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateNewPasswordScreen(
+                      email: email,
+                      otp: controller.otp,
+                    ),
+                  ),
+                );
+              } else if (onVerified != null) {
                 onVerified!();
               } else {
                 Navigator.maybePop(context);

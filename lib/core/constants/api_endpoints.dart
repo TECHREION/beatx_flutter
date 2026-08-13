@@ -89,8 +89,8 @@ class _Auth {
   static const String emailVerification = '$_authRoute/verify-email';
   static const String forgetPassword = '$_authRoute/forgot-password';
   static const String refreshToken = '$_authRoute/refresh-token';
-  static const String verifyCode = '$_authRoute/password-reset/verify';
-  static const String resetPassword = '$_authRoute/password-reset/reset';
+  static const String verifyCode = '$_authRoute/verify-otp';
+  static const String resetPassword = '$_authRoute/reset-password';
   static const String resendEmailOtp = '$_authRoute/resend-verification';
 }
 

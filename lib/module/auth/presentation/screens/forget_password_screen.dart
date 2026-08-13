@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/theme/app_gap.dart';
 import '../../../onbording/common/app_logo.dart';
+import 'otp_verification_screen.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -106,28 +107,8 @@ class _ForgetPasswordCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppLogo(height: 72, width: 180),
-            Text.rich(
-              TextSpan(
-                text: 'Welcome to BEAT',
-                children: [
-                  TextSpan(
-                    text: 'X',
-                    style: TextStyle(
-                      color: const Color(0xFFD27BFF),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              style: const TextStyle(
-                color: Color(0xFFC6C0C8),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0,
-              ),
-            ),
-            const SizedBox(height: 28),
+            const AppLogo(),
+            const SizedBox(height: 40),
             const Text(
               'Forgot Password?',
               textAlign: TextAlign.center,
@@ -189,7 +170,15 @@ class _ForgetPasswordCard extends StatelessWidget {
 
                 controller.forgetPassword(
                   onSuccess: () {
-                    Navigator.maybePop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OtpVerificationScreen(
+                          email: controller.email,
+                          mode: OtpMode.forgetPassword,
+                        ),
+                      ),
+                    );
                   },
                 );
               },

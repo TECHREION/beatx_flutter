@@ -1,3 +1,6 @@
+import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/module/auth/controller/create_new_password_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -5,9 +8,17 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_gap.dart';
 import '../../../onbording/common/app_logo.dart';
 import '../../presentation/widget/textfield.dart';
+import 'login_screen.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
-  const CreateNewPasswordScreen({super.key});
+  const CreateNewPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otp,
+  });
+
+  final String email;
+  final String otp;
 
   @override
   State<CreateNewPasswordScreen> createState() => _CreateNewPasswordScreenState();
@@ -15,6 +26,9 @@ class CreateNewPasswordScreen extends StatefulWidget {
 
 class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  late final ResetPasswordController _controller;
+  late final bool _ownsController;
 
   String _password = '';
 
@@ -26,6 +40,25 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = !Get.isRegistered<ResetPasswordController>();
+    _controller = _ownsController
+        ? Get.put(
+            ResetPasswordController(email: widget.email, otp: widget.otp),
+          )
+        : Get.find<ResetPasswordController>();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsController && Get.isRegistered<ResetPasswordController>()) {
+      Get.delete<ResetPasswordController>();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +161,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                             isPassword: true,
                             onChanged: (value) {
                               _password = value;
+                              _controller.newPassword = value;
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -148,6 +182,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                             prefixIcon: Icons.lock_outline,
                             isPassword: true,
                             onChanged: (value) {
+                              _controller.confirmPassword = value;
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -164,44 +199,42 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
 
                           const SizedBox(height: 20),
 
-                          SizedBox(
-                            width: double.infinity,
-                            height: 58,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: _buttonGradient,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    Get.snackbar(
-                                      "Success",
-                                      "Password Changed Successfully",
-                                      backgroundColor:
-                                          const Color(0xFF111113),
-                                      colorText: Colors.white,
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(30),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Change Password",
-                                  style: TextStyle(
-                                    color: Color(0xFF111113),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
+                          RSaveButton(
+                            key: const ValueKey(
+                              'create-new-password-save-button',
                             ),
+                            height: 55,
+                            borderRadius: BorderRadius.circular(28),
+                            activeGradient: _buttonGradient,
+                            style: const TextStyle(
+                              color: Color(0xFF113238),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
+                            ),
+                            saveText: 'Reset Password',
+                            loadingText: 'Saving',
+                            doneText: 'Done',
+                            errorText: 'Failed',
+                            buttonStatusNotifier: _controller.processNotifier,
+                            onSaveTap: () {
+                              if (!(_formKey.currentState?.validate() ??
+                                  false)) {
+                                return;
+                              }
+                              _controller.resetPassword(
+                                SnackbarNotifier(context: context),
+                              );
+                            },
+                            onDone: () {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LoginScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            },
                           ),
                         ],
                       ),

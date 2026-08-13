@@ -136,9 +136,6 @@ final class AuthInterfaceImpl extends AuthInterface {
           ApiEndpoints.resendEmailOtp,
           data: {'email': email},
         );
-        // final body = response.data is Map
-        //     ? Map<String, dynamic>.from(response.data as Map)
-        //     : <String, dynamic>{};
         return Success(message: extractSuccessMessage(response));
       },
     );
