@@ -1,7 +1,7 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/presentation/screens/forget_password_screen.dart';
-import 'package:beatx_flutter/module/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:beatx_flutter/module/auth/presentation/screens/email_verify_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/screens/signup_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/social_auth_buttons.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
@@ -195,7 +195,7 @@ class _LoginCard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => OtpVerificationScreen(
+                            builder: (_) => EmailVerificationScreen(
                               email: controller.email.value,
                               mode: OtpMode.emailVerification,
                               onVerified: () {

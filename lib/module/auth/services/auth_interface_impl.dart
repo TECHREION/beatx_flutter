@@ -28,54 +28,13 @@ final class AuthInterfaceImpl extends AuthInterface {
           ApiEndpoints.login,
           data: params.toJson(),
         );
-
         debugPrint("login response [${response.statusCode}]: ${response.data}");
-
-        // final body = response.data is Map
-        //     ? Map<String, dynamic>.from(response.data as Map)
-        //     : <String, dynamic>{};
-
-        // final data = body['data'] is Map
-        //     ? Map<String, dynamic>.from(body['data'] as Map)
-        //     : <String, dynamic>{};
-
-        // final accessToken = (data['accessToken'] ?? '').toString();
-        // final refreshToken = (data['refreshToken'] ?? '').toString();
-
-        // // Backend returns no user object — decode from JWT
-        // // final claims = _jwtClaims(accessToken);
-        // // final uid = (claims['sub'] ?? '').toString();
-        // // final email = (claims['email'] ?? params.email).toString();
-        // // final role = (claims['role'] ?? 'user').toString();
-
-        // await appPigeon.saveNewAuth(
-        //   saveAuthParams: SaveNewAuthParams(
-        //     uid: uid,
-        //     accessToken: accessToken,
-        //     refreshToken: refreshToken,
-        //     data: {
-        //       'userId': uid,
-        //       'email': email,
-        //       'role': role,
-        //       'name': '',
-        //       'preferredLanguage': params.preferredLanguage,
-        //     },
-        //   ),
-        // );
-
-        // if (Get.isRegistered<AppLanguageController>()) {
-        //   await Get.find<AppLanguageController>().syncFromBackendValue(
-        //     params.preferredLanguage,
-        //   );
-        // }
         final body = extractBodyData(response);
         debugPrint(body.toString());
 
         final accessToken = (body["accessToken"] ?? '').toString();
         final refreshToken = (body["refreshToken"] ?? '').toString();
         final role = (body['role'] ?? 'user').toString();
-
-        // Backend returns no user object — use the email the user logged in with
         await appPigeon.saveNewAuth(
           saveAuthParams: SaveNewAuthParams(
             uid: params.email,
@@ -101,13 +60,6 @@ final class AuthInterfaceImpl extends AuthInterface {
           ApiEndpoints.signup,
           data: params.toMap(),
         );
-
-        // debugPrint("Signup response: ${response.data}");
-
-        // final body = response.data is Map
-        //     ? Map<String, dynamic>.from(response.data as Map)
-        //     : <String, dynamic>{};
-
         return Success(message: extractSuccessMessage(response));
       },
     );
@@ -171,42 +123,6 @@ final class AuthInterfaceImpl extends AuthInterface {
           ApiEndpoints.verifyEmail,
           data: param.toJson(),
         );
-
-        // debugPrint("verifyEmail response: ${response.data}");
-
-        // final body = response.data is Map
-        //     ? Map<String, dynamic>.from(response.data as Map)
-        //     : <String, dynamic>{};
-
-        // final data = body['data'] is Map
-        //     ? Map<String, dynamic>.from(body['data'] as Map)
-        //     : <String, dynamic>{};
-
-        // final accessToken = (data['accessToken'] ?? '').toString();
-        // final refreshToken = (data['refreshToken'] ?? '').toString();
-
-        // if (accessToken.isNotEmpty) {
-        //   final claims = _jwtClaims(accessToken);
-        //   final uid = (claims['sub'] ?? '').toString();
-        //   final email = (claims['email'] ?? param.email).toString();
-        //   final role = (claims['role'] ?? 'user').toString();
-
-        //   await appPigeon.saveNewAuth(
-        //     saveAuthParams: SaveNewAuthParams(
-        //       uid: uid,
-        //       accessToken: accessToken,
-        //       refreshToken: refreshToken,
-        //       data: {
-        //         'userId': uid,
-        //         'email': email,
-        //         'role': role,
-        //         'name': '',
-        //         'preferredLanguage': 'en',
-        //       },
-        //     ),
-        //   );
-        // }
-
         return Success(message: extractSuccessMessage(response));
       },
     );

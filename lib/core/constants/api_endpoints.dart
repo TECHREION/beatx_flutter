@@ -30,6 +30,8 @@ base class ApiEndpoints {
   static const String audiobookhome = _Audiobook.audiobookhome;
   static String audiobookDetails({required String audiobookId}) =>
       _Audiobook._audiobookDetails(audiobookId);
+  static String audiobookStreamUrl({required String audiobookId, required String chapterId}) =>
+      _Audiobook._audiobookStreamUrl(audiobookId, chapterId);
   
   //----------------------- watch -----------------------------
   static const String videoHome = _Video.videoHome;
@@ -73,7 +75,7 @@ class _Auth {
   static const String socialLogin = '$_authRoute/social-login';
   static const String signup = '$_authRoute/register';
   static const String emailVerification = '$_authRoute/verify-email';
-  static const String forgetPassword = '$_authRoute/password-reset/request';
+  static const String forgetPassword = '$_authRoute/forgot-password';
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/password-reset/verify';
   static const String resetPassword = '$_authRoute/password-reset/reset';
@@ -95,6 +97,8 @@ class _Audiobook {
   static const String audiobookhome = '$_audiobookRoute/home';
   static String _audiobookDetails(String audiobookId) =>
       '$_audiobookRoute/$audiobookId';
+  static String _audiobookStreamUrl(String audiobookId, String chapterId) =>
+      '${_audiobookDetails(audiobookId)}/stream/$chapterId';
 }
 
 // ---------------------- watch -----------------------------

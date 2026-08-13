@@ -6,6 +6,8 @@ import 'package:beatx_flutter/module/audiobook/model/audio_book_details_model.da
 import 'package:beatx_flutter/module/audiobook/model/audiobook_model.dart';
 import 'package:beatx_flutter/module/audiobook/services/audio_book_interface.dart';
 
+import '../model/audio_book_stream_url_model.dart';
+
 final class AudioBookInterfaceImpl extends AudioBookInterface {
   AudioBookInterfaceImpl(this.appPigeon);
 
@@ -54,6 +56,33 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: AudiobookDetailsData.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(String audiobookId, String chapterId) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.audiobookStreamUrl(
+            audiobookId: audiobookId,
+            chapterId: chapterId,
+          ),
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: AudioBookStreamUrlModel.fromJson(data),
         );
       },
     );

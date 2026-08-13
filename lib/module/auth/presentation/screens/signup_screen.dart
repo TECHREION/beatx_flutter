@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_gap.dart';
 import '../../../onbording/common/app_logo.dart';
-import 'otp_verify_screen.dart';
+import 'email_verify_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -184,7 +184,7 @@ class _SignupCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => OtpVerificationScreen(
+                    builder: (_) => EmailVerificationScreen(
                       email: controller.email.value,
                       mode: OtpMode.emailVerification,
                       onVerified: () {

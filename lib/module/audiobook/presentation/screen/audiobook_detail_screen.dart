@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/notifiers/snackbar_notifier.dart';
 import '../../controller/audio_book_details_controller.dart';
 import '../../model/audio_book_details_model.dart' as details_model;
 import '../../model/audiobook_model.dart';
@@ -45,7 +46,7 @@ class AudiobookDetailScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                     sliver: SliverList.list(
                       children: [
-                        _ActionPanel(book: book),
+                        _ActionPanel(book: book, controller: detailsController),
                         const SizedBox(height: 20),
                         _RatingsBlock(book: book),
                         const SizedBox(height: 10),
@@ -61,6 +62,7 @@ class AudiobookDetailScreen extends StatelessWidget {
                             chapters:
                                 detailsController.details.value?.chapters ??
                                 const [],
+                            controller: detailsController,
                           ),
                         ),
                       ],
@@ -147,9 +149,28 @@ class _DetailHeader extends StatelessWidget {
 }
 
 class _ActionPanel extends StatelessWidget {
-  const _ActionPanel({required this.book});
+  const _ActionPanel({required this.book, required this.controller});
 
   final Audiobook book;
+  final AudioBookDetailsController controller;
+
+  Future<void> _listenNow(BuildContext context) async {
+    final chapter = controller.firstChapter;
+    if (chapter == null) {
+      SnackbarNotifier(
+        context: context,
+      ).notifyError(message: 'No chapters available yet.');
+      return;
+    }
+
+    await controller.playChapter(chapter);
+
+    if (context.mounted && controller.errorMessage.value.isNotEmpty) {
+      SnackbarNotifier(
+        context: context,
+      ).notifyError(message: controller.errorMessage.value);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -242,23 +263,38 @@ class _ActionPanel extends StatelessWidget {
               Expanded(
                 child: SizedBox(
                   height: 54,
-                  child: FilledButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.play_arrow_rounded, size: 28),
-                    label: Text(progress > 0 ? 'Resume' : 'Listen Now'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF40DDEB),
-                      foregroundColor: const Color(0xFF111315),
-                      textStyle: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
+                  child: Obx(() {
+                    final isLoading = controller.isStreamLoading.value;
+                    return FilledButton.icon(
+                      onPressed: isLoading ? null : () => _listenNow(context),
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: Color(0xFF111315),
+                              ),
+                            )
+                          : const Icon(Icons.play_arrow_rounded, size: 28),
+                      label: Text(progress > 0 ? 'Resume' : 'Listen Now'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF40DDEB),
+                        foregroundColor: const Color(0xFF111315),
+                        disabledBackgroundColor: const Color(
+                          0xFF40DDEB,
+                        ).withValues(alpha: 0.6),
+                        textStyle: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                    ),
-                  ),
+                    );
+                  }),
                 ),
               ),
               const SizedBox(width: 16),
@@ -428,9 +464,10 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ChaptersBlock extends StatelessWidget {
-  const _ChaptersBlock({required this.chapters});
+  const _ChaptersBlock({required this.chapters, required this.controller});
 
   final List<details_model.Chapter> chapters;
+  final AudioBookDetailsController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -462,7 +499,7 @@ class _ChaptersBlock extends StatelessWidget {
           if (chapters.isNotEmpty) ...[
             const SizedBox(height: 22),
             for (var i = 0; i < chapters.length; i++) ...[
-              _ChapterRow(chapter: chapters[i]),
+              _ChapterRow(chapter: chapters[i], controller: controller),
               if (i != chapters.length - 1) const SizedBox(height: 24),
             ],
           ],
@@ -473,9 +510,20 @@ class _ChaptersBlock extends StatelessWidget {
 }
 
 class _ChapterRow extends StatelessWidget {
-  const _ChapterRow({required this.chapter});
+  const _ChapterRow({required this.chapter, required this.controller});
 
   final details_model.Chapter chapter;
+  final AudioBookDetailsController controller;
+
+  Future<void> _play(BuildContext context) async {
+    await controller.playChapter(chapter);
+
+    if (context.mounted && controller.errorMessage.value.isNotEmpty) {
+      SnackbarNotifier(
+        context: context,
+      ).notifyError(message: controller.errorMessage.value);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -509,19 +557,35 @@ class _ChapterRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          width: 50,
-          height: 50,
-          decoration: const BoxDecoration(
+        Obx(() {
+          final isLoading = controller.isStreamLoading.value;
+          return Material(
             color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.north_east_rounded,
-            color: Color(0xFF111315),
-            size: 25,
-          ),
-        ),
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: isLoading ? null : () => _play(context),
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(15),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: Color(0xFF111315),
+                        ),
+                      )
+                    : const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Color(0xFF111315),
+                        size: 27,
+                      ),
+              ),
+            ),
+          );
+        }),
       ],
     );
   }
