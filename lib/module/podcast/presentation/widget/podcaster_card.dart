@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../model/podcaster_model.dart';
+import '../../model/podcast_home_model.dart';
 
 class PodcasterCard extends StatelessWidget {
   const PodcasterCard({super.key, required this.podcasters});
 
-  final List<PodcasterModel> podcasters;
+  final List<Podcaster> podcasters;
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +41,31 @@ class PodcasterCard extends StatelessWidget {
                         ),
                         child: CircleAvatar(
                           backgroundColor: const Color(0xFF111113),
-                          backgroundImage: AssetImage(podcaster.image),
-                          onBackgroundImageError: (_, _) {},
+                          backgroundImage:
+                              podcaster.artistAvatar?.isNotEmpty == true
+                              ? NetworkImage(podcaster.artistAvatar!)
+                              : null,
+                          onBackgroundImageError:
+                              podcaster.artistAvatar?.isNotEmpty == true
+                              ? (_, _) {}
+                              : null,
+                          child: podcaster.artistAvatar?.isNotEmpty == true
+                              ? null
+                              : Text(
+                                  _initials(podcaster.stageName ?? podcaster.name),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        podcaster.name,
+                        podcaster.stageName?.isNotEmpty == true
+                            ? podcaster.stageName!
+                            : podcaster.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -88,4 +106,13 @@ class PodcasterCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _initials(String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return '?';
+  final parts = trimmed.split(RegExp(r'\s+'));
+  final first = parts.first.isNotEmpty ? parts.first[0] : '';
+  final last = parts.length > 1 && parts.last.isNotEmpty ? parts.last[0] : '';
+  return (first + last).toUpperCase();
 }

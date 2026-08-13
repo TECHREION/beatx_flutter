@@ -50,6 +50,18 @@ base class ApiEndpoints {
       _Listen._listenDetails(listenId);
   static String listenStreamUrl({required String listenId}) =>
       _Listen._listenStreamUrl(listenId);
+
+  //---------------------- podcast -----------------------------
+  static const String podcastHome = _Podcast.podcastHome;
+  static String podcastDetails({required String podcastId}) =>
+      _Podcast._podcastDetails(podcastId);
+  static String podcastEpisodes({required String podcastId}) =>
+      _Podcast._podcastEpisodes(podcastId);
+  static String episodeDetails({required String episodeId}) =>
+      _Podcast._episodeDetails(episodeId);
+  static String getStreamUrl({required String episodeId}) =>
+      _Podcast._getStreamUrl(episodeId);
+  
 }
 
 //arrow360degree@gmail.com
@@ -123,6 +135,20 @@ class _Listen {
       '$listen/$listenId';
   static String _listenStreamUrl(String listenId) =>
       '${_listenDetails(listenId)}/stream';
+}
+
+// ---------------------- podcast -----------------------------
+class _Podcast {
+  static const String podcastRoute = '${ApiEndpoints.baseUrl}/podcasts';
+  static const String podcastHome = '$podcastRoute/home';
+  static String _podcastDetails(String podcastId) =>
+      '$podcastRoute/$podcastId';
+  static String _episodeDetails(String episodeId) =>
+      '$podcastRoute/episodes/$episodeId';
+  static String _getStreamUrl(String episodeId) =>
+      '${_episodeDetails(episodeId)}/stream';
+  static String _podcastEpisodes(String podcastId) =>
+      '${_podcastDetails(podcastId)}/episodes';
 }
 
 // ---------------------- Notification -----------------------------

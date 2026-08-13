@@ -268,6 +268,20 @@ class RecentEpisode {
       publishedAt: DateTime.parse(json['publishedAt']),
     );
   }
+
+  /// `45 min`, `1h 12m`.
+  String get formattedDuration => formatPodcastDuration(durationMs);
+
+  bool get isNew => DateTime.now().difference(publishedAt).inDays <= 7;
+}
+
+String formatPodcastDuration(int milliseconds) {
+  if (milliseconds <= 0) return '';
+  final duration = Duration(milliseconds: milliseconds);
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  if (hours == 0) return '$minutes min';
+  return '${hours}h ${minutes}m';
 }
 
 class Metadata {

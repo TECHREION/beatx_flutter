@@ -1,95 +1,137 @@
-import 'package:flutter/material.dart';
+import 'package:app_pigeon/app_pigeon.dart';
+import 'package:beatx_flutter/core/player/player_controller.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:get/get.dart';
 
-import '../model/category_model.dart';
-import '../model/episode_model.dart';
-import '../model/podcast_model.dart';
-import '../model/podcaster_model.dart';
+import '../model/podcast_home_model.dart';
+import '../services/podcast_interface.dart';
+import '../services/podcast_interface_impl.dart';
 
 class PodcastController extends GetxController {
+  final home = Rxn<PodcastHomeData>();
+  final isLoading = true.obs;
+  final errorMessage = ''.obs;
   final featuredIndex = 0.obs;
 
-  final featuredPodcasts = const <PodcastModel>[
-    PodcastModel(
-      title: 'DeadLine Adda',
-      host: 'Teamature',
-      description:
-          'Exploring the intersections of artificial intelligence and human psychology...',
-      image: 'assets/image/Featured Podcast 1.png',
-      badge: 'TRENDING NOW',
-    ),
-    PodcastModel(
-      title: 'Frequency Response',
-      host: 'Fahim Islam',
-      description:
-          'Fresh conversations on culture, creativity, and sound design.',
-      image: 'assets/image/Featured Podcast 1.png',
-      badge: 'CURATED PICK',
-    ),
-  ];
+  /// Id of the episode whose stream URL is being fetched, or '' when idle.
+  final loadingEpisodeId = ''.obs;
 
-  final categories = const <CategoryModel>[
-    CategoryModel(
-      title: 'True Crime',
-      image: 'assets/image/podcast_category_true_crime.png',
-      tint: Color(0xFF4D314F),
-    ),
-    CategoryModel(
-      title: 'Comedy',
-      image: 'assets/image/podcast_category_comedy.png',
-      tint: Color(0xFF176064),
-    ),
-    CategoryModel(
-      title: 'Tech',
-      image: 'assets/image/podcast_category_tech.png',
-      tint: Color(0xFF4E563B),
-    ),
-  ];
+  bool get isStreamLoading => loadingEpisodeId.value.isNotEmpty;
 
-  final podcasters = const <PodcasterModel>[
-    PodcasterModel(name: 'Fahim Islam', image: 'assets/image/a1.png'),
-    PodcasterModel(name: 'SARAH V.', image: 'assets/image/a2.png'),
-    PodcasterModel(name: 'DR. THORNE', image: 'assets/image/a3.png'),
-    PodcasterModel(
-      name: 'MARCUS K.',
-      image: 'assets/image/podcast_avatar_marcus.png',
-    ),
-  ];
+  @override
+  void onInit() {
+    super.onInit();
+    fetchHome();
+  }
 
-  final episodes = const <EpisodeModel>[
-    EpisodeModel(
-      title: 'The Crime Renaissance',
-      subtitle: 'Why modern producers are...',
-      meta: '45 min - Frequency Response',
-      image: 'assets/image/Episode 1.png',
-      audioAsset: 'audio/music5.m4a',
-      isNew: true,
-    ),
-    EpisodeModel(
-      title: 'S04 E12: Silicon Dreams',
-      subtitle: 'What happens when the AI...',
-      meta: '58 min - Neural Networks',
-      image: 'assets/image/Episode 2.png',
-      audioAsset: 'audio/music6.m4a',
-    ),
-    EpisodeModel(
-      title: 'Quantum Supremacy & Audio',
-      subtitle: 'How quantum computing will...',
-      meta: '1h 12m - Tech Talk',
-      image: 'assets/image/Episode 3.png',
-      audioAsset: 'audio/music1.m4a',
-    ),
-  ];
+  PodcastInterface _podcastInterface() {
+    if (!Get.isRegistered<PodcastInterface>() &&
+        Get.isRegistered<AuthorizedPigeon>()) {
+      Get.put<PodcastInterface>(
+        PodcastInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      );
+    }
+    return Get.find<PodcastInterface>();
+  }
 
-  PodcastModel get featuredPodcast => featuredPodcasts[featuredIndex.value];
+  PlayerController _playerController() {
+    if (!Get.isRegistered<PlayerController>()) {
+      Get.put(PlayerController(), permanent: true);
+    }
+    return Get.find<PlayerController>();
+  }
+
+  Future<void> fetchHome() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    final result = await _podcastInterface().podcastHome();
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (
+      success,
+    ) {
+      home.value = success.data;
+      if (featuredIndex.value >= featured.length) featuredIndex.value = 0;
+    });
+
+    isLoading.value = false;
+  }
+
+  List<ContinueListening> get continueListening =>
+      home.value?.continueListening ?? const [];
+
+  List<FeaturedPodcast> get featured => home.value?.featured ?? const [];
+
+  FeaturedPodcast? get featuredPodcast =>
+      featured.isEmpty ? null : featured[featuredIndex.value];
+
+  List<TopCategory> get categories => home.value?.topCategories ?? const [];
+
+  List<Podcaster> get podcasters => home.value?.topPodcasters.data ?? const [];
+
+  List<RecentEpisode> get episodes => home.value?.recentEpisodes ?? const [];
 
   void showPreviousFeatured() {
+    if (featured.isEmpty) return;
     featuredIndex.value =
-        (featuredIndex.value - 1 + featuredPodcasts.length) %
-        featuredPodcasts.length;
+        (featuredIndex.value - 1 + featured.length) % featured.length;
   }
 
   void showNextFeatured() {
-    featuredIndex.value = (featuredIndex.value + 1) % featuredPodcasts.length;
+    if (featured.isEmpty) return;
+    featuredIndex.value = (featuredIndex.value + 1) % featured.length;
+  }
+
+  /// Plays the first recent episode belonging to [podcast], if any is loaded.
+  Future<void> playFeatured(FeaturedPodcast podcast) async {
+    RecentEpisode? episode;
+    for (final candidate in episodes) {
+      if (candidate.podcastId.id == podcast.id) {
+        episode = candidate;
+        break;
+      }
+    }
+
+    if (episode == null) {
+      errorMessage.value = 'No episodes available for this podcast yet.';
+      return;
+    }
+
+    await playEpisode(episode);
+  }
+
+  /// Fetches the stream URL for [episode] and starts playback via the app's
+  /// shared [PlayerController], then opens the full-screen player.
+  Future<void> playEpisode(RecentEpisode episode) async {
+    if (isStreamLoading) return;
+
+    loadingEpisodeId.value = episode.id;
+    errorMessage.value = '';
+
+    final result = await _podcastInterface().getStreamUrl(episode.id);
+
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (
+      success,
+    ) {
+      final streamUrl = success.data?.streamUrl ?? '';
+      if (streamUrl.isEmpty) {
+        errorMessage.value = 'Stream URL is unavailable right now.';
+        return;
+      }
+
+      _playerController().play(
+        title: episode.title,
+        artist: episode.podcastId.title,
+        imageAsset: episode.coverUrl ?? episode.podcastId.coverUrl ?? '',
+        audioAsset: streamUrl,
+      );
+
+      Get.to(
+        () => const PlayerScreen(),
+        transition: Transition.downToUp,
+        preventDuplicates: true,
+      );
+    });
+
+    loadingEpisodeId.value = '';
   }
 }

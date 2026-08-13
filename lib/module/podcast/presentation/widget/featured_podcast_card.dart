@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../../model/podcast_model.dart';
+import '../../../audiobook/presentation/widget/book_cover.dart';
+import '../../model/podcast_home_model.dart';
 
 class FeaturedPodcastCard extends StatelessWidget {
-  const FeaturedPodcastCard({super.key, required this.podcast});
+  const FeaturedPodcastCard({
+    super.key,
+    required this.podcast,
+    this.onListenNow,
+    this.isLoading = false,
+  });
 
-  final PodcastModel podcast;
+  final FeaturedPodcast podcast;
+  final VoidCallback? onListenNow;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -16,17 +24,10 @@ class FeaturedPodcastCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              podcast.image,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const ColoredBox(
-                color: Color(0xFF202020),
-                child: Icon(
-                  Icons.graphic_eq_rounded,
-                  color: Colors.white38,
-                  size: 58,
-                ),
-              ),
+            BookCover(
+              url: podcast.coverUrl ?? '',
+              placeholderIcon: Icons.graphic_eq_rounded,
+              iconSize: 58,
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -50,15 +51,16 @@ class FeaturedPodcastCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    podcast.badge,
-                    style: const TextStyle(
-                      color: Color(0xFFBD89FF),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0,
+                  if (podcast.genre.name.isNotEmpty)
+                    Text(
+                      podcast.genre.name.toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFFBD89FF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 7),
                   Text(
                     podcast.title,
@@ -72,7 +74,9 @@ class FeaturedPodcastCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    podcast.host,
+                    podcast.totalEpisodes > 0
+                        ? '${podcast.totalEpisodes} episodes'
+                        : '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -99,12 +103,24 @@ class FeaturedPodcastCard extends StatelessWidget {
                   SizedBox(
                     height: 51,
                     child: FilledButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.play_arrow_rounded, size: 25),
+                      onPressed: isLoading ? null : onListenNow,
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Color(0xFF111315),
+                              ),
+                            )
+                          : const Icon(Icons.play_arrow_rounded, size: 25),
                       label: const Text('LISTEN NOW'),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF40DDEB),
                         foregroundColor: const Color(0xFF111315),
+                        disabledBackgroundColor: const Color(
+                          0xFF40DDEB,
+                        ).withValues(alpha: 0.6),
                         padding: const EdgeInsets.symmetric(horizontal: 28),
                         textStyle: const TextStyle(
                           fontSize: 13,

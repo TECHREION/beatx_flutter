@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 
-import '../../model/episode_model.dart';
+import '../../../audiobook/presentation/widget/book_cover.dart';
+import '../../model/podcast_home_model.dart';
 
 class EpisodeTile extends StatelessWidget {
-  const EpisodeTile({super.key, required this.episode, this.onTap});
+  const EpisodeTile({
+    super.key,
+    required this.episode,
+    this.onTap,
+    this.isLoading = false,
+  });
 
-  final EpisodeModel episode;
+  final RecentEpisode episode;
   final VoidCallback? onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
+    final meta = [
+      episode.formattedDuration,
+      episode.podcastId.title,
+    ].where((e) => e.isNotEmpty).join(' - ');
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         height: 92,
         padding: const EdgeInsets.all(10),
@@ -23,20 +35,13 @@ class EpisodeTile extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                episode.image,
+              child: SizedBox(
                 width: 72,
                 height: 72,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 72,
-                  height: 72,
-                  color: const Color(0xFF202020),
-                  child: const Icon(
-                    Icons.mic_rounded,
-                    color: Colors.white38,
-                    size: 30,
-                  ),
+                child: BookCover(
+                  url: episode.coverUrl ?? episode.podcastId.coverUrl ?? '',
+                  placeholderIcon: Icons.mic_rounded,
+                  iconSize: 30,
                 ),
               ),
             ),
@@ -72,7 +77,7 @@ class EpisodeTile extends StatelessWidget {
                       ],
                       Expanded(
                         child: Text(
-                          episode.meta,
+                          meta,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -83,6 +88,15 @@ class EpisodeTile extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (isLoading)
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF40DDEB),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -100,7 +114,7 @@ class EpisodeTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    episode.subtitle,
+                    'Season ${episode.seasonNumber} - Episode ${episode.episodeNumber}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
