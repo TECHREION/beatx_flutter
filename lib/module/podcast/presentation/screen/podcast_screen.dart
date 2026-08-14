@@ -10,6 +10,7 @@ import '../widget/category_card.dart';
 import '../widget/episode_tile.dart';
 import '../widget/featured_podcast_card.dart';
 import '../widget/podcaster_card.dart';
+import 'episode_details_screen.dart';
 
 class PodcastScreen extends StatelessWidget {
   const PodcastScreen({super.key});
@@ -171,8 +172,8 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
           for (final episode in episodes) ...[
             EpisodeTile(
               episode: episode,
-              isLoading: controller.loadingEpisodeId.value == episode.id,
-              onTap: () => _playEpisode(context, controller, episode),
+              onTap: () =>
+                  Get.to(() => EpisodeDetailsScreen(episode: episode)),
             ),
             const SizedBox(height: 12),
           ],
@@ -180,19 +181,6 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
       ],
     ),
   );
-}
-
-Future<void> _playEpisode(
-  BuildContext context,
-  PodcastController controller,
-  RecentEpisode episode,
-) async {
-  await controller.playEpisode(episode);
-  if (context.mounted && controller.errorMessage.value.isNotEmpty) {
-    SnackbarNotifier(
-      context: context,
-    ).notifyError(message: controller.errorMessage.value);
-  }
 }
 
 Future<void> _playFeatured(

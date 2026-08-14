@@ -61,6 +61,8 @@ base class ApiEndpoints {
       _Podcast._episodeDetails(episodeId);
   static String getStreamUrl({required String episodeId}) =>
       _Podcast._getStreamUrl(episodeId);
+  static String saveProgress({required String episodeId}) =>
+      _Podcast._saveProgress(episodeId);
   
 }
 
@@ -110,7 +112,7 @@ class _Audiobook {
   static String _audiobookDetails(String audiobookId) =>
       '$_audiobookRoute/$audiobookId';
   static String _audiobookStreamUrl(String audiobookId, String chapterId) =>
-      '${_audiobookDetails(audiobookId)}/stream/$chapterId';
+      '$_audiobookRoute/$audiobookId/stream/$chapterId';
 }
 
 // ---------------------- watch -----------------------------
@@ -120,11 +122,11 @@ class _Video {
   static String _videoDetails(String videoId) =>
       '$videoRoute/$videoId';
   static String _videoStreamUrl(String videoId) =>
-      '${_videoDetails(videoId)}/stream';
+      '$videoRoute/$videoId/stream';
   static String _relatedVideos(String videoId) =>
-      '${_videoDetails(videoId)}/related';
+      '$videoRoute/$videoId/related';
   static String _likeUnlike(String videoId) =>
-      '${_videoDetails(videoId)}/like';
+      '$videoRoute/$videoId/like';
 }
 
 // ---------------------- Listen/Home -----------------------------
@@ -134,7 +136,7 @@ class _Listen {
   static String _listenDetails(String listenId) =>
       '$listen/$listenId';
   static String _listenStreamUrl(String listenId) =>
-      '${_listenDetails(listenId)}/stream';
+      '$listen/$listenId/stream';
 }
 
 // ---------------------- podcast -----------------------------
@@ -146,9 +148,11 @@ class _Podcast {
   static String _episodeDetails(String episodeId) =>
       '$podcastRoute/episodes/$episodeId';
   static String _getStreamUrl(String episodeId) =>
-      '${_episodeDetails(episodeId)}/stream';
+      '$podcastRoute/episodes/$episodeId/stream';
   static String _podcastEpisodes(String podcastId) =>
-      '${_podcastDetails(podcastId)}/episodes';
+      '$podcastRoute/$podcastId/episodes';
+  static String _saveProgress(String episodeId) =>
+      '$podcastRoute/episodes/$episodeId/progress';
 }
 
 // ---------------------- Notification -----------------------------
