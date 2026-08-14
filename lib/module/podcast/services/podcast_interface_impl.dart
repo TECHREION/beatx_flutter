@@ -8,6 +8,7 @@ import 'package:beatx_flutter/module/podcast/model/podcast_details_model.dart';
 import 'package:beatx_flutter/module/podcast/model/podcast_home_model.dart';
 
 import '../../../core/constants/api_endpoints.dart';
+import '../model/save_progress_data.dart';
 import 'podcast_interface.dart';
 
 final class PodcastInterfaceImpl extends PodcastInterface {
@@ -126,6 +127,34 @@ final class PodcastInterfaceImpl extends PodcastInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: data,
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<SaveProgressData>> saveProgress(
+    String id,
+    int positionMs,
+  ) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.saveProgress(episodeId: id),
+          data: {'positionMs': positionMs},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: SaveProgressData.fromJson(data),
         );
       },
     );

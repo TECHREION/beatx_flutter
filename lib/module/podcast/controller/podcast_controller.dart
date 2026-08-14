@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../model/podcast_home_model.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
+import 'save_progress_controller.dart';
 
 class PodcastController extends GetxController {
   final home = Rxn<PodcastHomeData>();
@@ -39,6 +40,13 @@ class PodcastController extends GetxController {
       Get.put(PlayerController(), permanent: true);
     }
     return Get.find<PlayerController>();
+  }
+
+  SaveProgressController _saveProgressController() {
+    if (!Get.isRegistered<SaveProgressController>()) {
+      Get.put(SaveProgressController(), permanent: true);
+    }
+    return Get.find<SaveProgressController>();
   }
 
   Future<void> fetchHome() async {
@@ -124,6 +132,8 @@ class PodcastController extends GetxController {
         imageAsset: episode.coverUrl ?? episode.podcastId.coverUrl ?? '',
         audioAsset: streamUrl,
       );
+
+      _saveProgressController().start(episode.id);
 
       Get.to(
         () => const PlayerScreen(),
