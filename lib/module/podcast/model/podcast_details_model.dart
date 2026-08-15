@@ -114,7 +114,9 @@ class Podcast {
       coverUrl: json['coverUrl'],
       coverKey: json['coverKey'],
       language: json['language'] ?? '',
-      genre: Genre.fromJson(json['genre'] ?? {}),
+      // The podcast endpoints label this `category`; `genre` is kept as a
+      // fallback in case older responses use it.
+      genre: Genre.fromJson(json['genre'] ?? json['category'] ?? {}),
       ownerId: Owner.fromJson(json['ownerId'] ?? {}),
       totalEpisodes: json['totalEpisodes'] ?? 0,
       totalDurationMs: json['totalDurationMs'] ?? 0,

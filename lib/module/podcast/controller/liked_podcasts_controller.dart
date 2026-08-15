@@ -63,17 +63,6 @@ class LikedPodcastsController extends GetxController {
     isLoading.value = false;
   }
 
-  /// Covers for the header mosaic, at most the four it can show.
-  ///
-  /// A getter rather than work done in the widget so that reading it inside
-  /// an `Obx` is what touches [podcasts] — passing the list itself registers
-  /// no dependency and the observer throws for having watched nothing.
-  List<String> get mosaicCovers => podcasts
-      .map((podcast) => podcast.coverUrl ?? '')
-      .where((url) => url.isNotEmpty)
-      .take(4)
-      .toList();
-
   /// Removes [podcast] from the user's likes and drops it from the list.
   Future<void> unlike(Podcast podcast) async {
     if (unliking.contains(podcast.id)) return;

@@ -73,17 +73,6 @@ class LikedSongsController extends GetxController {
     isLoading.value = false;
   }
 
-  /// Covers for the header mosaic, at most the four it can show.
-  ///
-  /// A getter rather than work done in the widget so that reading it inside
-  /// an `Obx` is what touches [songs] — passing the list itself registers no
-  /// dependency and the observer throws for having watched nothing.
-  List<String> get mosaicCovers => songs
-      .map((song) => song.coverUrl)
-      .where((url) => url.isNotEmpty)
-      .take(4)
-      .toList();
-
   /// Plays [song] and opens the player, through the same path the home
   /// screen uses.
   Future<void> play(ListenMusicDetailsModel song) =>
