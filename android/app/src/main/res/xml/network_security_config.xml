@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cleartext is denied by default and opened only for the API host, so a
+  compromised network cannot downgrade any other traffic.
+
+  This whole file should be deleted once the backend is served over HTTPS on a
+  real domain — see also NSAppTransportSecurity in ios/Runner/Info.plist.
+-->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">13.206.25.95</domain>
+        <!-- Must match ApiEndpoints.baseUrl in lib/core/constants/api_endpoints.dart. -->
+        <domain includeSubdomains="false">13.200.168.40</domain>
     </domain-config>
 </network-security-config>

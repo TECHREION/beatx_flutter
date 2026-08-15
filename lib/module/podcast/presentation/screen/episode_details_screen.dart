@@ -63,15 +63,12 @@ class EpisodeDetailsScreen extends StatelessWidget {
                 children: [
                   Obx(
                     () => _ProgressRow(
-                      durationMs: controller
-                              .details
-                              .value
-                              ?.episode
-                              .durationMs ??
-                          episode.durationMs,
-                      positionMs:
-                          controller.details.value?.userProgress?.positionMs ??
-                          0,
+                      durationMs: controller.durationMs > 0
+                          ? controller.durationMs
+                          : episode.durationMs,
+                      positionMs: controller.listenedMs,
+                      fraction: controller.listenedFraction,
+                      isCompleted: controller.isCompleted,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -102,11 +99,8 @@ class EpisodeDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Obx(
                     () => _PlayActionRow(
-                      hasProgress:
-                          (controller.details.value?.userProgress
-                                  ?.percentComplete ??
-                              0) >
-                          0,
+                      resumePosition: controller.resumePosition,
+                      isCompleted: controller.isCompleted,
                       isLoading: controller.isStreamLoading,
                       onPlay: () => _play(context, controller),
                     ),
@@ -274,27 +268,32 @@ class _CircleIconButton extends StatelessWidget {
 // ─── Progress ─────────────────────────────────────────────────────────────
 
 class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({required this.durationMs, required this.positionMs});
+  const _ProgressRow({
+    required this.durationMs,
+    required this.positionMs,
+    required this.fraction,
+    required this.isCompleted,
+  });
 
   final int durationMs;
   final int positionMs;
+  final double fraction;
+  final bool isCompleted;
 
   @override
   Widget build(BuildContext context) {
-    final progress = durationMs > 0
-        ? (positionMs / durationMs).clamp(0.0, 1.0)
-        : 0.0;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
-            value: progress,
+            value: isCompleted ? 1 : fraction,
             minHeight: 6,
             backgroundColor: Colors.white24,
-            valueColor: const AlwaysStoppedAnimation(Color(0xFF40DDEB)),
+            valueColor: AlwaysStoppedAnimation(
+              isCompleted ? const Color(0xFF9BFF4D) : const Color(0xFF40DDEB),
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -302,7 +301,13 @@ class _ProgressRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(_formatClock(positionMs), style: _clockStyle),
-            Text(_formatClock(durationMs), style: _clockStyle),
+            _StatusLabel(fraction: fraction, isCompleted: isCompleted),
+            // An unmeasured episode has no length to show — "0:00" would
+            // read as an empty episode rather than a missing figure.
+            Text(
+              durationMs > 0 ? _formatClock(durationMs) : '--:--',
+              style: _clockStyle,
+            ),
           ],
         ),
       ],
@@ -315,6 +320,30 @@ class _ProgressRow extends StatelessWidget {
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
+}
+
+/// "Completed", "62% completed", or nothing at all before the first listen.
+class _StatusLabel extends StatelessWidget {
+  const _StatusLabel({required this.fraction, required this.isCompleted});
+
+  final double fraction;
+  final bool isCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isCompleted && fraction <= 0) return const SizedBox.shrink();
+
+    final percent = (fraction * 100).round();
+    return Text(
+      isCompleted ? 'Completed' : '$percent% completed',
+      style: TextStyle(
+        color: isCompleted ? const Color(0xFF9BFF4D) : const Color(0xFF40DDEB),
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+    );
+  }
 }
 
 String _formatClock(int milliseconds) {
@@ -395,14 +424,22 @@ class _Dot extends StatelessWidget {
 
 class _PlayActionRow extends StatelessWidget {
   const _PlayActionRow({
-    required this.hasProgress,
+    required this.resumePosition,
+    required this.isCompleted,
     required this.isLoading,
     required this.onPlay,
   });
 
-  final bool hasProgress;
+  final Duration resumePosition;
+  final bool isCompleted;
   final bool isLoading;
   final VoidCallback onPlay;
+
+  String get _label {
+    if (isCompleted) return 'Play Again';
+    if (resumePosition > Duration.zero) return 'Resume Episode';
+    return 'Play Episode';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +460,7 @@ class _PlayActionRow extends StatelessWidget {
                       ),
                     )
                   : const Icon(Icons.play_arrow_rounded, size: 26),
-              label: Text(hasProgress ? 'Resume Episode' : 'Play Episode'),
+              label: Text(_label),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF40DDEB),
                 foregroundColor: const Color(0xFF111315),

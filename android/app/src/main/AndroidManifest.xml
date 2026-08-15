@@ -1,6 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- API traffic plus podcast/audiobook/video streaming. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Lets Dio and the media players notice connectivity changes mid-stream. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Keeps the CPU alive so audio keeps playing after the screen turns off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- Profile photo capture. Gallery picking needs no permission of its own:
+         image_picker goes through the system photo picker / ACTION_GET_CONTENT. -->
     <uses-permission android:name="android.permission.CAMERA"/>
+
+    <!-- The app is fully usable without a camera, so keep Play from filtering it
+         off camera-less devices. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 
     <application
         android:label="beatx_flutter"

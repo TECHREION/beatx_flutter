@@ -131,6 +131,7 @@ class PodcastController extends GetxController {
         artist: episode.podcastId.title,
         imageAsset: episode.coverUrl ?? episode.podcastId.coverUrl ?? '',
         audioAsset: streamUrl,
+        trackId: episode.id,
       );
 
       _saveProgressController().start(episode.id);

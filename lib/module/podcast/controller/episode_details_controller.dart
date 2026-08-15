@@ -67,6 +67,59 @@ class EpisodeDetailsController extends GetxController {
     isLoading.value = false;
   }
 
+  /// Duration of the loaded episode. The API reports 0 for episodes whose
+  /// audio has not been measured, so fall back to the length the player
+  /// itself read off the stream.
+  int get durationMs {
+    final reported = details.value?.episode.durationMs ?? 0;
+    if (reported > 0) return reported;
+    return _isActiveTrack
+        ? _playerController().duration.value.inMilliseconds
+        : 0;
+  }
+
+  UserProgress? get _progress => details.value?.userProgress;
+
+  bool get isCompleted => _progress?.completed ?? false;
+
+  /// True while this episode is the track the shared player is on.
+  bool get _isActiveTrack =>
+      _loadedEpisodeId != null &&
+      _playerController().trackId.value == _loadedEpisodeId;
+
+  /// Position to show on the progress bar: the live player position while
+  /// this episode is playing, otherwise the last position saved server-side.
+  int get listenedMs {
+    final position = _isActiveTrack
+        ? _playerController().position.value.inMilliseconds
+        : (_progress?.positionMs ?? 0);
+    if (position <= 0) return 0;
+    // A stale saved position can outrun a re-cut episode.
+    return durationMs > 0 ? position.clamp(0, durationMs) : position;
+  }
+
+  /// How much of the episode has been listened to, as a 0–1 fraction.
+  double get listenedFraction {
+    if (durationMs > 0) return (listenedMs / durationMs).clamp(0.0, 1.0);
+    // No duration to measure against — fall back to the server's own figure.
+    return ((_progress?.percentComplete ?? 0) / 100).clamp(0.0, 1.0);
+  }
+
+  /// Where playback should pick up. A finished episode — or one stopped in
+  /// its last seconds — starts over rather than resuming at the very end.
+  Duration get resumePosition {
+    final progress = _progress;
+    if (progress == null || progress.completed) return Duration.zero;
+
+    final positionMs = progress.positionMs;
+    if (positionMs <= 0) return Duration.zero;
+    if (durationMs > 0 && positionMs >= durationMs - 1000) return Duration.zero;
+
+    return Duration(milliseconds: positionMs);
+  }
+
+  bool get canResume => resumePosition > Duration.zero;
+
   Future<void> _loadRelatedEpisodes(
     String podcastId,
     String currentEpisodeId,
@@ -112,6 +165,10 @@ class EpisodeDetailsController extends GetxController {
         artist: artist,
         imageAsset: coverUrl ?? '',
         audioAsset: streamUrl,
+        // Only the episode this screen loaded has a progress record to
+        // resume from.
+        startAt: episodeId == _loadedEpisodeId ? resumePosition : Duration.zero,
+        trackId: episodeId,
       );
 
       _saveProgressController().start(episodeId);
@@ -120,9 +177,22 @@ class EpisodeDetailsController extends GetxController {
         () => const PlayerScreen(),
         transition: Transition.downToUp,
         preventDuplicates: true,
-      );
+      )?.then((_) => _refreshProgress(episodeId));
     });
 
     loadingEpisodeId.value = '';
+  }
+
+  /// Re-reads the episode once the player is dismissed so the progress bar
+  /// shows what was just listened to. Silent — on failure the previous
+  /// values stay on screen.
+  Future<void> _refreshProgress(String episodeId) async {
+    // Send the position reached before asking the server for it back.
+    await _saveProgressController().flush();
+
+    final result = await _podcastInterface().episodeDetails(episodeId);
+    result.fold((failure) => null, (success) {
+      if (success.data != null) details.value = success.data;
+    });
   }
 }

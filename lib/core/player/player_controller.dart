@@ -14,6 +14,9 @@ class PlayerController extends GetxController {
   // Increments on every play() call — guaranteed to fire ever() listeners
   // even when the same song is replayed after dismissal.
   final playCount = 0.obs;
+  // Id of whatever is loaded (episode, book, song), or '' when the caller
+  // does not track one. Lets a screen tell whether it owns the active track.
+  final trackId = ''.obs;
 
   @override
   void onInit() {
@@ -26,18 +29,23 @@ class PlayerController extends GetxController {
     });
   }
 
+  /// Starts [audioAsset]. Pass [startAt] to resume part-way in, and [trackId]
+  /// to identify what is playing.
   Future<void> play({
     required String title,
     required String artist,
     required String imageAsset,
     required String audioAsset,
+    Duration startAt = Duration.zero,
+    String trackId = '',
   }) async {
     playCount.value++;
     this.title.value = title;
     this.artist.value = artist;
     this.imageAsset.value = imageAsset;
     this.audioAsset.value = audioAsset;
-    position.value = Duration.zero;
+    this.trackId.value = trackId;
+    position.value = startAt;
     duration.value = Duration.zero;
     isPlaying.value = true;
     await _player.stop();
@@ -45,6 +53,7 @@ class PlayerController extends GetxController {
         audioAsset.startsWith('http://') || audioAsset.startsWith('https://');
     await _player.play(
       isNetworkSource ? UrlSource(audioAsset) : AssetSource(audioAsset),
+      position: startAt > Duration.zero ? startAt : null,
     );
   }
 
@@ -70,6 +79,7 @@ class PlayerController extends GetxController {
     artist.value = '';
     imageAsset.value = '';
     audioAsset.value = '';
+    trackId.value = '';
     position.value = Duration.zero;
     duration.value = Duration.zero;
   }

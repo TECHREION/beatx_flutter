@@ -39,6 +39,16 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<!-- Podcasts and audiobooks must keep playing once the screen locks or the
+	     user leaves the app. Without this iOS suspends audio on backgrounding. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<!-- The app uses only HTTPS/standard crypto, so it is exempt from export
+	     compliance. Saves answering the prompt on every App Store upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

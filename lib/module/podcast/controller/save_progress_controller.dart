@@ -51,6 +51,13 @@ class SaveProgressController extends GetxController {
     _timer = Timer.periodic(_interval, (_) => _tick());
   }
 
+  /// Saves the position reached right now without interrupting tracking, so
+  /// a resume taken straight afterwards is not up to [_interval] behind.
+  Future<void> flush() async {
+    if (_episodeId.isEmpty || !_isCurrentSession) return;
+    await _save(_positionMs);
+  }
+
   /// Stops reporting and saves the position reached one last time, so the
   /// final seconds before a pause or a screen exit are not lost.
   void stop() {
