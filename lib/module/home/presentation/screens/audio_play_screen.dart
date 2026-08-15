@@ -1,8 +1,10 @@
+import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../watch/presentation/screen/equelizer_screen.dart';
+import '../../controller/song_like_controller.dart';
 
 class PlayerScreen extends StatelessWidget {
   const PlayerScreen({super.key});
@@ -21,6 +23,7 @@ class PlayerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<PlayerController>();
+    final likeCtrl = SongLikeController.instance;
 
     return Scaffold(
       backgroundColor: const Color(0xFF050608),
@@ -351,9 +354,22 @@ class PlayerScreen extends StatelessWidget {
                                 const _BottomAction(
                                     icon: Icons.share, title: 'SHARE'),
                                 _divider(),
-                                const _BottomAction(
-                                    icon: Icons.favorite_border,
-                                    title: 'LIKE'),
+                                Obx(() {
+                                  final liked = likeCtrl.isLiked.value;
+                                  return _BottomAction(
+                                    icon: liked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    title: 'LIKE',
+                                    active: liked,
+                                    // The player is shared with podcasts and
+                                    // audiobooks, so the button only acts
+                                    // while a song is what is playing.
+                                    onTap: likeCtrl.canLike
+                                        ? () => _toggleLike(context, likeCtrl)
+                                        : null,
+                                  );
+                                }),
                               ],
                             ),
                           ),
@@ -371,6 +387,17 @@ class PlayerScreen extends StatelessWidget {
     );
   }
 
+  static Future<void> _toggleLike(
+    BuildContext context,
+    SongLikeController likeCtrl,
+  ) async {
+    await likeCtrl.toggleLike();
+
+    final error = likeCtrl.errorMessage.value;
+    if (error.isEmpty || !context.mounted) return;
+    SnackbarNotifier(context: context).notifyError(message: error);
+  }
+
   static String _fmt(Duration d) {
     final hours = d.inHours;
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -386,22 +413,36 @@ class PlayerScreen extends StatelessWidget {
 }
 
 class _BottomAction extends StatelessWidget {
-  const _BottomAction({required this.icon, required this.title});
+  const _BottomAction({
+    required this.icon,
+    required this.title,
+    this.active = false,
+    this.onTap,
+  });
 
   final IconData icon;
   final String title;
+  final bool active;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.white70, size: 22),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          style: const TextStyle(color: Colors.white70, fontSize: 11),
-        ),
-      ],
+    final color = active ? const Color(0xFF9BFF4D) : Colors.white70;
+
+    return GestureDetector(
+      onTap: onTap,
+      // The label and the gap between it and the icon are part of the target.
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(color: color, fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 }

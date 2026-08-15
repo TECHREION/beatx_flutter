@@ -40,6 +40,10 @@ class ListenMusicDetailsModel {
   final String? trendDirection;
   final int likeCount;
 
+  /// Whether the signed-in user has liked this song. Absent from responses
+  /// that are not user-scoped, in which case it reads false.
+  final bool isLiked;
+
   final int version;
 
   ListenMusicDetailsModel({
@@ -73,6 +77,7 @@ class ListenMusicDetailsModel {
     required this.isTrending,
     this.trendDirection,
     required this.likeCount,
+    this.isLiked = false,
     required this.version,
   });
 
@@ -147,6 +152,9 @@ class ListenMusicDetailsModel {
       likeCount:
           json['likeCount'] ?? 0,
 
+      isLiked:
+          json['isLiked'] ?? false,
+
       version:
           json['__v'] ?? 0,
     );
@@ -211,6 +219,7 @@ class ListenMusicDetailsModel {
       'trendDirection': trendDirection,
 
       'likeCount': likeCount,
+      'isLiked': isLiked,
 
       '__v': version,
     };

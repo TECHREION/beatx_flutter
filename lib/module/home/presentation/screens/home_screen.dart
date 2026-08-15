@@ -3,8 +3,10 @@ import 'dart:ui';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
 import 'package:beatx_flutter/module/home/controller/home_controller.dart';
+import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/liked_songs_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -419,20 +421,28 @@ class _MixGrid extends StatelessWidget {
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Expanded(
               child: AspectRatio(
                 aspectRatio: _tileAspectRatio,
-                child: _MixTile(
-                  icon: Icons.favorite_rounded,
-                  title: 'Liked Songs',
-                  subtitle: '128 tracks',
-                  iconColor: Color(0xFF4DEBFF),
-                ),
+                child: Obx(() {
+                  final liked = LikedSongsController.instance;
+                  return _MixTile(
+                    icon: Icons.favorite_rounded,
+                    title: 'Liked Songs',
+                    subtitle: _likedSubtitle(liked),
+                    iconColor: const Color(0xFF4DEBFF),
+                    onTap: () => Get.to(
+                      () => const LikedSongsScreen(),
+                      transition: Transition.rightToLeft,
+                      preventDuplicates: true,
+                    ),
+                  );
+                }),
               ),
             ),
-            SizedBox(width: 16),
-            Expanded(
+            const SizedBox(width: 16),
+            const Expanded(
               child: AspectRatio(
                 aspectRatio: _tileAspectRatio,
                 child: _MixTile(
@@ -477,6 +487,15 @@ class _MixGrid extends StatelessWidget {
       ],
     );
   }
+
+  /// Held back until the fetch lands, so the tile never reads "0 tracks"
+  /// when it only means the count is not in yet.
+  static String _likedSubtitle(LikedSongsController controller) {
+    if (!controller.hasLoaded.value) return 'Your favourites';
+
+    final count = controller.songs.length;
+    return count == 1 ? '1 track' : '$count tracks';
+  }
 }
 
 class _MixTile extends StatelessWidget {
@@ -485,16 +504,21 @@ class _MixTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.iconColor,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final Color iconColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1F),
         borderRadius: BorderRadius.circular(22),
@@ -534,6 +558,7 @@ class _MixTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

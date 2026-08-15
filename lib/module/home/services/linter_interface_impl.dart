@@ -4,6 +4,7 @@ import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/home/model/listem_miusic_detalis_model.dart';
 import 'package:beatx_flutter/module/home/model/listen_model.dart';
 import 'package:beatx_flutter/module/home/model/miusic_stream.dart';
+import 'package:beatx_flutter/module/home/model/song_like_model.dart';
 
 import '../../../core/constants/api_endpoints.dart';
 import 'listen_interface.dart';
@@ -76,6 +77,62 @@ final class ListenInterfaceImpl extends ListenInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: SongStreamUrlModel.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<List<ListenMusicDetailsModel>>> getLikedSong() async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getLikesong);
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'];
+        final items = data is List
+            ? data
+            : data is Map && data['data'] is List
+                ? data['data'] as List
+                : const [];
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: items
+              .whereType<Map>()
+              .map(
+                (item) => ListenMusicDetailsModel.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<SongLikeModel>> likesong(String songId) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(ApiEndpoints.likesong(songId: songId));
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        // Toggle endpoints often answer with the new state at the top level
+        // rather than wrapped in `data`, so fall back to the body itself.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : body;
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: SongLikeModel.fromJson(data),
         );
       },
     );

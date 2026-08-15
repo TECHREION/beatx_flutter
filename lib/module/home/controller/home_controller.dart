@@ -6,6 +6,7 @@ import '../model/listen_model.dart';
 import '../presentation/screens/audio_play_screen.dart';
 import '../services/linter_interface_impl.dart';
 import '../services/listen_interface.dart';
+import 'song_like_controller.dart';
 
 class HomeController extends GetxController {
   final isLoading = true.obs;
@@ -72,11 +73,15 @@ class HomeController extends GetxController {
     var artist = '';
     var coverUrl = '';
     var streamUrl = '';
+    var isLiked = false;
+    var likeCount = 0;
 
     detailsResult.fold((failure) => error = failure.uiMessage, (success) {
       title = success.data?.title ?? '';
       artist = success.data?.artist ?? '';
       coverUrl = success.data?.coverUrl ?? '';
+      isLiked = success.data?.isLiked ?? false;
+      likeCount = success.data?.likeCount ?? 0;
     });
     streamResult.fold((failure) => error ??= failure.uiMessage, (success) {
       streamUrl = success.data?.streamUrl ?? '';
@@ -94,6 +99,15 @@ class HomeController extends GetxController {
       artist: artist,
       imageAsset: coverUrl,
       audioAsset: streamUrl,
+      trackId: listenId,
+    );
+
+    // After play(), which has already opened the session the like state binds
+    // to — the player screen reads the like off this controller.
+    SongLikeController.instance.load(
+      songId: listenId,
+      isLiked: isLiked,
+      likeCount: likeCount,
     );
 
     Get.to(

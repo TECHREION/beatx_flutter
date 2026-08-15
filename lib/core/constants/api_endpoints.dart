@@ -50,6 +50,8 @@ base class ApiEndpoints {
       _Listen._listenDetails(listenId);
   static String listenStreamUrl({required String listenId}) =>
       _Listen._listenStreamUrl(listenId);
+  static String likesong({required String songId}) =>_Listen._likesong(songId);
+  static const String getLikesong = _Listen.getLikesong;
 
   //---------------------- podcast -----------------------------
   static const String podcastHome = _Podcast.podcastHome;
@@ -65,6 +67,9 @@ base class ApiEndpoints {
       _Podcast._saveProgress(episodeId);
   static String searchCategory({required String categoryId}) =>
       _Podcast._searchCategory(categoryId);
+      
+  static String likpodcast({required String podcastid}) =>_Podcast._likesong(podcastid);
+  static const String getLikepodcast = _Podcast.getLikesong;
 }
 
 
@@ -137,6 +142,9 @@ class _Listen {
       '$listen/$listenId';
   static String _listenStreamUrl(String listenId) =>
       '$listen/$listenId/stream';
+  static String _likesong(String songId) =>
+      '$listen/$songId/like';
+  static const String getLikesong = '$listen/liked';
 }
 
 // ---------------------- podcast -----------------------------
@@ -155,6 +163,9 @@ class _Podcast {
       '$podcastRoute/episodes/$episodeId/progress';
   static String _searchCategory(String categoryId) =>
       '$podcastRoute/search?category=${Uri.encodeQueryComponent(categoryId)}';
+  static String _likesong(String podcastid) =>
+      '$podcastRoute/$podcastid/like';
+  static const String getLikesong = '$podcastRoute/liked';
 }
 
 // ---------------------- Notification -----------------------------
