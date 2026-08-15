@@ -67,15 +67,29 @@ class EpisodeDetailsController extends GetxController {
     isLoading.value = false;
   }
 
+  /// Length the screen already knew before the details call returned — what
+  /// the episode list carried. Set by the screen; last resort for [durationMs].
+  int fallbackDurationMs = 0;
+
   /// Duration of the loaded episode. The API reports 0 for episodes whose
-  /// audio has not been measured, so fall back to the length the player
-  /// itself read off the stream.
+  /// audio has not been measured, so fall back to the length the player read
+  /// off the stream — while it is playing, and for the rest of the session
+  /// once it has been played — and then to the length the list carried.
   int get durationMs {
     final reported = details.value?.episode.durationMs ?? 0;
     if (reported > 0) return reported;
-    return _isActiveTrack
-        ? _playerController().duration.value.inMilliseconds
-        : 0;
+
+    final player = _playerController();
+    if (_isActiveTrack && player.duration.value > Duration.zero) {
+      return player.duration.value.inMilliseconds;
+    }
+
+    final measured = player.measuredDuration(_loadedEpisodeId ?? '');
+    if (measured != null && measured > Duration.zero) {
+      return measured.inMilliseconds;
+    }
+
+    return fallbackDurationMs;
   }
 
   UserProgress? get _progress => details.value?.userProgress;

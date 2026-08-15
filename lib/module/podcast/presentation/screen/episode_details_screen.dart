@@ -18,7 +18,10 @@ class EpisodeDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(EpisodeDetailsController(), tag: episode.id);
+    final controller = Get.put(EpisodeDetailsController(), tag: episode.id)
+      // The list this screen was opened from may carry a length the details
+      // payload does not.
+      ..fallbackDurationMs = episode.durationMs;
     controller.loadDetails(episode.id);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -63,9 +66,7 @@ class EpisodeDetailsScreen extends StatelessWidget {
                 children: [
                   Obx(
                     () => _ProgressRow(
-                      durationMs: controller.durationMs > 0
-                          ? controller.durationMs
-                          : episode.durationMs,
+                      durationMs: controller.durationMs,
                       positionMs: controller.listenedMs,
                       fraction: controller.listenedFraction,
                       isCompleted: controller.isCompleted,
@@ -75,12 +76,7 @@ class EpisodeDetailsScreen extends StatelessWidget {
                   Obx(
                     () => _MetaRow(
                       showTitle: episode.podcastId.title,
-                      durationMs: controller
-                              .details
-                              .value
-                              ?.episode
-                              .durationMs ??
-                          episode.durationMs,
+                      durationMs: controller.durationMs,
                     ),
                   ),
                   const SizedBox(height: 10),
