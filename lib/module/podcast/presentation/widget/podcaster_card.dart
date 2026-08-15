@@ -52,7 +52,9 @@ class PodcasterCard extends StatelessWidget {
                           child: podcaster.artistAvatar?.isNotEmpty == true
                               ? null
                               : Text(
-                                  _initials(podcaster.stageName ?? podcaster.name),
+                                  _initials(
+                                    podcaster.stageName ?? podcaster.name,
+                                  ),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,

@@ -100,11 +100,7 @@ class PodcastBasic {
   final String title;
   final String? coverUrl;
 
-  PodcastBasic({
-    required this.id,
-    required this.title,
-    this.coverUrl,
-  });
+  PodcastBasic({required this.id, required this.title, this.coverUrl});
 
   factory PodcastBasic.fromJson(Map<String, dynamic> json) {
     return PodcastBasic(
@@ -151,16 +147,10 @@ class Genre {
   final String id;
   final String name;
 
-  Genre({
-    required this.id,
-    required this.name,
-  });
+  Genre({required this.id, required this.name});
 
   factory Genre.fromJson(Map<String, dynamic> json) {
-    return Genre(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return Genre(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 }
 
@@ -177,12 +167,42 @@ class TopCategory {
 
   factory TopCategory.fromJson(Map<String, dynamic> json) {
     return TopCategory(
-      genreId: json['genreId'] ?? '',
+      genreId: _readCategoryId(json),
       name: json['name'] ?? '',
       podcastCount: json['podcastCount'] ?? 0,
     );
   }
 }
+
+/// The id `/podcasts/search?category=` needs. The home aggregation does not
+/// always send it under `genreId` — and when it does, the value is sometimes
+/// the genre name rather than its id — so take the first value shaped like an
+/// ObjectId, whichever key carries it.
+String _readCategoryId(Map<String, dynamic> json) {
+  const preferredKeys = ['genreId', 'categoryId', 'genre', 'category', '_id'];
+
+  for (final key in preferredKeys) {
+    final id = _asObjectId(json[key]);
+    if (id.isNotEmpty) return id;
+  }
+
+  for (final value in json.values) {
+    final id = _asObjectId(value);
+    if (id.isNotEmpty) return id;
+  }
+
+  return '';
+}
+
+/// [value] as an ObjectId, reading through a populated `{_id, name}` object,
+/// or '' when it is not one.
+String _asObjectId(dynamic value) {
+  if (value is Map) return _asObjectId(value['_id']);
+  if (value is! String) return '';
+  return _objectIdPattern.hasMatch(value) ? value : '';
+}
+
+final _objectIdPattern = RegExp(r'^[0-9a-fA-F]{24}$');
 
 class TopPodcasters {
   final List<Podcaster> data;
@@ -287,13 +307,9 @@ String formatPodcastDuration(int milliseconds) {
 class Metadata {
   final String duration;
 
-  Metadata({
-    required this.duration,
-  });
+  Metadata({required this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'] ?? '',
-    );
+    return Metadata(duration: json['duration'] ?? '');
   }
 }

@@ -2,10 +2,7 @@ class EpisodeDetailsData {
   final EpisodeDetails episode;
   final UserProgress? userProgress;
 
-  EpisodeDetailsData({
-    required this.episode,
-    this.userProgress,
-  });
+  EpisodeDetailsData({required this.episode, this.userProgress});
 
   factory EpisodeDetailsData.fromJson(Map<String, dynamic> json) {
     return EpisodeDetailsData(
@@ -140,14 +137,9 @@ class UserProgress {
 class Metadata {
   final String duration;
 
-  Metadata({
-    required this.duration,
-  });
+  Metadata({required this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'] ?? '',
-    );
+    return Metadata(duration: json['duration'] ?? '');
   }
 }
-

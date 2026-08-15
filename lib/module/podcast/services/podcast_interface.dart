@@ -7,6 +7,7 @@ import '../model/get_stream_url_model.dart';
 import '../model/podcast_details_model.dart';
 import '../model/podcast_home_model.dart';
 import '../model/save_progress_data.dart';
+import '../model/search_category_model.dart';
 
 abstract base class PodcastInterface extends BaseRepository {
   FutureRequest<Success<PodcastHomeData>> podcastHome();
@@ -18,4 +19,5 @@ abstract base class PodcastInterface extends BaseRepository {
     String id,
     int positionMs,
   );
+  FutureRequest<Success<SearchCategoryData>> searchCategory(String id);
 }

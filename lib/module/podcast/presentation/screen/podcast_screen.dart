@@ -11,6 +11,7 @@ import '../widget/episode_tile.dart';
 import '../widget/featured_podcast_card.dart';
 import '../widget/podcaster_card.dart';
 import 'episode_details_screen.dart';
+import 'podcast_category_screen.dart';
 
 class PodcastScreen extends StatelessWidget {
   const PodcastScreen({super.key});
@@ -144,7 +145,8 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
           FeaturedPodcastCard(
             podcast: featuredPodcast,
             isLoading: controller.isStreamLoading,
-            onListenNow: () => _playFeatured(context, controller, featuredPodcast),
+            onListenNow: () =>
+                _playFeatured(context, controller, featuredPodcast),
           ),
         const SizedBox(height: 26),
         const _SectionTitle(title: 'Top Categories'),
@@ -153,7 +155,15 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
           const _EmptySection(message: 'No categories yet.')
         else
           for (final category in categories) ...[
-            CategoryCard(category: category),
+            CategoryCard(
+              category: category,
+              onTap: () => Get.to(
+                () => PodcastCategoryScreen(
+                  categoryId: category.genreId,
+                  categoryName: category.name,
+                ),
+              ),
+            ),
             const SizedBox(height: 15),
           ],
         const SizedBox(height: 8),
@@ -172,8 +182,7 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
           for (final episode in episodes) ...[
             EpisodeTile(
               episode: episode,
-              onTap: () =>
-                  Get.to(() => EpisodeDetailsScreen(episode: episode)),
+              onTap: () => Get.to(() => EpisodeDetailsScreen(episode: episode)),
             ),
             const SizedBox(height: 12),
           ],

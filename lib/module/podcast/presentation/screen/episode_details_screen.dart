@@ -113,8 +113,7 @@ class EpisodeDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 22),
                   Obx(() {
                     final genre =
-                        controller.details.value?.episode.podcastId.genre ??
-                        '';
+                        controller.details.value?.episode.podcastId.genre ?? '';
                     if (genre.isEmpty) return const SizedBox.shrink();
                     return _TagsRow(tags: [genre]);
                   }),
@@ -787,10 +786,7 @@ class _RelatedEpisodeTile extends StatelessWidget {
                 ),
               )
             else
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFF6E6A72),
-              ),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF6E6A72)),
           ],
         ),
       ),

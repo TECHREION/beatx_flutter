@@ -54,9 +54,7 @@ class EpisodeDetailsController extends GetxController {
     errorMessage.value = '';
 
     final result = await _podcastInterface().episodeDetails(episodeId);
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (
-      success,
-    ) {
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
       final data = success.data;
       details.value = data;
       if (data != null) {
@@ -165,9 +163,7 @@ class EpisodeDetailsController extends GetxController {
 
     final result = await _podcastInterface().getStreamUrl(episodeId);
 
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (
-      success,
-    ) {
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
       final streamUrl = success.data?.streamUrl ?? '';
       if (streamUrl.isEmpty) {
         errorMessage.value = 'Stream URL is unavailable right now.';

@@ -21,13 +21,9 @@ class EpisodeStreamData {
 class Metadata {
   final String duration;
 
-  Metadata({
-    required this.duration,
-  });
+  Metadata({required this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'] ?? '',
-    );
+    return Metadata(duration: json['duration'] ?? '');
   }
 }

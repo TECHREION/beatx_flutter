@@ -63,10 +63,10 @@ base class ApiEndpoints {
       _Podcast._getStreamUrl(episodeId);
   static String saveProgress({required String episodeId}) =>
       _Podcast._saveProgress(episodeId);
-  
+  static String searchCategory({required String categoryId}) =>
+      _Podcast._searchCategory(categoryId);
 }
 
-//arrow360degree@gmail.com
 
 // class _RemoteServer {
 //   static const String socketUrl =
@@ -153,6 +153,8 @@ class _Podcast {
       '$podcastRoute/$podcastId/episodes';
   static String _saveProgress(String episodeId) =>
       '$podcastRoute/episodes/$episodeId/progress';
+  static String _searchCategory(String categoryId) =>
+      '$podcastRoute/search?category=${Uri.encodeQueryComponent(categoryId)}';
 }
 
 // ---------------------- Notification -----------------------------
