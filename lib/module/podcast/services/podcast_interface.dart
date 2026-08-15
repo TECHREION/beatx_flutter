@@ -6,6 +6,7 @@ import '../model/episodes_model.dart';
 import '../model/get_stream_url_model.dart';
 import '../model/podcast_details_model.dart';
 import '../model/podcast_home_model.dart';
+import '../model/podcast_like_model.dart';
 import '../model/save_progress_data.dart';
 import '../model/search_category_model.dart';
 
@@ -20,4 +21,8 @@ abstract base class PodcastInterface extends BaseRepository {
     int positionMs,
   );
   FutureRequest<Success<SearchCategoryData>> searchCategory(String id);
+  /// Toggles the like on [podcastid] — the same call likes and unlikes.
+  FutureRequest<Success<PodcastLikeModel>> likePodcast(String podcastid);
+  /// Every podcast the signed-in user has liked.
+  FutureRequest<Success<List<Podcast>>> getLikedPodcast();
 }

@@ -7,6 +7,7 @@ import '../model/episodes_details.dart';
 import '../model/episodes_model.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
+import 'podcast_like_controller.dart';
 import 'save_progress_controller.dart';
 
 class EpisodeDetailsController extends GetxController {
@@ -152,6 +153,7 @@ class EpisodeDetailsController extends GetxController {
   /// full-screen player.
   Future<void> playEpisode({
     required String episodeId,
+    required String podcastId,
     required String title,
     required String artist,
     String? coverUrl,
@@ -182,6 +184,10 @@ class EpisodeDetailsController extends GetxController {
       );
 
       _saveProgressController().start(episodeId);
+
+      // The like belongs to the podcast, not the episode — the player screen
+      // reads it off this controller.
+      PodcastLikeController.instance.load(podcastId: podcastId);
 
       Get.to(
         () => const PlayerScreen(),

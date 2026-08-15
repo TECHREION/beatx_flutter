@@ -3,26 +3,26 @@ import 'package:get/get.dart';
 
 import '../../../core/player/player_controller.dart';
 import '../../../core/player/player_like_target.dart';
-import '../services/linter_interface_impl.dart';
-import '../services/listen_interface.dart';
+import '../services/podcast_interface.dart';
+import '../services/podcast_interface_impl.dart';
 
-/// Like state of the song the player is on, toggled through
-/// `POST /songs/:id/like`.
+/// Like state of the podcast the player is on, toggled through
+/// `POST /podcasts/:id/like`.
 ///
-/// The [PlayerController] is shared with podcasts and audiobooks, so the state
-/// is tied to the play session that loaded it: [canLike] turns false the
-/// moment the player moves on to anything else, which stops the player screen
-/// from sending a song like while an episode is playing.
-class SongLikeController extends GetxController implements PlayerLikeTarget {
+/// The like belongs to the podcast, not to the episode, so this holds the id
+/// of the episode's parent. Like its song counterpart it binds to the play
+/// session that loaded it, so [canLike] turns false as soon as the shared
+/// [PlayerController] moves on to a song or an audiobook.
+class PodcastLikeController extends GetxController implements PlayerLikeTarget {
   /// The shared instance, registered on first use.
-  static SongLikeController get instance {
-    if (!Get.isRegistered<SongLikeController>()) {
-      Get.put(SongLikeController(), permanent: true);
+  static PodcastLikeController get instance {
+    if (!Get.isRegistered<PodcastLikeController>()) {
+      Get.put(PodcastLikeController(), permanent: true);
     }
-    return Get.find<SongLikeController>();
+    return Get.find<PodcastLikeController>();
   }
 
-  final songId = ''.obs;
+  final podcastId = ''.obs;
   @override
   final isLiked = false.obs;
   final likeCount = 0.obs;
@@ -31,17 +31,21 @@ class SongLikeController extends GetxController implements PlayerLikeTarget {
   final errorMessage = ''.obs;
 
   // Observable so widgets reading [canLike] inside an Obx rebuild when the
-  // loaded song changes.
+  // loaded podcast changes.
   final _playSession = (-1).obs;
 
-  ListenInterface _listenInterface() {
-    if (!Get.isRegistered<ListenInterface>() &&
+  // Bumped by anything that settles the like state, so a details fetch that
+  // lands late cannot overwrite a newer answer.
+  int _stateVersion = 0;
+
+  PodcastInterface _podcastInterface() {
+    if (!Get.isRegistered<PodcastInterface>() &&
         Get.isRegistered<AuthorizedPigeon>()) {
-      Get.put<ListenInterface>(
-        ListenInterfaceImpl(Get.find<AuthorizedPigeon>()),
+      Get.put<PodcastInterface>(
+        PodcastInterfaceImpl(Get.find<AuthorizedPigeon>()),
       );
     }
-    return Get.find<ListenInterface>();
+    return Get.find<PodcastInterface>();
   }
 
   PlayerController _playerController() {
@@ -51,36 +55,35 @@ class SongLikeController extends GetxController implements PlayerLikeTarget {
     return Get.find<PlayerController>();
   }
 
-  // Bumped by anything that settles the like state, so a liked-songs fetch
-  // that lands late cannot overwrite a newer answer.
-  int _stateVersion = 0;
-
-  /// Adopts [songId] as the song now playing. Call right after
-  /// [PlayerController.play], which is what starts the session this is tied
-  /// to.
+  /// Adopts the podcast an episode belongs to as the one now playing. Call
+  /// right after [PlayerController.play], which is what starts the session
+  /// this is tied to.
   void load({
-    required String songId,
+    required String podcastId,
     bool isLiked = false,
     int likeCount = 0,
   }) {
-    this.songId.value = songId;
+    this.podcastId.value = podcastId;
     this.isLiked.value = isLiked;
     this.likeCount.value = likeCount;
     errorMessage.value = '';
     _playSession.value = _playerController().playCount.value;
 
-    // `GET /songs/:id` reports likeCount but no per-user flag, so without this
-    // an already-liked song comes up with an empty heart on every fresh run.
     _refreshLiked(++_stateVersion);
   }
 
-  /// Settles [isLiked] against the user's liked songs on the backend.
+  /// Settles [isLiked] against the podcast's own record.
+  ///
+  /// Episodes are played from lists and from `GET /podcasts/episodes/:id`,
+  /// none of which carry a liked flag — `GET /podcasts/:id` is where the
+  /// backend reports one.
   Future<void> _refreshLiked(int version) async {
-    if (songId.value.isEmpty) return;
+    final id = podcastId.value;
+    if (id.isEmpty) return;
 
-    final result = await _listenInterface().getLikedSong();
+    final result = await _podcastInterface().podcastDetails(id);
 
-    // A like landed, or another song was loaded, while this was in flight.
+    // A like landed, or another podcast was loaded, while this was in flight.
     if (version != _stateVersion) return;
 
     result.fold(
@@ -88,23 +91,26 @@ class SongLikeController extends GetxController implements PlayerLikeTarget {
       // that flips back on a dropped request.
       (failure) {},
       (success) {
-        final liked = success.data ?? const [];
-        isLiked.value = liked.any((song) => song.id == songId.value);
+        final podcast = success.data?.podcast;
+        if (podcast == null) return;
+
+        isLiked.value = podcast.isLiked;
+        likeCount.value = podcast.likeCount;
       },
     );
   }
 
-  /// Whether the loaded song is still what the shared player is playing.
+  /// Whether the loaded podcast is still what the shared player is playing.
   @override
   bool get canLike =>
-      songId.value.isNotEmpty &&
+      podcastId.value.isNotEmpty &&
       _playerController().playCount.value == _playSession.value;
 
-  /// Likes the song, or unlikes it when it is already liked — the endpoint
+  /// Likes the podcast, or unlikes it when it is already liked — the endpoint
   /// toggles, so both directions are the same call.
   @override
   Future<void> toggleLike() async {
-    final id = songId.value;
+    final id = podcastId.value;
 
     // Cleared ahead of the guards so a tap that does nothing does not leave
     // the caller looking at the previous attempt's error.
@@ -114,7 +120,7 @@ class SongLikeController extends GetxController implements PlayerLikeTarget {
     isToggling.value = true;
     _stateVersion++;
 
-    final result = await _listenInterface().likesong(id);
+    final result = await _podcastInterface().likePodcast(id);
 
     result.fold(
       (failure) => errorMessage.value = failure.uiMessage,

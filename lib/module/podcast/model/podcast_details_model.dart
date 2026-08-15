@@ -58,6 +58,12 @@ class Podcast {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  /// Whether the signed-in user has liked this podcast. The episode
+  /// endpoints carry no such flag, so this record is what the player screen
+  /// settles its heart against.
+  final bool isLiked;
+  final int likeCount;
+
   final int version;
 
   Podcast({
@@ -89,6 +95,8 @@ class Podcast {
     this.publishedAt,
     this.createdAt,
     this.updatedAt,
+    this.isLiked = false,
+    this.likeCount = 0,
     required this.version,
   });
 
@@ -122,6 +130,8 @@ class Podcast {
       publishedAt: _parseDate(json['publishedAt']),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      isLiked: json['isLiked'] ?? false,
+      likeCount: json['likeCount'] ?? 0,
       version: json['__v'] ?? 0,
     );
   }

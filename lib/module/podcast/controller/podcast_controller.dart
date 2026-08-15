@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../model/podcast_home_model.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
+import 'podcast_like_controller.dart';
 import 'save_progress_controller.dart';
 
 class PodcastController extends GetxController {
@@ -131,6 +132,10 @@ class PodcastController extends GetxController {
       );
 
       _saveProgressController().start(episode.id);
+
+      // The like belongs to the podcast, not the episode — the player screen
+      // reads it off this controller.
+      PodcastLikeController.instance.load(podcastId: episode.podcastId.id);
 
       Get.to(
         () => const PlayerScreen(),

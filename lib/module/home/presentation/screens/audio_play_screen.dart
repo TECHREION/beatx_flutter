@@ -1,8 +1,10 @@
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/core/player/player_controller.dart';
+import 'package:beatx_flutter/core/player/player_like_target.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../podcast/controller/podcast_like_controller.dart';
 import '../../../watch/presentation/screen/equelizer_screen.dart';
 import '../../controller/song_like_controller.dart';
 
@@ -23,7 +25,6 @@ class PlayerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<PlayerController>();
-    final likeCtrl = SongLikeController.instance;
 
     return Scaffold(
       backgroundColor: const Color(0xFF050608),
@@ -355,19 +356,21 @@ class PlayerScreen extends StatelessWidget {
                                     icon: Icons.share, title: 'SHARE'),
                                 _divider(),
                                 Obx(() {
-                                  final liked = likeCtrl.isLiked.value;
+                                  // Whichever of the song and podcast
+                                  // bindings owns the current play session,
+                                  // or neither for an audiobook.
+                                  final target = _activeLikeTarget();
+                                  final liked = target?.isLiked.value ?? false;
+
                                   return _BottomAction(
                                     icon: liked
                                         ? Icons.favorite
                                         : Icons.favorite_border,
                                     title: 'LIKE',
                                     active: liked,
-                                    // The player is shared with podcasts and
-                                    // audiobooks, so the button only acts
-                                    // while a song is what is playing.
-                                    onTap: likeCtrl.canLike
-                                        ? () => _toggleLike(context, likeCtrl)
-                                        : null,
+                                    onTap: target == null
+                                        ? null
+                                        : () => _toggleLike(context, target),
                                   );
                                 }),
                               ],
@@ -387,13 +390,31 @@ class PlayerScreen extends StatelessWidget {
     );
   }
 
+  /// The like binding for whatever the shared player is on, or null when what
+  /// is playing has none — an audiobook, or one of the bundled demo tracks.
+  ///
+  /// Each candidate is asked in turn, and asking reads the observables that
+  /// [PlayerLikeTarget.canLike] is built from, so the caller's `Obx` stays
+  /// subscribed even when the answer is null.
+  static PlayerLikeTarget? _activeLikeTarget() {
+    final candidates = <PlayerLikeTarget>[
+      SongLikeController.instance,
+      PodcastLikeController.instance,
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate.canLike) return candidate;
+    }
+    return null;
+  }
+
   static Future<void> _toggleLike(
     BuildContext context,
-    SongLikeController likeCtrl,
+    PlayerLikeTarget target,
   ) async {
-    await likeCtrl.toggleLike();
+    await target.toggleLike();
 
-    final error = likeCtrl.errorMessage.value;
+    final error = target.errorMessage.value;
     if (error.isEmpty || !context.mounted) return;
     SnackbarNotifier(context: context).notifyError(message: error);
   }

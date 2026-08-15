@@ -159,6 +159,7 @@ class EpisodeDetailsScreen extends StatelessWidget {
   ) async {
     await controller.playEpisode(
       episodeId: episode.id,
+      podcastId: episode.podcastId.id,
       title: episode.title,
       artist: episode.podcastId.title,
       coverUrl: episode.coverUrl ?? episode.podcastId.coverUrl,

@@ -8,6 +8,7 @@ import '../model/podcast_home_model.dart';
 import '../model/search_category_model.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
+import 'podcast_like_controller.dart';
 import 'save_progress_controller.dart';
 
 /// Everything published under one category: the shows themselves and, below
@@ -204,6 +205,10 @@ class PodcastCategoryController extends GetxController {
       );
 
       _saveProgressController().start(episode.id);
+
+      // The like belongs to the podcast, not the episode — the player screen
+      // reads it off this controller.
+      PodcastLikeController.instance.load(podcastId: episode.podcastId.id);
 
       Get.to(
         () => const PlayerScreen(),

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../../core/common/widget/app_header.dart';
 import '../../../../../core/notifiers/snackbar_notifier.dart';
 import '../../../../../core/theme/app_sizes.dart';
+import '../../controller/liked_podcasts_controller.dart';
 import '../../controller/podcast_controller.dart';
 import '../../model/podcast_home_model.dart';
 import '../widget/category_card.dart';
@@ -11,6 +12,7 @@ import '../widget/episode_tile.dart';
 import '../widget/featured_podcast_card.dart';
 import '../widget/podcaster_card.dart';
 import 'episode_details_screen.dart';
+import 'liked_podcasts_screen.dart';
 import 'podcast_category_screen.dart';
 
 class PodcastScreen extends StatelessWidget {
@@ -173,6 +175,8 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
           const _EmptySection(message: 'No podcasters yet.')
         else
           PodcasterCard(podcasters: podcasters),
+        const SizedBox(height: 18),
+        const _LikedPodcastsButton(),
         const SizedBox(height: 28),
         const _RecentHeader(),
         const SizedBox(height: 14),
@@ -321,6 +325,106 @@ class _RoundArrowButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Way into the user's liked podcasts, sat under the podcasters row.
+class _LikedPodcastsButton extends StatelessWidget {
+  const _LikedPodcastsButton();
+
+  static const _accent = Color(0xFFBD89FF);
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = LikedPodcastsController.instance;
+
+    return GestureDetector(
+      onTap: () => Get.to(
+        () => const LikedPodcastsScreen(),
+        transition: Transition.rightToLeft,
+        preventDuplicates: true,
+      ),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF16161A),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _accent.withValues(alpha: 0.22)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _accent.withValues(alpha: 0.15),
+              ),
+              child: const Icon(
+                Icons.favorite_rounded,
+                color: _accent,
+                size: 21,
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Liked Podcasts',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Everything you have hearted',
+                    style: TextStyle(
+                      color: Color(0xFFAAA5AD),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Obx(() {
+              final count = _count(controller);
+              if (count == null) return const SizedBox.shrink();
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: _accent,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
+                ),
+              );
+            }),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white38,
+              size: 24,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Held back until the fetch lands, so the button never reads "0" when it
+  /// only means the count is not in yet.
+  static int? _count(LikedPodcastsController controller) =>
+      controller.hasLoaded.value ? controller.podcasts.length : null;
 }
 
 class _SectionTitle extends StatelessWidget {
