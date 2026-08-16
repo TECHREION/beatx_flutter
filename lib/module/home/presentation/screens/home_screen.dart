@@ -7,6 +7,8 @@ import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/liked_songs_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/on_repeat_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/recently_played_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -442,14 +444,19 @@ class _MixGrid extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: AspectRatio(
                 aspectRatio: _tileAspectRatio,
                 child: _MixTile(
                   icon: Icons.bolt_rounded,
                   title: 'On Repeat',
                   subtitle: 'Top played',
-                  iconColor: Color(0xFF6CFF8B),
+                  iconColor: const Color(0xFF6CFF8B),
+                  onTap: () => Get.to(
+                    () => const OnRepeatScreen(),
+                    transition: Transition.rightToLeft,
+                    preventDuplicates: true,
+                  ),
                 ),
               ),
             ),
@@ -458,7 +465,7 @@ class _MixGrid extends StatelessWidget {
         const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Expanded(
               child: AspectRatio(
                 aspectRatio: _tileAspectRatio,
@@ -466,12 +473,17 @@ class _MixGrid extends StatelessWidget {
                   icon: Icons.access_time_filled_rounded,
                   title: 'Recent',
                   subtitle: 'History',
-                  iconColor: Color(0xFFC88BFF),
+                  iconColor: const Color(0xFFC88BFF),
+                  onTap: () => Get.to(
+                    () => const RecentlyPlayedScreen(),
+                    transition: Transition.rightToLeft,
+                    preventDuplicates: true,
+                  ),
                 ),
               ),
             ),
-            SizedBox(width: 16),
-            Expanded(
+            const SizedBox(width: 16),
+            const Expanded(
               child: AspectRatio(
                 aspectRatio: _tileAspectRatio,
                 child: _MixTile(

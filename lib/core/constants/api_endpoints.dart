@@ -52,6 +52,9 @@ base class ApiEndpoints {
       _Listen._listenStreamUrl(listenId);
   static String likesong({required String songId}) =>_Listen._likesong(songId);
   static const String getLikesong = _Listen.getLikesong;
+  static String recentlyPlayed({required String userId}) =>
+      _Listen._recentlyPlayed(userId);
+  static const String onRepeatedSong = _Listen._onRepeatedSong;
 
   //---------------------- podcast -----------------------------
   static const String podcastHome = _Podcast.podcastHome;
@@ -145,6 +148,11 @@ class _Listen {
   static String _likesong(String songId) =>
       '$listen/$songId/like';
   static const String getLikesong = '$listen/liked';
+
+  /// The history is read off the bearer token, so the signed-in user never
+  /// reaches the path — [userId] only scopes the call at the call site.
+  static String _recentlyPlayed(String userId) => '$listen/recently-played';
+  static const String _onRepeatedSong = '$listen/on-repeat';
 }
 
 // ---------------------- podcast -----------------------------

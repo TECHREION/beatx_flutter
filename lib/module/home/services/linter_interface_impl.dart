@@ -4,6 +4,8 @@ import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/home/model/listem_miusic_detalis_model.dart';
 import 'package:beatx_flutter/module/home/model/listen_model.dart';
 import 'package:beatx_flutter/module/home/model/miusic_stream.dart';
+import 'package:beatx_flutter/module/home/model/on_repeat_model.dart';
+import 'package:beatx_flutter/module/home/model/recently_played_model.dart';
 import 'package:beatx_flutter/module/home/model/song_like_model.dart';
 
 import '../../../core/constants/api_endpoints.dart';
@@ -133,6 +135,67 @@ final class ListenInterfaceImpl extends ListenInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: SongLikeModel.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<RecentlyPlayedPage>> recentlyPlayed(
+    String userId, {
+    required int page,
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.recentlyPlayed(userId: userId),
+          queryParameters: {'page': page, 'limit': limit},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            // A response that answers with the list alone still has to reach
+            // the same parser, which reads the entries off `data`.
+            : {'data': body['data']};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: RecentlyPlayedPage.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<OnRepeatPage>> onRepeatedSong({
+    required int page,
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.onRepeatedSong,
+          queryParameters: {'page': page, 'limit': limit},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            // A response that answers with the list alone still has to reach
+            // the same parser, which reads the entries off `data`.
+            : {'data': body['data']};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: OnRepeatPage.fromJson(data),
         );
       },
     );

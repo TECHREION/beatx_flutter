@@ -12,16 +12,22 @@ abstract final class LikedPalette {
   static const heart = Color(0xFFFF4D6D);
 }
 
-/// Back button, heart-marked title and strapline.
+/// Back button, marked title and strapline.
 class LikedHeader extends StatelessWidget {
   const LikedHeader({
     super.key,
     required this.title,
     required this.subtitle,
+    this.icon = Icons.favorite_rounded,
+    this.iconColor = LikedPalette.heart,
   });
 
   final String title;
   final String subtitle;
+
+  /// The badge beside the title. Defaults to the heart the liked screens use.
+  final IconData icon;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +48,9 @@ class LikedHeader extends StatelessWidget {
                     height: 34,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(11),
-                      color: LikedPalette.heart.withValues(alpha: 0.16),
+                      color: iconColor.withValues(alpha: 0.16),
                     ),
-                    child: const Icon(
-                      Icons.favorite_rounded,
-                      color: LikedPalette.heart,
-                      size: 18,
-                    ),
+                    child: Icon(icon, color: iconColor, size: 18),
                   ),
                   const SizedBox(width: 11),
                   Text(
@@ -207,6 +209,7 @@ class LikedRowCard extends StatelessWidget {
     required this.onUnlike,
     required this.onMore,
     this.onTap,
+    this.liked = true,
   });
 
   final int position;
@@ -221,9 +224,16 @@ class LikedRowCard extends StatelessWidget {
   /// Genre or category. The pill is dropped when the payload carried none.
   final String tag;
   final bool busy;
+
+  /// Fires on the heart. On the liked screens every row is liked, so it only
+  /// ever unlikes; a list that also holds unliked songs passes [liked] and
+  /// gets a toggle.
   final VoidCallback onUnlike;
   final VoidCallback onMore;
   final VoidCallback? onTap;
+
+  /// Whether the user has liked this row. False draws an empty heart.
+  final bool liked;
 
   @override
   Widget build(BuildContext context) {
@@ -360,9 +370,13 @@ class LikedRowCard extends StatelessWidget {
                                 ),
                               ),
                             )
-                          : const Icon(
-                              Icons.favorite_rounded,
-                              color: LikedPalette.heart,
+                          : Icon(
+                              liked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: liked
+                                  ? LikedPalette.heart
+                                  : LikedPalette.muted,
                               size: 21,
                             ),
                     ),
@@ -502,6 +516,8 @@ class LikedEmptyState extends StatelessWidget {
     required this.emptyBody,
     required this.accent,
     required this.onRetry,
+    this.failedTitle = 'Could not load your likes',
+    this.emptyIcon = Icons.favorite_border_rounded,
   });
 
   /// The failure that left the list empty, or empty when it is simply empty.
@@ -510,6 +526,12 @@ class LikedEmptyState extends StatelessWidget {
   final String emptyBody;
   final Color accent;
   final VoidCallback onRetry;
+
+  /// Heading shown in place of [emptyTitle] when the fetch failed.
+  final String failedTitle;
+
+  /// The mark above an empty — not failed — list.
+  final IconData emptyIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -520,13 +542,13 @@ class LikedEmptyState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            failed ? Icons.cloud_off_rounded : Icons.favorite_border_rounded,
+            failed ? Icons.cloud_off_rounded : emptyIcon,
             color: Colors.white24,
             size: 54,
           ),
           const SizedBox(height: 18),
           Text(
-            failed ? 'Could not load your likes' : emptyTitle,
+            failed ? failedTitle : emptyTitle,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
