@@ -4,6 +4,7 @@ import 'package:beatx_flutter/core/player/player_like_target.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../audiobook/controller/audiobook_like_controller.dart';
 import '../../../podcast/controller/podcast_like_controller.dart';
 import '../../../watch/presentation/screen/equelizer_screen.dart';
 import '../../controller/song_like_controller.dart';
@@ -391,7 +392,7 @@ class PlayerScreen extends StatelessWidget {
   }
 
   /// The like binding for whatever the shared player is on, or null when what
-  /// is playing has none — an audiobook, or one of the bundled demo tracks.
+  /// is playing has none — one of the bundled demo tracks.
   ///
   /// Each candidate is asked in turn, and asking reads the observables that
   /// [PlayerLikeTarget.canLike] is built from, so the caller's `Obx` stays
@@ -400,6 +401,7 @@ class PlayerScreen extends StatelessWidget {
     final candidates = <PlayerLikeTarget>[
       SongLikeController.instance,
       PodcastLikeController.instance,
+      AudiobookLikeController.instance,
     ];
 
     for (final candidate in candidates) {

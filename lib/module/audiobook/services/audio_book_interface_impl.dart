@@ -6,6 +6,7 @@ import 'package:beatx_flutter/module/audiobook/model/audio_book_details_model.da
 import 'package:beatx_flutter/module/audiobook/model/audiobook_model.dart';
 import 'package:beatx_flutter/module/audiobook/services/audio_book_interface.dart';
 
+import '../model/audio_book_like_model.dart';
 import '../model/audio_book_stream_url_model.dart';
 
 final class AudioBookInterfaceImpl extends AudioBookInterface {
@@ -83,6 +84,69 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: AudioBookStreamUrlModel.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks() async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getLikedAudiobooks);
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'];
+        final items = data is List
+            ? data
+            : data is Map && data['data'] is List
+                ? data['data'] as List
+                : const [];
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: items.whereType<Map>().map((item) {
+            final entry = Map<String, dynamic>.from(item);
+
+            // Liked books come back as books, but the details endpoint wraps
+            // one in `book` — take whichever this entry carries.
+            final book = entry['book'] is Map
+                ? Map<String, dynamic>.from(entry['book'] as Map)
+                : entry;
+
+            return Audiobook.fromJson(book);
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<AudioBookLikeModel>> likeAudiobook(
+    String audiobookId,
+  ) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.likaudiobook(audiobookId: audiobookId),
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        // Toggle endpoints often answer with the new state at the top level
+        // rather than wrapped in `data`, so fall back to the body itself.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : body;
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: AudioBookLikeModel.fromJson(data),
         );
       },
     );

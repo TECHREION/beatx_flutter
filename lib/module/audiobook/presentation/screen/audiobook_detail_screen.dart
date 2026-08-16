@@ -172,6 +172,16 @@ class _ActionPanel extends StatelessWidget {
     }
   }
 
+  Future<void> _toggleLike(BuildContext context) async {
+    await controller.toggleLike();
+
+    if (context.mounted && controller.errorMessage.value.isNotEmpty) {
+      SnackbarNotifier(
+        context: context,
+      ).notifyError(message: controller.errorMessage.value);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final progress = book is ContinueListeningBook
@@ -301,17 +311,41 @@ class _ActionPanel extends StatelessWidget {
               SizedBox(
                 width: 92,
                 height: 54,
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white38),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                child: Obx(() {
+                  final liked = controller.isLiked.value;
+                  final busy = controller.isTogglingLike.value;
+
+                  return OutlinedButton(
+                    onPressed: busy ? null : () => _toggleLike(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: liked
+                          ? const Color(0xFFFF4D6D)
+                          : Colors.white,
+                      side: BorderSide(
+                        color: liked
+                            ? const Color(0xFFFF4D6D)
+                            : Colors.white38,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
                     ),
-                  ),
-                  child: const Icon(Icons.bookmark_border_rounded),
-                ),
+                    child: busy
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: Colors.white54,
+                            ),
+                          )
+                        : Icon(
+                            liked
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                          ),
+                  );
+                }),
               ),
             ],
           ),

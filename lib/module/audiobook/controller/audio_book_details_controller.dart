@@ -6,12 +6,20 @@ import 'package:get/get.dart';
 import '../model/audio_book_details_model.dart';
 import '../services/audio_book_interface.dart';
 import '../services/audio_book_interface_impl.dart';
+import 'audiobook_like_controller.dart';
+import 'liked_audiobooks_controller.dart';
 
 class AudioBookDetailsController extends GetxController {
   final details = Rxn<AudiobookDetailsData>();
   final isLoading = false.obs;
   final errorMessage = ''.obs;
   final isStreamLoading = false.obs;
+
+  /// Whether the user has liked this book. Settled against
+  /// `GET /audiobooks/liked` once the screen opens, since neither the details
+  /// payload nor the home payload carries a per-user flag.
+  final isLiked = false.obs;
+  final isTogglingLike = false.obs;
 
   String? _loadedAudiobookId;
 
@@ -45,6 +53,47 @@ class AudioBookDetailsController extends GetxController {
       (success) => details.value = success.data,
     );
     isLoading.value = false;
+
+    _settleLiked(audiobookId);
+  }
+
+  /// Reads the heart off the user's liked books, which is where the backend
+  /// reports the like — the details payload has no per-user flag.
+  Future<void> _settleLiked(String audiobookId) async {
+    final liked = LikedAudiobooksController.instance;
+
+    // The list is shared, so a fetch is only needed when nothing has asked
+    // for it yet this run.
+    if (!liked.hasLoaded.value) await liked.fetch();
+
+    isLiked.value = liked.isLiked(audiobookId);
+  }
+
+  /// Likes the book, or unlikes it when it is already liked — the endpoint
+  /// toggles, so both directions are the same call.
+  Future<void> toggleLike() async {
+    final audiobookId = details.value?.book?.id ?? _loadedAudiobookId ?? '';
+
+    // Cleared ahead of the guards so a tap that does nothing does not leave
+    // the caller looking at the previous attempt's error.
+    errorMessage.value = '';
+    if (audiobookId.isEmpty || isTogglingLike.value) return;
+
+    isTogglingLike.value = true;
+
+    final result = await _audioBookInterface().likeAudiobook(audiobookId);
+
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      // A backend that only acknowledges the call reports no flag, so fall
+      // back to flipping what is on screen.
+      final liked = success.data?.liked ?? !isLiked.value;
+
+      isLiked.value = liked;
+      LikedAudiobooksController.syncHearts(audiobookId, liked);
+      LikedAudiobooksController.instance.fetch();
+    });
+
+    isTogglingLike.value = false;
   }
 
   /// The chapter `Listen Now` should start from — first chapter in the list.
@@ -90,6 +139,14 @@ class AudioBookDetailsController extends GetxController {
         artist: book?.author ?? '',
         imageAsset: book?.coverUrl ?? '',
         audioAsset: streamUrl,
+        trackId: chapterId,
+      );
+
+      // The like belongs to the book, not the chapter — the player screen
+      // reads it off this controller.
+      AudiobookLikeController.instance.load(
+        audiobookId: audiobookId,
+        isLiked: isLiked.value,
       );
 
       Get.to(
