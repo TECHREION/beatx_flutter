@@ -38,6 +38,7 @@ base class ApiEndpoints {
       _Audiobook._audiobookStreamUrl(audiobookId, chapterId);
   static String likaudiobook({required String audiobookId}) =>_Audiobook._likeAudibook(audiobookId);
   static const String getLikedAudiobooks= _Audiobook.getLikedAudiobooks;
+  static const String searchAudiobook = _Audiobook.searchAudiobook;
   
   //----------------------- watch -----------------------------
   static const String videoHome = _Video.videoHome;
@@ -49,6 +50,7 @@ base class ApiEndpoints {
       _Video._relatedVideos(videoId);
   static String likeUnlike({required String videoId}) =>
       _Video._likeUnlike(videoId);
+  static const String searchVideo = _Video.searchVideo;
 
   //---------------------- home/listen -----------------------------
   static const String listenHome = _Listen.listenHome;
@@ -136,6 +138,7 @@ class _Audiobook {
   static String _likeAudibook(String audiobookId) =>
       '$_audiobookRoute/$audiobookId/like';
   static const String getLikedAudiobooks = '$_audiobookRoute/liked';
+  static const String searchAudiobook = '$_audiobookRoute/search';
 }
 
 // ---------------------- watch -----------------------------
@@ -150,6 +153,7 @@ class _Video {
       '$videoRoute/$videoId/related';
   static String _likeUnlike(String videoId) =>
       '$videoRoute/$videoId/like';
+  static const String searchVideo = '$videoRoute/search';
 }
 
 // ---------------------- Listen/Home -----------------------------
@@ -166,6 +170,7 @@ class _Listen {
   static const String _searchSong = '$listen/search';
   static String _recentlyPlayed(String userId) => '$listen/recently-played';
   static const String _onRepeatedSong = '$listen/on-repeat';
+  static const String searchSong = '$listen/search';
 }
 
 // ---------------------- podcast -----------------------------

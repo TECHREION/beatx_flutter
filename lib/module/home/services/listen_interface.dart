@@ -1,4 +1,5 @@
 import '../../../core/api_handler/base_repository.dart';
+import '../../../core/api_handler/paged_result.dart';
 import '../../../core/api_handler/success.dart';
 import '../../../core/helpers/typedefs.dart';
 import '../model/listem_miusic_detalis_model.dart';
@@ -20,6 +21,14 @@ abstract base class ListenInterface extends BaseRepository {
     required int limit,
   });
   FutureRequest<Success<OnRepeatPage>> onRepeatedSong({
+    required int page,
+    required int limit,
+  });
+  /// Songs matching [query] and/or [genreId]. Both are empty when unset, and
+  /// an unset filter is left off the request rather than sent blank.
+  FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> searchSong({
+    required String query,
+    required String genreId,
     required int page,
     required int limit,
   });

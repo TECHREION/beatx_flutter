@@ -1,6 +1,7 @@
 import 'package:beatx_flutter/module/audiobook/model/audio_book_details_model.dart';
 
 import '../../../core/api_handler/base_repository.dart';
+import '../../../core/api_handler/paged_result.dart';
 import '../../../core/api_handler/success.dart';
 import '../../../core/helpers/typedefs.dart';
 import '../model/audio_book_like_model.dart';
@@ -13,4 +14,12 @@ abstract base class AudioBookInterface extends BaseRepository {
   FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(String audiobookId, String chapterId);
   FutureRequest<Success<AudioBookLikeModel>> likeAudiobook(String audiobookId);
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks();
+  /// Audiobooks matching [query] and/or [genreId]. Both are empty when unset,
+  /// and an unset filter is left off the request rather than sent blank.
+  FutureRequest<Success<PagedResult<Audiobook>>> searchAudiobook({
+    required String query,
+    required String genreId,
+    required int page,
+    required int limit,
+  });
 }

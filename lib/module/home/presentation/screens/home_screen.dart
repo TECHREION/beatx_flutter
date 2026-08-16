@@ -5,8 +5,8 @@ import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_
 import 'package:beatx_flutter/module/home/controller/home_controller.dart';
 import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
-import 'package:beatx_flutter/module/home/presentation/screens/explore_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/liked_songs_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/song_search_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/on_repeat_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/recently_played_screen.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                 showLogo: true,
                 onSearchTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ExploreScreen()),
+                  MaterialPageRoute(builder: (context) => SongSearchScreen()),
                 ),
                 notificationBadge: '3',
               ),

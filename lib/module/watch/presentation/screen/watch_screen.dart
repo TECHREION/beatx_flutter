@@ -7,6 +7,7 @@ import '../../../../core/theme/app_sizes.dart';
 import '../../controller/watch_controller.dart';
 import '../../model/watch_model.dart';
 import 'video_screen.dart';
+import 'video_search_screen.dart';
 
 String _formatDuration(int durationMs) {
   final totalSeconds = (durationMs / 1000).round();
@@ -28,7 +29,15 @@ class WatchScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              const AppHeader(title: 'Watch', notificationBadge: '3'),
+              AppHeader(
+                title: 'Watch',
+                notificationBadge: '3',
+                onSearchTap: () => Get.to(
+                  () => VideoSearchScreen(),
+                  transition: Transition.rightToLeft,
+                  preventDuplicates: true,
+                ),
+              ),
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value && controller.home.value == null) {

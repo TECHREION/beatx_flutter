@@ -13,6 +13,7 @@ import '../widget/new_release_card.dart';
 import '../widget/promo_banner.dart';
 import 'audiobook_detail_screen.dart';
 import 'audiobook_new_releases_screen.dart';
+import 'audiobook_search_screen.dart';
 import 'liked_audiobooks_screen.dart';
 
 class AudiobookScreen extends StatelessWidget {
@@ -31,7 +32,15 @@ class AudiobookScreen extends StatelessWidget {
             bottom: false,
             child: Column(
               children: [
-                const AppHeader(title: 'Audiobook', notificationBadge: '3'),
+                AppHeader(
+                  title: 'Audiobook',
+                  notificationBadge: '3',
+                  onSearchTap: () => Get.to(
+                    () => AudiobookSearchScreen(),
+                    transition: Transition.rightToLeft,
+                    preventDuplicates: true,
+                  ),
+                ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: controller.fetchHome,
