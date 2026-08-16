@@ -26,6 +26,10 @@ base class ApiEndpoints {
   static String changePassword = _User.changePassword;
   static String userPreferences = _User.preferences;
 
+  //=======================genre/artist========================
+  static const String genre = _Genre.getallgenre;
+  static const String genreSearch = _Genre.genreSearch;
+
   //---------------------- Audiobook -----------------------------
   static const String audiobookhome = _Audiobook.audiobookhome;
   static String audiobookDetails({required String audiobookId}) =>
@@ -73,7 +77,6 @@ base class ApiEndpoints {
       _Podcast._saveProgress(episodeId);
   static String searchCategory({required String categoryId}) =>
       _Podcast._searchCategory(categoryId);
-      
   static String likpodcast({required String podcastid}) =>_Podcast._likesong(podcastid);
   static const String getLikepodcast = _Podcast.getLikesong;
 }
@@ -114,6 +117,12 @@ class _User {
   static String updateProfile = '$_userRoute/profile';
   static String changePassword = '$_userRoute/change-password';
   static String preferences = '$_userRoute/me/preferences';
+}
+// /=======================genre/artist========================
+class _Genre {
+  static const String _genreRoute = '${ApiEndpoints.baseUrl}/genre';
+  static const String getallgenre = '$_genreRoute/';
+  static const String genreSearch = '$_genreRoute/search';
 }
 
 //------------------------------ Audiobook -----------------------------

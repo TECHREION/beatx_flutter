@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/theme/app_sizes.dart';
+import '../../../genre-artist/controller/genre_controller.dart';
 import '../../controller/explore_controller.dart';
 
 class ExploreScreen extends StatelessWidget {
   ExploreScreen({super.key});
 
   final ExploreController controller = Get.put(ExploreController());
+  final GenreController genreController = GenreController.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +54,20 @@ class ExploreScreen extends StatelessWidget {
                           ),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 18)),
-                        Obx(
-                          () => SliverPadding(
+                        Obx(() {
+                          final genres = genreController.genres;
+
+                          if (genres.isEmpty) {
+                            return SliverToBoxAdapter(
+                              child: _GenresPlaceholder(
+                                isLoading: genreController.isLoading.value,
+                                message: genreController.errorMessage.value,
+                                onRetry: genreController.fetch,
+                              ),
+                            );
+                          }
+
+                          return SliverPadding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSizes.screenHorizontalPadding,
                             ),
@@ -62,12 +76,12 @@ class ExploreScreen extends StatelessWidget {
                                 context,
                                 index,
                               ) {
-                                final item = controller.genres[index];
                                 return _GenreTile(
-                                  title: item.title,
-                                  image: item.image,
+                                  title: genres[index].name,
+                                  colors: _genreGradients[index %
+                                      _genreGradients.length],
                                 );
-                              }, childCount: controller.genres.length),
+                              }, childCount: genres.length),
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
@@ -76,8 +90,8 @@ class ExploreScreen extends StatelessWidget {
                                     childAspectRatio: 0.84,
                                   ),
                             ),
-                          ),
-                        ),
+                          );
+                        }),
                         const SliverToBoxAdapter(child: SizedBox(height: 30)),
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(
@@ -295,11 +309,22 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Artwork for the genre tiles. `GET /genre` reports a name and nothing else,
+/// so each tile is coloured by its place in the list rather than by an image.
+const _genreGradients = [
+  [Color(0xFF40DDEB), Color(0xFF32185F)],
+  [Color(0xFF9BFF4D), Color(0xFF126B4A)],
+  [Color(0xFFFF7A59), Color(0xFF5B1B4B)],
+  [Color(0xFFC777FF), Color(0xFF241A5E)],
+  [Color(0xFFFFC400), Color(0xFF5A2E12)],
+  [Color(0xFF4D8BFF), Color(0xFF15214F)],
+];
+
 class _GenreTile extends StatelessWidget {
-  const _GenreTile({required this.title, required this.image});
+  const _GenreTile({required this.title, required this.colors});
 
   final String title;
-  final String image;
+  final List<Color> colors;
 
   @override
   Widget build(BuildContext context) {
@@ -308,7 +333,15 @@ class _GenreTile extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          _ArtworkImage(asset: image),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: colors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -338,6 +371,85 @@ class _GenreTile extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Stands in for the genre grid while it is being fetched, and when it comes
+/// back empty or failed.
+class _GenresPlaceholder extends StatelessWidget {
+  const _GenresPlaceholder({
+    required this.isLoading,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final bool isLoading;
+
+  /// The failure that left the grid empty, or empty when it is simply empty.
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const SizedBox(
+        height: 140,
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF40DDEB)),
+        ),
+      );
+    }
+
+    final failed = message.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.screenHorizontalPadding,
+        18,
+        AppSizes.screenHorizontalPadding,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            failed ? message : 'No genres yet',
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
+          ),
+          if (failed) ...[
+            const SizedBox(height: 14),
+            GestureDetector(
+              onTap: onRetry,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFF9BFF4D),
+                ),
+                child: const Text(
+                  'Try again',
+                  style: TextStyle(
+                    color: Color(0xFF0B0B0C),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

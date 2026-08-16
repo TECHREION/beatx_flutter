@@ -59,19 +59,19 @@ class ExploreController extends GetxController {
 
   PaginatedSongs get recentlyPlayed => listenData.value.recentlyPlayed;
 
-  final genres = const <GenreModel>[
-    GenreModel(title: 'Pop', image: 'assets/image/genre_pop.png'),
-    GenreModel(title: 'Synth Wave', image: 'assets/image/genre_synth_wave.png'),
-    GenreModel(title: 'Rock', image: 'assets/image/genre_rock.png'),
-    GenreModel(title: 'Jazz', image: 'assets/image/genre_jazz.png'),
-    GenreModel(
-      title: 'Hip Hop & Soul',
-      image: 'assets/image/genre_hiphop_soul.png',
-    ),
-    GenreModel(title: 'Shop', image: 'assets/image/genre_shop.png'),
-    GenreModel(title: 'Podcasts', image: 'assets/image/genre_podcasts.png'),
-    GenreModel(title: 'Audiobooks', image: 'assets/image/genre_audiobooks.png'),
-  ].obs;
+  // final genres = const <GenreModel>[
+  //   GenreModel(title: 'Pop', image: 'assets/image/genre_pop.png'),
+  //   GenreModel(title: 'Synth Wave', image: 'assets/image/genre_synth_wave.png'),
+  //   GenreModel(title: 'Rock', image: 'assets/image/genre_rock.png'),
+  //   GenreModel(title: 'Jazz', image: 'assets/image/genre_jazz.png'),
+  //   GenreModel(
+  //     title: 'Hip Hop & Soul',
+  //     image: 'assets/image/genre_hiphop_soul.png',
+  //   ),
+  //   GenreModel(title: 'Shop', image: 'assets/image/genre_shop.png'),
+  //   GenreModel(title: 'Podcasts', image: 'assets/image/genre_podcasts.png'),
+  //   GenreModel(title: 'Audiobooks', image: 'assets/image/genre_audiobooks.png'),
+  // ].obs;
 
   final recentTracks = const <RecentTrackModel>[
     RecentTrackModel(
