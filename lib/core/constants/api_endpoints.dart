@@ -26,6 +26,9 @@ base class ApiEndpoints {
   static String changePassword = _User.changePassword;
   static String userPreferences = _User.preferences;
 
+  /// `GET` reads the settings, `PATCH` writes them back.
+  static String userSettings = _User.settings;
+
   //=======================genre/artist========================
   static const String genre = _Genre.getallgenre;
   static const String genreSearch = _Genre.genreSearch;
@@ -119,6 +122,7 @@ class _User {
   static String updateProfile = '$_userRoute/profile';
   static String changePassword = '$_userRoute/change-password';
   static String preferences = '$_userRoute/me/preferences';
+  static String settings = '$_userRoute/settings';
 }
 // /=======================genre/artist========================
 class _Genre {

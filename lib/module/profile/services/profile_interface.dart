@@ -18,4 +18,13 @@ abstract base class ProfileInterface extends BaseRepository {
   FutureRequest<Success<ChangePasswordResponse>> changePassword(
     ChangePasswordRequest params,
   );
+
+  /// The user's settings, behind `GET /users/settings`.
+  FutureRequest<Success<ProfileSettings>> getSettings();
+
+  /// Writes the settings back whole — the endpoint takes every field, not
+  /// just the changed one — and answers with what it saved.
+  FutureRequest<Success<ProfileSettings>> updateSettings(
+    ProfileSettings settings,
+  );
 }

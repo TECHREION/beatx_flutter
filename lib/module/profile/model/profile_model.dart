@@ -119,7 +119,9 @@ class UserProfileModel {
   }
 }
 
-/// The user's app settings, as carried on the profile.
+/// The user's app settings, as carried on the profile and as
+/// `GET /users/settings` reports them — `PATCH /users/settings` takes the same
+/// shape back, whole, and answers with it.
 class ProfileSettings {
   const ProfileSettings({
     this.language = 'en',
@@ -163,5 +165,45 @@ class ProfileSettings {
     'trackSearchHistory': trackSearchHistory,
     'sendUsageData': sendUsageData,
     'wifiOnlyMode': wifiOnlyMode,
+  };
+
+  ProfileSettings copyWith({
+    String? language,
+    String? theme,
+    bool? enablePasscode,
+    bool? allowSms,
+    bool? allowEmailNotification,
+    bool? trackSearchHistory,
+    bool? sendUsageData,
+    bool? wifiOnlyMode,
+  }) {
+    return ProfileSettings(
+      language: language ?? this.language,
+      theme: theme ?? this.theme,
+      enablePasscode: enablePasscode ?? this.enablePasscode,
+      allowSms: allowSms ?? this.allowSms,
+      allowEmailNotification:
+          allowEmailNotification ?? this.allowEmailNotification,
+      trackSearchHistory: trackSearchHistory ?? this.trackSearchHistory,
+      sendUsageData: sendUsageData ?? this.sendUsageData,
+      wifiOnlyMode: wifiOnlyMode ?? this.wifiOnlyMode,
+    );
+  }
+
+  /// The language code as the settings rows spell it out.
+  String get languageLabel => switch (language.trim().toLowerCase()) {
+    'it' || 'it-it' => 'Italian',
+    'en' || 'en-gb' || 'en-us' => 'English',
+    final code when code.isEmpty => 'English',
+    final code => code.toUpperCase(),
+  };
+
+  /// The theme as the settings rows spell it out.
+  String get themeLabel => switch (theme.trim().toLowerCase()) {
+    'light' => 'Light',
+    'system' => 'System',
+    'dark' => 'Dark',
+    final value when value.isEmpty => 'Dark',
+    final value => value[0].toUpperCase() + value.substring(1),
   };
 }

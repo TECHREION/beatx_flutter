@@ -139,16 +139,15 @@ class ProfileScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-
-                          IconButton(
-                            onPressed: () =>
-                                _openScreen(context, const EditProfileScreen()),
-                            icon: const Icon(
-                              Icons.edit_outlined,
-                              color: Colors.white70,
-                              size: 28,
-                            ),
-                          ),
+                          // IconButton(
+                          //   onPressed: () =>
+                          //       _openScreen(context, const EditProfileScreen()),
+                          //   icon: const Icon(
+                          //     Icons.edit_outlined,
+                          //     color: Colors.white70,
+                          //     size: 28,
+                          //   ),
+                          // ),
                         ],
                       );
                     }),

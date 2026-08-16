@@ -92,4 +92,54 @@ final class ProfileInterfaceImpl extends ProfileInterface {
       },
     );
   }
+
+  @override
+  FutureRequest<Success<ProfileSettings>> getSettings() async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.userSettings);
+
+        return Success<ProfileSettings>(
+          message: _messageOf(response.data, 'Settings fetched successfully'),
+          data: ProfileSettings.fromJson(_dataOf(response.data)),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<ProfileSettings>> updateSettings(
+    ProfileSettings settings,
+  ) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.patch(
+          ApiEndpoints.userSettings,
+          data: settings.toJson(),
+          options: appLanguageOptions(),
+        );
+
+        // The endpoint answers with the saved settings, so the caller can take
+        // them as the new truth rather than reading them back.
+        return Success<ProfileSettings>(
+          message: _messageOf(response.data, 'Settings updated successfully'),
+          data: ProfileSettings.fromJson(_dataOf(response.data)),
+        );
+      },
+    );
+  }
+
+  Map<String, dynamic> _dataOf(dynamic body) {
+    if (body is! Map) return <String, dynamic>{};
+
+    final data = body['data'];
+    return data is Map
+        ? Map<String, dynamic>.from(data)
+        : <String, dynamic>{};
+  }
+
+  String _messageOf(dynamic body, String fallback) {
+    final message = body is Map ? body['message']?.toString() : null;
+    return (message == null || message.isEmpty) ? fallback : message;
+  }
 }

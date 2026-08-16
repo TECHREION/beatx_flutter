@@ -1,7 +1,10 @@
+import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/terms_service_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({super.key});
@@ -11,8 +14,13 @@ class PrivacyScreen extends StatefulWidget {
 }
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
-  bool wifiOnly = true;
-  bool usageData = true;
+  final SettingsController controller = SettingsController.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetch();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,30 +52,61 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ),
                     child: Column(
                       children: [
-                        const ListTile(
-                          title: Text(
-                            'Language',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        Obx(() {
+                          final settings = controller.settings.value;
+                          final loaded = controller.hasLoaded.value;
+
+                          return Column(
                             children: [
-                              Text(
-                                'English',
-                                style: TextStyle(color: Colors.white),
+                              ListTile(
+                                title: const Text(
+                                  'Language',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      loaded ? settings.languageLabel : '…',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Colors.white,
+                              _switchTile(
+                                'Wi-Fi Only Mode',
+                                settings.wifiOnlyMode,
+                                // Held inert until the real values land, so a
+                                // flip cannot save the defaults over them.
+                                loaded
+                                    ? (value) => controller.setWifiOnlyMode(
+                                        value,
+                                        notifier: SnackbarNotifier(
+                                          context: context,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              _switchTile(
+                                'Send Usage Data',
+                                settings.sendUsageData,
+                                loaded
+                                    ? (value) => controller.setSendUsageData(
+                                        value,
+                                        notifier: SnackbarNotifier(
+                                          context: context,
+                                        ),
+                                      )
+                                    : null,
                               ),
                             ],
-                          ),
-                        ),
-                        _switchTile('Wi-Fi Only Mode', wifiOnly, (value) {
-                          setState(() => wifiOnly = value);
-                        }),
-                        _switchTile('Send Usage Data', usageData, (value) {
-                          setState(() => usageData = value);
+                          );
                         }),
                         _arrowTile('Data Management'),
                         _arrowTile(
@@ -104,7 +143,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     );
   }
 
-  Widget _switchTile(String title, bool value, ValueChanged<bool> onChanged) {
+  Widget _switchTile(String title, bool value, ValueChanged<bool>? onChanged) {
     return ListTile(
       title: Text(title, style: const TextStyle(color: Colors.white)),
       trailing: CupertinoSwitch(

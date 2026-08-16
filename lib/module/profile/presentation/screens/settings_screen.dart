@@ -1,5 +1,8 @@
+import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,7 +12,13 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool trackHistory = true;
+  final SettingsController controller = SettingsController.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetch();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,21 +50,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     child: Column(
                       children: [
-                        _row(
-                          'Language',
-                          trailing: const Text(
-                            'English',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          icon: Icons.keyboard_arrow_down,
-                        ),
-                        _switchRow(
-                          title: 'Track Search History',
-                          value: trackHistory,
-                          onChanged: (value) {
-                            setState(() => trackHistory = value);
-                          },
-                        ),
+                        Obx(() {
+                          final settings = controller.settings.value;
+                          final loaded = controller.hasLoaded.value;
+
+                          return Column(
+                            children: [
+                              _row(
+                                'Language',
+                                trailing: Text(
+                                  loaded ? settings.languageLabel : '…',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                icon: Icons.keyboard_arrow_down,
+                              ),
+                              _switchRow(
+                                title: 'Track Search History',
+                                value: settings.trackSearchHistory,
+                                // Held inert until the real values land, so a
+                                // flip cannot save the defaults over them.
+                                onChanged: loaded
+                                    ? (value) =>
+                                          controller.setTrackSearchHistory(
+                                            value,
+                                            notifier: SnackbarNotifier(
+                                              context: context,
+                                            ),
+                                          )
+                                    : null,
+                              ),
+                            ],
+                          );
+                        }),
                         _arrowRow('Clear Cache'),
                         _arrowRow('Delete Data'),
                         _arrowRow(
@@ -91,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _switchRow({
     required String title,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
   }) {
     return ListTile(
       title: Text(title, style: const TextStyle(color: Colors.white)),

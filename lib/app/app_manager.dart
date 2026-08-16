@@ -57,6 +57,7 @@ import '../module/app_ground.dart';
 import '../module/auth/controller/login_controller.dart';
 import '../module/onbording/onboarding1.dart';
 import '../module/profile/controller/get_profile_controller.dart';
+import '../module/profile/controller/settings_controller.dart';
 
 class AppManager extends GetxController {
   AuthStatus _authStatus = AuthLoading();
@@ -113,6 +114,13 @@ class AppManager extends GetxController {
         Get.delete<ProfileController>();
       }
       Get.put(ProfileController());
+
+      // Dropped with the profile, so the settings screens do not open on the
+      // previous user's switches.
+      if (Get.isRegistered<SettingsController>()) {
+        Get.delete<SettingsController>();
+      }
+      Get.put(SettingsController());
 
       Get.offAll(() => AppGround());
 

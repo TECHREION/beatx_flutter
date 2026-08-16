@@ -1,9 +1,12 @@
+import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/music_history_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/privacy_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/settings_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class GeneralSettingsScreen extends StatefulWidget {
   const GeneralSettingsScreen({super.key});
@@ -13,9 +16,15 @@ class GeneralSettingsScreen extends StatefulWidget {
 }
 
 class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
-  bool passcodeEnabled = true;
-  bool smsEnabled = false;
-  bool emailEnabled = true;
+  final SettingsController controller = SettingsController.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    // Re-read on every visit, so settings changed elsewhere are not left
+    // stale behind the screen. A fetch already running is joined.
+    controller.fetch();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,27 +125,43 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   const SizedBox(height: 12),
 
                   _sectionContainer(
-                    child: Column(
-                      children: [
-                        _settingRow(title: "Language", value: "English"),
+                    child: Obx(() {
+                      final settings = controller.settings.value;
+                      final loaded = controller.hasLoaded.value;
 
-                        const SizedBox(height: 18),
+                      return Column(
+                        children: [
+                          _settingRow(
+                            title: "Language",
+                            value: loaded ? settings.languageLabel : "…",
+                          ),
 
-                        _settingRow(title: "Theme", value: "Dark"),
+                          const SizedBox(height: 18),
 
-                        const SizedBox(height: 18),
+                          _settingRow(
+                            title: "Theme",
+                            value: loaded ? settings.themeLabel : "…",
+                          ),
 
-                        _switchRow(
-                          title: "Enable Passcode",
-                          value: passcodeEnabled,
-                          onChanged: (value) {
-                            setState(() {
-                              passcodeEnabled = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+                          const SizedBox(height: 18),
+
+                          _switchRow(
+                            title: "Enable Passcode",
+                            value: settings.enablePasscode,
+                            // Held inert until the real values land, so a flip
+                            // cannot save the defaults over them.
+                            onChanged: loaded
+                                ? (value) => controller.setEnablePasscode(
+                                    value,
+                                    notifier: SnackbarNotifier(
+                                      context: context,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ],
+                      );
+                    }),
                   ),
 
                   const SizedBox(height: 28),
@@ -210,31 +235,43 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   const SizedBox(height: 12),
 
                   _sectionContainer(
-                    child: Column(
-                      children: [
-                        _switchRow(
-                          title: "Allow SMS",
-                          value: smsEnabled,
-                          onChanged: (value) {
-                            setState(() {
-                              smsEnabled = value;
-                            });
-                          },
-                        ),
+                    child: Obx(() {
+                      final settings = controller.settings.value;
+                      final loaded = controller.hasLoaded.value;
 
-                        const SizedBox(height: 18),
+                      return Column(
+                        children: [
+                          _switchRow(
+                            title: "Allow SMS",
+                            value: settings.allowSms,
+                            onChanged: loaded
+                                ? (value) => controller.setAllowSms(
+                                    value,
+                                    notifier: SnackbarNotifier(
+                                      context: context,
+                                    ),
+                                  )
+                                : null,
+                          ),
 
-                        _switchRow(
-                          title: "Allow Email Notification",
-                          value: emailEnabled,
-                          onChanged: (value) {
-                            setState(() {
-                              emailEnabled = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+                          const SizedBox(height: 18),
+
+                          _switchRow(
+                            title: "Allow Email Notification",
+                            value: settings.allowEmailNotification,
+                            onChanged: loaded
+                                ? (value) =>
+                                      controller.setAllowEmailNotification(
+                                        value,
+                                        notifier: SnackbarNotifier(
+                                          context: context,
+                                        ),
+                                      )
+                                : null,
+                          ),
+                        ],
+                      );
+                    }),
                   ),
 
                   const SizedBox(height: 28),
@@ -363,7 +400,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   Widget _switchRow({
     required String title,
     required bool value,
-    required Function(bool) onChanged,
+    required ValueChanged<bool>? onChanged,
   }) {
     return Row(
       children: [
