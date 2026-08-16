@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import '../../theme/app_sizes.dart';
 import '../../../module/home/presentation/screens/explore_screen.dart';
 import '../../../module/onbording/common/app_logo.dart';
+import '../../../module/profile/controller/get_profile_controller.dart';
 import '../../../module/profile/presentation/screens/my_profile_screen.dart';
+import '../../../module/profile/presentation/widgets/user_avatar.dart';
 
 /// Unified top header for every tab screen.
 ///
@@ -94,7 +96,26 @@ class _ProfileAvatar extends StatelessWidget {
               end: Alignment.bottomRight,
             ),
           ),
-          child: const Icon(Icons.person, color: Color(0xFF0F1B28), size: 25),
+          child: Obx(() {
+            final user = ProfileController.instance.profile.value;
+
+            // The gradient behind this is the placeholder, so an account with
+            // no picture keeps the icon rather than dropping to an initial.
+            if (user == null || !user.hasAvatar) {
+              return const Icon(
+                Icons.person,
+                color: Color(0xFF0F1B28),
+                size: 25,
+              );
+            }
+
+            return UserAvatar(
+              radius: 21,
+              fontSize: 16,
+              initial: user.initial,
+              avatarUrl: user.avatar,
+            );
+          }),
         ),
       ),
     );

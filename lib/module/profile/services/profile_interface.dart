@@ -7,11 +7,14 @@ import '../model/change_password_model.dart';
 import '../model/update_profile_model.dart';
 
 abstract base class ProfileInterface extends BaseRepository {
-  FutureRequest<UserProfileModel> getProfile();
+  FutureRequest<Success<UserProfileModel>> getProfile();
 
-  FutureRequest<Success<UpdateProfileResponse>> updateProfile(
+  /// Saves the name and, when one was picked, the avatar. Answers with the
+  /// updated user.
+  FutureRequest<Success<UserProfileModel>> updateProfile(
     UserUpdateProfile params,
   );
+
   FutureRequest<Success<ChangePasswordResponse>> changePassword(
     ChangePasswordRequest params,
   );

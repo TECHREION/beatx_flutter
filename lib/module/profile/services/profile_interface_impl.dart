@@ -15,7 +15,7 @@ final class ProfileInterfaceImpl extends ProfileInterface {
   ProfileInterfaceImpl(this.appPigeon);
 
   @override
-  FutureRequest<UserProfileModel> getProfile() async {
+  FutureRequest<Success<UserProfileModel>> getProfile() async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(ApiEndpoints.getuserbyId);
@@ -28,33 +28,39 @@ final class ProfileInterfaceImpl extends ProfileInterface {
             ? Map<String, dynamic>.from(body['data'] as Map)
             : <String, dynamic>{};
 
-        return UserProfileModel.fromMap(data);
+        return Success<UserProfileModel>(
+          message: body['message']?.toString() ?? 'Success',
+          data: UserProfileModel.fromJson(data),
+        );
       },
     );
   }
 
   @override
-  FutureRequest<Success<UpdateProfileResponse>> updateProfile(
+  FutureRequest<Success<UserProfileModel>> updateProfile(
     UserUpdateProfile params,
   ) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.patch(
           ApiEndpoints.updateProfile,
-          data: FormData.fromMap(await params.toFormMap()),
+          data: params.toFormData(),
           options: appLanguageOptions(),
         );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
-        final updateResponse = UpdateProfileResponse.fromJson(body);
 
-        return Success<UpdateProfileResponse>(
-          message: updateResponse.message.isEmpty
-              ? 'Profile updated'
-              : updateResponse.message,
-          data: updateResponse,
+        // The endpoint answers with the whole updated user, so the caller can
+        // take it as the new profile rather than fetching it again.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        return Success<UserProfileModel>(
+          message: body['message']?.toString() ?? 'Profile updated',
+          data: UserProfileModel.fromJson(data),
         );
       },
     );

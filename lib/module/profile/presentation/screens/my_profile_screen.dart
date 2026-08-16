@@ -5,12 +5,21 @@ import 'package:beatx_flutter/module/profile/presentation/screens/my_profile_det
 import 'package:beatx_flutter/module/profile/presentation/screens/payment_methods_screen.dart';
 import 'package:beatx_flutter/module/subscription/presentation/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../controller/get_profile_controller.dart';
+import '../widgets/user_avatar.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Re-read on every visit, so a profile changed elsewhere is not left
+    // stale behind the screen. A fetch already running is joined, not
+    // duplicated.
+    ProfileController.instance.fetch();
+
     return Scaffold(
       backgroundColor: const Color(0xFF050608),
       body: Stack(
@@ -84,58 +93,65 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white24),
                     ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Color(0xFF222222),
-                          child: Text(
-                            'I',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
+                    child: Obx(() {
+                      final controller = ProfileController.instance;
+                      final user = controller.profile.value;
+
+                      return Row(
+                        children: [
+                          UserAvatar(
+                            radius: 35,
+                            fontSize: 24,
+                            initial: user?.initial ?? '?',
+                            avatarUrl: user?.avatar,
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  // Held back until the fetch lands, so the
+                                  // card never flashes an empty name.
+                                  controller.hasLoaded.value
+                                      ? user?.name ?? ''
+                                      : 'Loading…',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.email ?? '',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
 
-                        const SizedBox(width: 14),
-
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Iqbal Hasan",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                "iqbal@mail.com",
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
+                          IconButton(
+                            onPressed: () =>
+                                _openScreen(context, const EditProfileScreen()),
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                              color: Colors.white70,
+                              size: 28,
+                            ),
                           ),
-                        ),
-
-                        IconButton(
-                          onPressed: () =>
-                              _openScreen(context, const EditProfileScreen()),
-                          icon: const Icon(
-                            Icons.edit_outlined,
-                            color: Colors.white70,
-                            size: 28,
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    }),
                   ),
 
                   const SizedBox(height: 26),

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
@@ -7,6 +5,8 @@ import 'package:beatx_flutter/module/profile/controller/use_profile_update_contr
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../widgets/user_avatar.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,7 +25,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   late final EditProfileController _controller;
   late final bool _ownsController;
 
@@ -38,10 +37,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         : Get.find<EditProfileController>();
 
     _controller.fetchProfile().then((_) {
+      if (!mounted) return;
+
       final profile = _controller.profile.value;
       _nameController.text = profile.fullName;
       _emailController.text = profile.email;
-      _phoneController.text = profile.phoneNumber;
     });
   }
 
@@ -49,7 +49,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     if (_ownsController && Get.isRegistered<EditProfileController>()) {
       Get.delete<EditProfileController>();
     }
@@ -161,14 +160,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         onTap: _showImageSourceSheet,
                         child: Stack(
                           children: [
-                            Obx(
-                              () => _ProfileAvatar(
-                                imageBytes:
-                                    _controller.profile.value.imageBytes,
-                                imageUrl: _controller.profile.value.imageUrl,
-                                name: _controller.profile.value.fullName,
-                              ),
-                            ),
+                            Obx(() {
+                              final profile = _controller.profile.value;
+                              final name = profile.fullName.trim();
+
+                              return UserAvatar(
+                                radius: 42,
+                                fontSize: 30,
+                                initial: name.isEmpty
+                                    ? '?'
+                                    : name[0].toUpperCase(),
+                                avatarUrl: profile.imageUrl,
+                                imageBytes: profile.imageBytes,
+                              );
+                            }),
 
                             Positioned(
                               bottom: 0,
@@ -220,14 +225,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             prefixIcon: Icons.email_outlined,
                             readOnly: true,
                           ),
-                          const SizedBox(height: 6),
-                          LabeledTextField(
-                            title: 'Phone',
-                            hintText: 'Enter phone number',
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            prefixIcon: Icons.phone_android_outlined,
-                          ),
                         ],
                       ),
                     ),
@@ -265,8 +262,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     _controller.updateProfile(
       fullName: _nameController.text,
-      email: _emailController.text,
-      phoneNumber: _phoneController.text,
       snackbarNotifier: SnackbarNotifier(context: context),
     );
   }
@@ -322,45 +317,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickImage(ImageSource source) async {
     Navigator.pop(context);
     await _controller.pickProfileImage(source);
-  }
-}
 
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({
-    required this.imageBytes,
-    required this.imageUrl,
-    required this.name,
-  });
-
-  final Uint8List? imageBytes;
-  final String? imageUrl;
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
-    final avatarUrl = imageUrl?.trim();
-    final ImageProvider? avatarImage = imageBytes != null
-        ? MemoryImage(imageBytes!)
-        : avatarUrl != null && avatarUrl.isNotEmpty
-        ? NetworkImage(avatarUrl)
-        : null;
-
-    return CircleAvatar(
-      radius: 42,
-      backgroundColor: const Color(0xFF222222),
-      backgroundImage: avatarImage,
-      child: avatarImage == null
-          ? Text(
-              initial,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-              ),
-            )
-          : null,
-    );
+    // Most often the camera or photo permission was turned down, which is
+    // silent otherwise — the avatar simply would not change.
+    final error = _controller.pickerError.value;
+    if (error.isEmpty || !mounted) return;
+    SnackbarNotifier(context: context).notifyError(message: error);
   }
 }
 

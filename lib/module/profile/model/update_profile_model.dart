@@ -2,32 +2,39 @@ import 'dart:typed_data';
 
 import 'package:app_pigeon/app_pigeon.dart';
 
-class UserUpdateProfile {
-  final String fullName;
-  final String email;
-  final String phoneNumber;
-  final Uint8List? imageBytes;
-  final String? imageName;
-  final String? imageUrl;
+import 'profile_model.dart';
 
+/// What `PATCH /users/profile` is sent: the name, and the avatar when the
+/// user picked a new one.
+///
+/// Goes out as multipart, since the avatar is a file. [imageUrl] is the
+/// avatar already on the account — it is what the screen shows until a new
+/// image is picked, and is never uploaded.
+class UserUpdateProfile {
   const UserUpdateProfile({
-    required this.fullName,
-    required this.email,
-    required this.phoneNumber,
+    this.fullName = '',
+    this.email = '',
     this.imageBytes,
     this.imageName,
     this.imageUrl,
   });
 
-  factory UserUpdateProfile.empty() {
-    return const UserUpdateProfile(fullName: '', email: '', phoneNumber: '');
-  }
+  final String fullName;
 
-  factory UserUpdateProfile.fromUser(ProfileUserData user) {
+  /// Shown on the form and never sent — the backend does not take an email
+  /// change through this endpoint.
+  final String email;
+
+  final Uint8List? imageBytes;
+  final String? imageName;
+  final String? imageUrl;
+
+  factory UserUpdateProfile.empty() => const UserUpdateProfile();
+
+  factory UserUpdateProfile.fromProfile(UserProfileModel user) {
     return UserUpdateProfile(
       fullName: user.name,
       email: user.email,
-      phoneNumber: '',
       imageUrl: user.avatar,
     );
   }
@@ -35,7 +42,6 @@ class UserUpdateProfile {
   UserUpdateProfile copyWith({
     String? fullName,
     String? email,
-    String? phoneNumber,
     Uint8List? imageBytes,
     String? imageName,
     String? imageUrl,
@@ -44,162 +50,48 @@ class UserUpdateProfile {
     return UserUpdateProfile(
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
       imageBytes: clearImage ? null : imageBytes ?? this.imageBytes,
       imageName: clearImage ? null : imageName ?? this.imageName,
       imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
-  Future<Map<String, dynamic>> toFormMap() async {
-    final phone = phoneNumber.trim();
+  /// The multipart body. Only what the backend takes goes in: it rejects
+  /// properties it does not know, so the email on the form is left out.
+  FormData toFormData() {
+    final name = fullName.trim();
+    final bytes = imageBytes;
 
-    return {
-      'name': fullName.trim(),
-      if (phone.isNotEmpty) 'phoneNumber': phone,
-      if (imageBytes != null)
+    return FormData.fromMap({
+      if (name.isNotEmpty) 'name': name,
+      if (bytes != null)
         'avatar': MultipartFile.fromBytes(
-          imageBytes!,
-          filename: imageName ?? 'profile.jpg',
+          bytes,
+          filename: _filename,
+          // Without this dio sends application/octet-stream, which an upload
+          // filtering on image mime types turns away.
+          contentType: DioMediaType('image', _extension),
         ),
+    });
+  }
+
+  String get _filename {
+    final picked = imageName?.trim() ?? '';
+    return picked.isEmpty ? 'avatar.jpg' : picked;
+  }
+
+  /// The picked file's extension, normalised to what a mime type expects.
+  String get _extension {
+    final name = _filename.toLowerCase();
+    final dot = name.lastIndexOf('.');
+
+    return switch (dot == -1 ? '' : name.substring(dot + 1)) {
+      'png' => 'png',
+      'webp' => 'webp',
+      'heic' => 'heic',
+      'heif' => 'heif',
+      'gif' => 'gif',
+      _ => 'jpeg',
     };
-  }
-}
-
-class UpdateProfileResponse {
-  final bool status;
-  final String message;
-  final ProfileUserData data;
-  final DateTime? timestamp;
-  final String path;
-  final Metadata metadata;
-
-  const UpdateProfileResponse({
-    required this.status,
-    required this.message,
-    required this.data,
-    this.timestamp,
-    required this.path,
-    required this.metadata,
-  });
-
-  factory UpdateProfileResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] is Map
-        ? Map<String, dynamic>.from(json['data'] as Map)
-        : <String, dynamic>{};
-    final metadata = json['metadata'] is Map
-        ? Map<String, dynamic>.from(json['metadata'] as Map)
-        : <String, dynamic>{};
-
-    return UpdateProfileResponse(
-      status: json['status'] == true,
-      message: (json['message'] ?? '').toString(),
-      data: ProfileUserData.fromJson(data),
-      timestamp: DateTime.tryParse((json['timestamp'] ?? '').toString()),
-      path: (json['path'] ?? '').toString(),
-      metadata: Metadata.fromJson(metadata),
-    );
-  }
-}
-
-class ProfileUserData {
-  final String id;
-  final String email;
-  final String name;
-  final String role;
-  final String provider;
-  final bool isVerified;
-  final Settings settings;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-  final int version;
-  final String? avatar;
-  final String? avatarKey;
-  final List<String> favoriteArtists;
-  final List<String> favoriteGenres;
-
-  const ProfileUserData({
-    required this.id,
-    required this.email,
-    required this.name,
-    required this.role,
-    required this.provider,
-    required this.isVerified,
-    required this.settings,
-    this.createdAt,
-    this.updatedAt,
-    required this.version,
-    this.avatar,
-    this.avatarKey,
-    required this.favoriteArtists,
-    required this.favoriteGenres,
-  });
-
-  factory ProfileUserData.fromJson(Map<String, dynamic> json) {
-    final settings = json['settings'] is Map
-        ? Map<String, dynamic>.from(json['settings'] as Map)
-        : <String, dynamic>{};
-
-    return ProfileUserData(
-      id: (json['_id'] ?? json['id'] ?? '').toString(),
-      email: (json['email'] ?? '').toString(),
-      name: (json['name'] ?? json['fullName'] ?? '').toString(),
-      role: (json['role'] ?? '').toString(),
-      provider: (json['provider'] ?? '').toString(),
-      isVerified: json['isVerified'] == true,
-      settings: Settings.fromJson(settings),
-      createdAt: DateTime.tryParse((json['createdAt'] ?? '').toString()),
-      updatedAt: DateTime.tryParse((json['updatedAt'] ?? '').toString()),
-      version: json['__v'] is int ? json['__v'] as int : 0,
-      avatar: json['avatar']?.toString(),
-      avatarKey: json['avatarKey']?.toString(),
-      favoriteArtists: List<String>.from(json['favoriteArtists'] ?? []),
-      favoriteGenres: List<String>.from(json['favoriteGenres'] ?? []),
-    );
-  }
-}
-
-class Settings {
-  final String language;
-  final String theme;
-  final bool enablePasscode;
-  final bool allowSms;
-  final bool allowEmailNotification;
-  final bool trackSearchHistory;
-  final bool sendUsageData;
-  final bool wifiOnlyMode;
-
-  const Settings({
-    required this.language,
-    required this.theme,
-    required this.enablePasscode,
-    required this.allowSms,
-    required this.allowEmailNotification,
-    required this.trackSearchHistory,
-    required this.sendUsageData,
-    required this.wifiOnlyMode,
-  });
-
-  factory Settings.fromJson(Map<String, dynamic> json) {
-    return Settings(
-      language: (json['language'] ?? 'en').toString(),
-      theme: (json['theme'] ?? 'dark').toString(),
-      enablePasscode: json['enablePasscode'] == true,
-      allowSms: json['allowSms'] == true,
-      allowEmailNotification: json['allowEmailNotification'] == true,
-      trackSearchHistory: json['trackSearchHistory'] == true,
-      sendUsageData: json['sendUsageData'] == true,
-      wifiOnlyMode: json['wifiOnlyMode'] == true,
-    );
-  }
-}
-
-class Metadata {
-  final String duration;
-
-  const Metadata({required this.duration});
-
-  factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(duration: (json['duration'] ?? '').toString());
   }
 }

@@ -4,10 +4,12 @@ import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/profile/services/profile_interface.dart';
 import 'package:beatx_flutter/module/profile/services/profile_interface_impl.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../model/update_profile_model.dart';
+import 'get_profile_controller.dart';
 
 class EditProfileController extends GetxController {
   final ProcessStatusNotifier processNotifier = ProcessStatusNotifier(
@@ -23,6 +25,9 @@ class EditProfileController extends GetxController {
 
   final isLoadingProfile = true.obs;
 
+  /// The failure behind a picture that could not be picked, or empty.
+  final pickerError = ''.obs;
+
   ProfileInterface _getOrCreateProfileInterface() {
     if (!Get.isRegistered<ProfileInterface>() &&
         Get.isRegistered<AuthorizedPigeon>()) {
@@ -33,48 +38,52 @@ class EditProfileController extends GetxController {
     return Get.find<ProfileInterface>();
   }
 
+  /// Fills the form from the shared profile, fetching it when nothing has
+  /// asked for it yet this run.
   Future<void> fetchProfile() async {
     isLoadingProfile.value = true;
-    final result = await _getOrCreateProfileInterface().getProfile();
-    result.fold((_) {}, (userProfile) {
-      profile.value = profile.value.copyWith(
-        fullName: userProfile.name,
-        email: userProfile.email,
-        imageUrl: userProfile.avatar,
-        clearImage: true,
-      );
-    });
+
+    final shared = ProfileController.instance;
+    if (!shared.hasLoaded.value) await shared.fetch();
+
+    final user = shared.profile.value;
+    if (user != null) profile.value = UserUpdateProfile.fromProfile(user);
+
     isLoadingProfile.value = false;
   }
 
+  /// Picks a new avatar. It is held on the form until the save goes out.
   Future<void> pickProfileImage(ImageSource source) async {
-    final image = await _picker.pickImage(
-      source: source,
-      imageQuality: 85,
-      maxWidth: 1200,
-    );
+    pickerError.value = '';
 
-    if (image == null) return;
+    try {
+      final image = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1200,
+      );
 
-    final imageBytes = await image.readAsBytes();
-    profile.value = profile.value.copyWith(
-      imageBytes: imageBytes,
-      imageName: image.name.isEmpty ? 'profile.jpg' : image.name,
-    );
-    processNotifier.setEnabled();
+      if (image == null) return;
+
+      profile.value = profile.value.copyWith(
+        imageBytes: await image.readAsBytes(),
+        imageName: image.name.isEmpty ? 'avatar.jpg' : image.name,
+      );
+
+      // A picture is a change worth saving, so the button comes back to life
+      // even when nothing else on the form was touched.
+      processNotifier.setEnabled();
+    } on PlatformException catch (error) {
+      // Camera or photo access turned down, most often.
+      pickerError.value = error.message ?? 'Could not open that picture.';
+    }
   }
 
   Future<void> updateProfile({
     required String fullName,
-    required String email,
-    required String phoneNumber,
     SnackbarNotifier? snackbarNotifier,
   }) {
-    profile.value = profile.value.copyWith(
-      fullName: fullName,
-      email: email,
-      phoneNumber: phoneNumber,
-    );
+    profile.value = profile.value.copyWith(fullName: fullName);
 
     processNotifier.setLoading();
 
@@ -85,8 +94,11 @@ class EditProfileController extends GetxController {
         either: result,
         processStatusNotifier: processNotifier,
         errorSnackbarNotifier: snackbarNotifier,
-        onSuccess: (response) {
-          profile.value = UserUpdateProfile.fromUser(response.data);
+        onSuccess: (user) {
+          // The picked bytes have been uploaded — dropping them leaves the
+          // form on the avatar url the backend just answered with.
+          profile.value = UserUpdateProfile.fromProfile(user);
+          ProfileController.instance.apply(user);
         },
       );
     });
