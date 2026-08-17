@@ -46,9 +46,18 @@ class LikedPodcastsController extends GetxController {
     return Get.find<PodcastInterface>();
   }
 
-  Future<void> fetch() async {
-    if (isLoading.value) return;
+  Future<void>? _inFlight;
 
+  /// Reloads the list.
+  ///
+  /// A second caller joins the fetch already running rather than being turned
+  /// away — the screen asks on open at the same moment this controller's own
+  /// first fetch is still in flight, and a dropped call would leave the screen
+  /// waiting on a future that never ran.
+  Future<void> fetch() =>
+      _inFlight ??= _fetch().whenComplete(() => _inFlight = null);
+
+  Future<void> _fetch() async {
     isLoading.value = true;
     errorMessage.value = '';
 

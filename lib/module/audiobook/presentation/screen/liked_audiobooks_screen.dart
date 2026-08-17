@@ -12,7 +12,7 @@ import 'audiobook_detail_screen.dart';
 /// Same layout as the liked songs and liked podcasts screens — all three are
 /// built from the shared chrome in `liked_collection.dart` — with the
 /// audiobook tab's accent.
-class LikedAudiobooksScreen extends StatelessWidget {
+class LikedAudiobooksScreen extends StatefulWidget {
   const LikedAudiobooksScreen({super.key});
 
   static const accent = Color(0xFF40DDEB);
@@ -20,9 +20,25 @@ class LikedAudiobooksScreen extends StatelessWidget {
   static const _artGradient = [Color(0xFF673BD3), Color(0xFF40DDEB)];
 
   @override
-  Widget build(BuildContext context) {
-    final ctrl = LikedAudiobooksController.instance;
+  State<LikedAudiobooksScreen> createState() => _LikedAudiobooksScreenState();
+}
 
+class _LikedAudiobooksScreenState extends State<LikedAudiobooksScreen> {
+  final ctrl = LikedAudiobooksController.instance;
+
+  static const accent = LikedAudiobooksScreen.accent;
+
+  @override
+  void initState() {
+    super.initState();
+    // Asked for on every open, so a first fetch that failed — no token yet,
+    // or the network was down — is retried here rather than left as an error
+    // the user has to tap "Try again" on. A fetch already running is joined.
+    ctrl.fetch();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: LikedPalette.background,
       body: SafeArea(

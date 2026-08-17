@@ -7,7 +7,7 @@ import '../../controller/liked_songs_controller.dart';
 import '../../model/listem_miusic_detalis_model.dart';
 
 /// Every song the user has liked, over `GET /songs/liked`.
-class LikedSongsScreen extends StatelessWidget {
+class LikedSongsScreen extends StatefulWidget {
   const LikedSongsScreen({super.key});
 
   static const accent = Color(0xFF9BFF4D);
@@ -15,9 +15,41 @@ class LikedSongsScreen extends StatelessWidget {
   static const _artGradient = [Color(0xFF4DEBFF), Color(0xFF7B3BFF)];
 
   @override
-  Widget build(BuildContext context) {
-    final ctrl = LikedSongsController.instance;
+  State<LikedSongsScreen> createState() => _LikedSongsScreenState();
 
+  /// `durationMs` comes back as 0 for songs the backend never measured, so
+  /// fall back to whatever the player measured the last time it played one.
+  static String? formatDuration(String songId, int durationMs) {
+    var value = Duration(milliseconds: durationMs);
+    if (value == Duration.zero && Get.isRegistered<PlayerController>()) {
+      value =
+          Get.find<PlayerController>().measuredDuration(songId) ??
+          Duration.zero;
+    }
+    if (value == Duration.zero) return null;
+
+    final minutes = value.inMinutes;
+    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+}
+
+class _LikedSongsScreenState extends State<LikedSongsScreen> {
+  final ctrl = LikedSongsController.instance;
+
+  static const accent = LikedSongsScreen.accent;
+
+  @override
+  void initState() {
+    super.initState();
+    // Asked for on every open, so a first fetch that failed — no token yet,
+    // or the network was down — is retried here rather than left as an error
+    // the user has to tap "Try again" on. A fetch already running is joined.
+    ctrl.fetch();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: LikedPalette.background,
       body: SafeArea(
@@ -99,22 +131,6 @@ class LikedSongsScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// `durationMs` comes back as 0 for songs the backend never measured, so
-  /// fall back to whatever the player measured the last time it played one.
-  static String? formatDuration(String songId, int durationMs) {
-    var value = Duration(milliseconds: durationMs);
-    if (value == Duration.zero && Get.isRegistered<PlayerController>()) {
-      value =
-          Get.find<PlayerController>().measuredDuration(songId) ??
-          Duration.zero;
-    }
-    if (value == Duration.zero) return null;
-
-    final minutes = value.inMinutes;
-    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 }
 

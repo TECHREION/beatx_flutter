@@ -56,6 +56,9 @@ import '../core/helpers/auth_role.dart';
 import '../module/app_ground.dart';
 import '../module/auth/controller/login_controller.dart';
 import '../module/onbording/onboarding1.dart';
+import '../module/audiobook/controller/liked_audiobooks_controller.dart';
+import '../module/home/controller/liked_songs_controller.dart';
+import '../module/podcast/controller/liked_podcasts_controller.dart';
 import '../module/profile/controller/get_profile_controller.dart';
 import '../module/profile/controller/settings_controller.dart';
 
@@ -122,6 +125,8 @@ class AppManager extends GetxController {
       }
       Get.put(SettingsController());
 
+      _refreshLikedCollections();
+
       Get.offAll(() => AppGround());
 
       // navigatorKey.currentState?.pushNamedAndRemoveUntil(
@@ -134,6 +139,25 @@ class AppManager extends GetxController {
     //   debugPrint("(In Appmanager)Auth status: $authStatus");
 
     // }
+  }
+
+  /// Reloads the liked collections against the account that just signed in.
+  ///
+  /// They are registered `permanent`, so they outlive the sign-out that came
+  /// before this and would otherwise still be holding the previous user's
+  /// likes — or the failure their first fetch met while there was no token to
+  /// send. Only the ones already registered are touched; the rest fetch on
+  /// first use, which is now after this point.
+  void _refreshLikedCollections() {
+    if (Get.isRegistered<LikedSongsController>()) {
+      LikedSongsController.instance.fetch();
+    }
+    if (Get.isRegistered<LikedPodcastsController>()) {
+      LikedPodcastsController.instance.fetch();
+    }
+    if (Get.isRegistered<LikedAudiobooksController>()) {
+      LikedAudiobooksController.instance.fetch();
+    }
   }
 
   // initiate controllers on auth change[Authenticated]

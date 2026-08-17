@@ -10,7 +10,7 @@ import '../../model/podcast_details_model.dart';
 ///
 /// Same layout as the liked songs screen — both are built from the shared
 /// chrome in `liked_collection.dart` — with the podcast tab's accent.
-class LikedPodcastsScreen extends StatelessWidget {
+class LikedPodcastsScreen extends StatefulWidget {
   const LikedPodcastsScreen({super.key});
 
   static const accent = Color(0xFFBD89FF);
@@ -18,9 +18,25 @@ class LikedPodcastsScreen extends StatelessWidget {
   static const _artGradient = [Color(0xFF7B3BFF), Color(0xFF4D314F)];
 
   @override
-  Widget build(BuildContext context) {
-    final ctrl = LikedPodcastsController.instance;
+  State<LikedPodcastsScreen> createState() => _LikedPodcastsScreenState();
+}
 
+class _LikedPodcastsScreenState extends State<LikedPodcastsScreen> {
+  final ctrl = LikedPodcastsController.instance;
+
+  static const accent = LikedPodcastsScreen.accent;
+
+  @override
+  void initState() {
+    super.initState();
+    // Asked for on every open, so a first fetch that failed — no token yet,
+    // or the network was down — is retried here rather than left as an error
+    // the user has to tap "Try again" on. A fetch already running is joined.
+    ctrl.fetch();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: LikedPalette.background,
       body: SafeArea(
