@@ -239,4 +239,43 @@ final class ListenInterfaceImpl extends ListenInterface {
       },
     );
   }
+
+  @override
+  FutureRequest<Success<List<ListenMusicDetailsModel>>> dailyDiscover({
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.dailyDiscover,
+          queryParameters: {'limit': limit},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        // The picks arrive as a bare list on `data`; a wrapped one is read the
+        // same way so either shape lands.
+        final data = body['data'];
+        final items = data is List
+            ? data
+            : data is Map && data['data'] is List
+                ? data['data'] as List
+                : const [];
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: items
+              .whereType<Map>()
+              .map(
+                (item) => ListenMusicDetailsModel.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
 }

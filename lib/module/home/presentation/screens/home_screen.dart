@@ -5,6 +5,7 @@ import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_
 import 'package:beatx_flutter/module/home/controller/home_controller.dart';
 import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/daily_discover_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/liked_songs_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/song_search_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/on_repeat_screen.dart';
@@ -326,53 +327,61 @@ class _DailyDiscoverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      padding: const EdgeInsets.all(26),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF19191C), Color(0xFF322846)],
-        ),
+    return GestureDetector(
+      onTap: () => Get.to(
+        () => const DailyDiscoverScreen(),
+        transition: Transition.rightToLeft,
+        preventDuplicates: true,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.auto_awesome_rounded,
-            color: Color(0xFFD38BFF),
-            size: 33,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 220,
+        padding: const EdgeInsets.all(26),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF19191C), Color(0xFF322846)],
           ),
-          const Spacer(),
-          const Text(
-            'Daily\nDiscover',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 31,
-              height: 1.2,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.auto_awesome_rounded,
+              color: Color(0xFFD38BFF),
+              size: 33,
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const _StackedAvatars(),
-              const SizedBox(width: 14),
-              Text(
-                'New for you',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.62),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0,
-                ),
+            const Spacer(),
+            const Text(
+              'Daily\nDiscover',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 31,
+                height: 1.2,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const _StackedAvatars(),
+                const SizedBox(width: 14),
+                Text(
+                  'New for you',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.62),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

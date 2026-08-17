@@ -32,4 +32,9 @@ abstract base class ListenInterface extends BaseRepository {
     required int page,
     required int limit,
   });
+  /// The day's picks for the signed-in user. Answers with one unpaged list,
+  /// capped at [limit].
+  FutureRequest<Success<List<ListenMusicDetailsModel>>> dailyDiscover({
+    required int limit,
+  });
 }

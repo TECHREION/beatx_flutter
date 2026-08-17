@@ -67,6 +67,7 @@ base class ApiEndpoints {
       _Listen._recentlyPlayed(userId);
   static const String onRepeatedSong = _Listen._onRepeatedSong;
   static const String searchSong = _Listen._searchSong;
+  static const String dailyDiscover = _Listen.dailyDiscover;
 
   //---------------------- podcast -----------------------------
   static const String podcastHome = _Podcast.podcastHome;
@@ -175,6 +176,7 @@ class _Listen {
   static String _recentlyPlayed(String userId) => '$listen/recently-played';
   static const String _onRepeatedSong = '$listen/on-repeat';
   static const String searchSong = '$listen/search';
+  static const String dailyDiscover = '$listen/daily-discovery';
 }
 
 // ---------------------- podcast -----------------------------
