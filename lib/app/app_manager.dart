@@ -70,6 +70,40 @@ class AppManager extends GetxController {
   /// Socket connection status
   final RxBool socketConnected = false.obs;
 
+  /// Held closed while the launch clip is on screen. Auth usually resolves in
+  /// well under a second, and without this the stream's opening event would
+  /// route the app away before the clip had played a frame.
+  ///
+  /// [SplashView] opens it — and routes the launch itself — once the clip is
+  /// done. The timeout is a backstop for a build where no launch screen runs.
+  final _splashFinished = Completer<void>();
+
+  Future<void> get _splashGate => _splashFinished.future.timeout(
+    const Duration(seconds: 15),
+    onTimeout: () {},
+  );
+
+  /// Set when the launch screen has already routed the decision that is
+  /// parked on [_splashGate], so it is not acted on twice.
+  bool _launchRouteHandled = false;
+
+  /// Called by [SplashView] when it has finished with the launch clip and has
+  /// routed the app itself.
+  void markSplashFinished() {
+    // Only a status that has already arrived has a route waiting on the gate
+    // for the launch screen to have pre-empted. If none has, the launch screen
+    // fell back to sign-in and whatever arrives later still needs routing.
+    _launchRouteHandled = _authStatus is! AuthLoading;
+    if (!_splashFinished.isCompleted) _splashFinished.complete();
+  }
+
+  /// True once, for the decision the launch screen already carried out.
+  bool _launchScreenAlreadyRouted() {
+    if (!_launchRouteHandled) return false;
+    _launchRouteHandled = false;
+    return true;
+  }
+
   StreamSubscription<dynamic>? _socketConnectSub;
   StreamSubscription<dynamic>? _socketDisconnectSub;
   StreamSubscription<dynamic>? _socketErrorSub;
@@ -99,6 +133,8 @@ class AppManager extends GetxController {
       if (Get.isRegistered<LoginController>()) {
         Get.delete<LoginController>(force: true);
       }
+      await _splashGate;
+      if (_launchScreenAlreadyRouted()) return;
       Get.offAll(() => Onboarding1Screen());
       // navigatorKey.currentState?.pushNamedAndRemoveUntil(
       //   RouteNames.login,
@@ -127,6 +163,8 @@ class AppManager extends GetxController {
 
       _refreshLikedCollections();
 
+      await _splashGate;
+      if (_launchScreenAlreadyRouted()) return;
       Get.offAll(() => AppGround());
 
       // navigatorKey.currentState?.pushNamedAndRemoveUntil(
