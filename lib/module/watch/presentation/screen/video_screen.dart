@@ -155,236 +155,222 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Obx(
-              () => SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Pinned. The player holds the top of the screen and the detail
+            // below scrolls under it, rather than the whole page scrolling
+            // and carrying the video off screen with it.
+            _PlayerSurface(
+              chewieController: _chewieController,
+              errorMessage: controller.errorMessage,
+              onBack: Get.back<void>,
+            ),
 
-                    /// AppBar
-                    Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor:
-                                Colors.white24,
-                            child: IconButton(
-                              icon: const Icon(
-                                  Icons.arrow_back),
-                              onPressed: () =>
-                                  Get.back(),
-                            ),
-                          ),
-
-                          const SizedBox(width: 10),
-
-                          const Text(
-                            "Now Playing",
-                            style: TextStyle(
-                              color:
-                                  Colors.cyanAccent,
-                              fontSize: 20,
-                              fontWeight:
-                                  FontWeight.bold,
-                            ),
-                          ),
-
-                          const Spacer(),
-
-                          const Icon(
-                              Icons.more_vert),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    /// Video Player
-                    AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: _chewieController != null
-                          ? Chewie(controller: _chewieController!)
-                          : ColoredBox(
-                              color: Colors.black,
-                              child: Center(
-                                child: controller.errorMessage.value.isNotEmpty
-                                    ? Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Text(
-                                          controller.errorMessage.value,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                              color: Colors.white70),
-                                        ),
-                                      )
-                                    : const CircularProgressIndicator(
-                                        color: Colors.cyanAccent,
-                                      ),
+            /// Everything under the player scrolls.
+            Expanded(
+              child: Obx(
+                () => SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.only(bottom: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// Title and stats
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              controller.details.value?.title ?? '',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                    ),
+                            const SizedBox(height: 10),
+                            Text(
+                              '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                    /// Song Info
-                    Padding(
-                      padding:
-                          const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
-                        children: [
-                          Text(
-                            controller.details.value?.title ?? '',
-                            style:
-                                const TextStyle(
-                              fontSize: 20,
-                              fontWeight:
-                                  FontWeight.bold,
+                      const SizedBox(height: 16),
+
+                      /// Action Buttons
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ActionCard(
+                              icon: controller.isLiked.value
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              title: 'LIKE',
+                              active: controller.isLiked.value,
+                              onTap: controller.toggleLike,
+                            ),
+                            const ActionCard(
+                              icon: Icons.share,
+                              title: 'SHARE',
+                            ),
+                            const ActionCard(
+                              icon: Icons.download,
+                              title: 'GET',
+                            ),
+                            const ActionCard(
+                              icon: Icons.playlist_add,
+                              title: 'SAVE',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// Up Next
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            const Text(
+                              "Up Next",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text("Auto-play"),
+                            Switch(
+                              value: controller.autoPlay.value,
+                              onChanged: controller.toggleAutoPlay,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      if (controller.isLoading.value &&
+                          controller.upNextList.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.cyanAccent,
                             ),
                           ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: controller.upNextList.length,
+                          itemBuilder: (_, index) {
+                            final relatedVideo = controller.upNextList[index];
 
-                          const SizedBox(
-                              height: 10),
+                            return ListTile(
+                              onTap: () => _playVideo(relatedVideo.id),
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  relatedVideo.coverUrl,
+                                  width: 90,
+                                  height: 70,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              title: Text(
+                                relatedVideo.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                '${relatedVideo.ownerId.name} • ${_formatDuration(relatedVideo.durationMs)}',
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-                          Text(
-                            '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
-                            style:
-                                const TextStyle(
-                              color:
-                                  Colors.white70,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+/// The video itself, at a fixed 16:9, with a back button laid over it.
+///
+/// The button sits above Chewie's own overlay so it is reachable whether or
+/// not the player controls happen to be showing — Chewie fades those out
+/// after a few seconds, and there is no app bar above the video any more to
+/// fall back on.
+class _PlayerSurface extends StatelessWidget {
+  const _PlayerSurface({
+    required this.chewieController,
+    required this.errorMessage,
+    required this.onBack,
+  });
 
-                    /// Action Buttons
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(
-                              horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment
-                                .spaceEvenly,
-                        children: [
-                          ActionCard(
-                            icon: controller.isLiked.value
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            title: 'LIKE',
-                            active: controller.isLiked.value,
-                            onTap: controller.toggleLike,
-                          ),
-                          const ActionCard(
-                            icon: Icons.share,
-                            title: 'SHARE',
-                          ),
-                          const ActionCard(
-                            icon: Icons.download,
-                            title: 'GET',
-                          ),
-                          const ActionCard(
-                            icon:
-                                Icons.playlist_add,
-                            title: 'SAVE',
-                          ),
-                        ],
-                      ),
-                    ),
+  final ChewieController? chewieController;
+  final RxString errorMessage;
+  final VoidCallback onBack;
 
-                    const SizedBox(height: 20),
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Obx(() {
+            // Read first, so this rebuilds on an error arriving even while a
+            // player is on screen.
+            final message = errorMessage.value;
+            final chewie = chewieController;
+            if (chewie != null) return Chewie(controller: chewie);
 
-                    /// Up Next
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(
-                              horizontal: 16),
-                      child: Row(
-                        children: [
-                          const Text(
-                            "Up Next",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight:
-                                  FontWeight.bold,
-                            ),
-                          ),
-
-                          const Spacer(),
-
-                          const Text(
-                              "Auto-play"),
-
-                          Switch(
-                            value: controller
-                                .autoPlay.value,
-                            onChanged: controller
-                                .toggleAutoPlay,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    if (controller.isLoading.value &&
-                        controller.upNextList.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.cyanAccent,
-                          ),
+            return ColoredBox(
+              color: Colors.black,
+              child: Center(
+                child: message.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70),
                         ),
                       )
-                    else
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics:
-                            const NeverScrollableScrollPhysics(),
-                        itemCount: controller
-                            .upNextList.length,
-                        itemBuilder: (_, index) {
-
-                          final relatedVideo =
-                              controller
-                                  .upNextList[index];
-
-                          return ListTile(
-                            onTap: () => _playVideo(relatedVideo.id),
-                            leading: ClipRRect(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(12),
-                              child: Image.network(
-                                relatedVideo.coverUrl,
-                                width: 90,
-                                height: 70,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            title: Text(
-                              relatedVideo.title,
-                              maxLines: 2,
-                              overflow:
-                                  TextOverflow
-                                      .ellipsis,
-                            ),
-                            subtitle: Text(
-                              '${relatedVideo.ownerId.name} • ${_formatDuration(relatedVideo.durationMs)}',
-                            ),
-                          );
-                        },
+                    : const CircularProgressIndicator(
+                        color: Colors.cyanAccent,
                       ),
-                  ],
-                ),
+              ),
+            );
+          }),
+          Positioned(
+            top: 4,
+            left: 4,
+            child: Material(
+              color: Colors.black38,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: onBack,
+                tooltip: 'Back',
               ),
             ),
           ),
@@ -413,13 +399,13 @@ class ActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 75,
-        height: 85,
-        decoration: BoxDecoration(
-          color: Colors.white10,
-          borderRadius:
-              BorderRadius.circular(18),
-        ),
+        // width: 85,
+        // height: 25,
+        // decoration: BoxDecoration(
+        //   color: Colors.white10,
+        //   borderRadius:
+        //       BorderRadius.circular(18),
+        // ),
         child: Column(
           mainAxisAlignment:
               MainAxisAlignment.center,
@@ -430,8 +416,8 @@ class ActionCard extends StatelessWidget {
                   ? Colors.redAccent
                   : Colors.cyanAccent,
             ),
-            const SizedBox(height: 8),
-            Text(title),
+            // const SizedBox(height: 8),
+            // Text(title),
           ],
         ),
       ),
