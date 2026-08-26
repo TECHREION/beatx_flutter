@@ -158,7 +158,21 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      // The way out sits above the video rather than on top of it, so nothing
+      // covers the picture and the button is always where it was last time.
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: Get.back<void>,
+          tooltip: 'Back',
+        ),
+      ),
       body: SafeArea(
+        top: false,
         bottom: false,
         child: Column(
           children: [
@@ -172,7 +186,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               child: _PlayerSurface(
                 chewieController: _chewieController,
                 errorMessage: controller.errorMessage,
-                onBack: Get.back<void>,
               ),
             ),
 
@@ -339,71 +352,47 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   }
 }
 
-/// The video itself, at a fixed 16:9, with a back button laid over it.
+/// The video itself, at a fixed 16:9.
 ///
-/// The button sits above Chewie's own overlay so it is reachable whether or
-/// not the player controls happen to be showing — Chewie fades those out
-/// after a few seconds, and there is no app bar above the video any more to
-/// fall back on.
+/// Nothing is laid over the picture: the back button lives in the app bar
+/// above the player, so the frame stays clear whether or not Chewie happens
+/// to be showing its own controls.
 class _PlayerSurface extends StatelessWidget {
   const _PlayerSurface({
     required this.chewieController,
     required this.errorMessage,
-    required this.onBack,
   });
 
   final ChewieController? chewieController;
   final RxString errorMessage;
-  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Obx(() {
-            // Read first, so this rebuilds on an error arriving even while a
-            // player is on screen.
-            final message = errorMessage.value;
-            final chewie = chewieController;
-            if (chewie != null) return Chewie(controller: chewie);
+      child: Obx(() {
+        // Read first, so this rebuilds on an error arriving even while a
+        // player is on screen.
+        final message = errorMessage.value;
+        final chewie = chewieController;
+        if (chewie != null) return Chewie(controller: chewie);
 
-            return ColoredBox(
-              color: Colors.black,
-              child: Center(
-                child: message.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      )
-                    : const CircularProgressIndicator(
-                        color: Colors.cyanAccent,
-                      ),
-              ),
-            );
-          }),
-          Positioned(
-            top: 4,
-            left: 4,
-            child: Material(
-              color: Colors.black38,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: onBack,
-                tooltip: 'Back',
-              ),
-            ),
+        return ColoredBox(
+          color: Colors.black,
+          child: Center(
+            child: message.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  )
+                : const CircularProgressIndicator(color: Colors.cyanAccent),
           ),
-        ],
-      ),
+        );
+      }),
     );
   }
 }
