@@ -16,6 +16,7 @@ import 'package:get/get.dart';
 import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
 import '../../../../core/theme/app_sizes.dart';
+import '../../../../core/theme/responsive.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -40,8 +41,12 @@ class HomeScreen extends StatelessWidget {
                 notificationBadge: '3',
               ),
               Expanded(
-                child: CustomScrollView(
-                  slivers: [
+                // Capped and centred: past this width the column stops
+                // gaining anything and the rows just get longer.
+                child: ContentWidth.wide(
+                  padded: false,
+                  child: CustomScrollView(
+                    slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(
                         AppSizes.screenHorizontalPadding,
@@ -140,8 +145,9 @@ class HomeScreen extends StatelessWidget {
                           }),
                         ],
                       ),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -426,84 +432,76 @@ class _MixGrid extends StatelessWidget {
 
   static const _tileAspectRatio = 1.23;
 
+  /// On a phone a tile's height follows its width, which keeps the pair
+  /// square-ish. On a tablet each tile is several times wider, and following
+  /// the width there turns a small shortcut card into a half-screen slab — so
+  /// past a phone the height is pinned instead.
+  Widget _sized(BuildContext context, Widget tile) => context.isWide
+      ? SizedBox(height: 150, child: tile)
+      : AspectRatio(aspectRatio: _tileAspectRatio, child: tile);
+
   @override
   Widget build(BuildContext context) {
-    return Column(
+    // Two across on a phone, four on a tablet — driven by the width a tile
+    // needs rather than a breakpoint, so a split-screen window lands sensibly
+    // too.
+    return ResponsiveGrid(
+      minItemWidth: 150,
+      maxColumns: 4,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: _tileAspectRatio,
-                child: Obx(() {
-                  final liked = LikedSongsController.instance;
-                  return _MixTile(
-                    icon: Icons.favorite_rounded,
-                    title: 'Liked Songs',
-                    subtitle: _likedSubtitle(liked),
-                    iconColor: const Color(0xFF4DEBFF),
-                    onTap: () => Get.to(
-                      () => const LikedSongsScreen(),
-                      transition: Transition.rightToLeft,
-                      preventDuplicates: true,
-                    ),
-                  );
-                }),
+        _sized(
+          context,
+          Obx(() {
+            final liked = LikedSongsController.instance;
+            return _MixTile(
+              icon: Icons.favorite_rounded,
+              title: 'Liked Songs',
+              subtitle: _likedSubtitle(liked),
+              iconColor: const Color(0xFF4DEBFF),
+              onTap: () => Get.to(
+                () => const LikedSongsScreen(),
+                transition: Transition.rightToLeft,
+                preventDuplicates: true,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: _tileAspectRatio,
-                child: _MixTile(
-                  icon: Icons.bolt_rounded,
-                  title: 'On Repeat',
-                  subtitle: 'Top played',
-                  iconColor: const Color(0xFF6CFF8B),
-                  onTap: () => Get.to(
-                    () => const OnRepeatScreen(),
-                    transition: Transition.rightToLeft,
-                    preventDuplicates: true,
-                  ),
-                ),
-              ),
-            ),
-          ],
+            );
+          }),
         ),
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: _tileAspectRatio,
-                child: _MixTile(
-                  icon: Icons.access_time_filled_rounded,
-                  title: 'Recent',
-                  subtitle: 'History',
-                  iconColor: const Color(0xFFC88BFF),
-                  onTap: () => Get.to(
-                    () => const RecentlyPlayedScreen(),
-                    transition: Transition.rightToLeft,
-                    preventDuplicates: true,
-                  ),
-                ),
-              ),
+        _sized(
+          context,
+          _MixTile(
+            icon: Icons.bolt_rounded,
+            title: 'On Repeat',
+            subtitle: 'Top played',
+            iconColor: const Color(0xFF6CFF8B),
+            onTap: () => Get.to(
+              () => const OnRepeatScreen(),
+              transition: Transition.rightToLeft,
+              preventDuplicates: true,
             ),
-            const SizedBox(width: 16),
-            const Expanded(
-              child: AspectRatio(
-                aspectRatio: _tileAspectRatio,
-                child: _MixTile(
-                  icon: Icons.add_rounded,
-                  title: 'New Mix',
-                  subtitle: 'Create',
-                  iconColor: Color(0xFFAFAFAF),
-                ),
-              ),
+          ),
+        ),
+        _sized(
+          context,
+          _MixTile(
+            icon: Icons.access_time_filled_rounded,
+            title: 'Recent',
+            subtitle: 'History',
+            iconColor: const Color(0xFFC88BFF),
+            onTap: () => Get.to(
+              () => const RecentlyPlayedScreen(),
+              transition: Transition.rightToLeft,
+              preventDuplicates: true,
             ),
-          ],
+          ),
+        ),
+        _sized(
+          context,
+          const _MixTile(
+            icon: Icons.add_rounded,
+            title: 'New Mix',
+            subtitle: 'Create',
+            iconColor: Color(0xFFAFAFAF),
+          ),
         ),
       ],
     );
@@ -756,13 +754,14 @@ class _NewReleaseList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (final item in items) ...[
-          _ReleaseTile(item: item),
-          const SizedBox(height: 14),
-        ],
-      ],
+    // A release row needs roughly this much width before its title stops
+    // wrapping awkwardly; below that it stays one per row.
+    return ResponsiveGrid(
+      minItemWidth: 380,
+      maxColumns: 2,
+      spacing: 24,
+      runSpacing: 14,
+      children: [for (final item in items) _ReleaseTile(item: item)],
     );
   }
 }
@@ -802,8 +801,10 @@ class _ReleaseTile extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: SizedBox(
-              width: 72,
-              height: 72,
+              // 72 is right beside a phone-width title; in a wider row it
+              // reads as a stamp with a lot of nothing next to it.
+              width: context.responsive(phone: 72.0, tablet: 88.0),
+              height: context.responsive(phone: 72.0, tablet: 88.0),
               child: _ArtworkBackground(
                 asset: item.asset,
                 imageUrl: item.coverUrl,

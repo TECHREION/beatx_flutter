@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../../core/common/widget/app_header.dart';
 import '../../../../core/common/background_image.dart';
 import '../../../../core/theme/app_sizes.dart';
+import '../../../../core/theme/responsive.dart';
 import '../../controller/watch_controller.dart';
 import '../../model/watch_model.dart';
 import 'video_screen.dart';
@@ -60,8 +61,10 @@ class WatchScreen extends StatelessWidget {
                     );
                   }
 
-                  return CustomScrollView(
-                    slivers: [
+                  return ContentWidth.wide(
+                    padded: false,
+                    child: CustomScrollView(
+                      slivers: [
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(
                           AppSizes.screenHorizontalPadding,
@@ -77,27 +80,33 @@ class WatchScreen extends StatelessWidget {
                             const SizedBox(height: 24),
                             const _TrendingHeader(),
                             const SizedBox(height: 8),
-                            Column(
+                            // One 16:9 thumbnail per row is right on a
+                            // phone. On a tablet it becomes a poster the
+                            // height of the screen, so the row takes as many
+                            // as the width affords instead.
+                            ResponsiveGrid(
+                              minItemWidth: 320,
+                              maxColumns: 3,
+                              spacing: 18,
+                              runSpacing: 18,
                               children: [
-                                for (final entry
-                                    in controller.trendingVideos.indexed) ...[
+                                for (final video in controller.trendingVideos)
                                   _VideoTile(
-                                    video: entry.$2,
+                                    video: video,
                                     onTap: () => Get.to(
                                       () => MusicPlayerScreen(
-                                        videoId: entry.$2.id,
+                                        videoId: video.id,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 18),
-                                ],
                               ],
                             ),
                             const SizedBox(height: 74),
                           ],
                         ),
                       ),
-                    ],
+                      ],
+                    ),
                   );
                 }),
               ),

@@ -8,6 +8,7 @@ import '../../../audiobook/controller/audiobook_like_controller.dart';
 import '../../../podcast/controller/podcast_like_controller.dart';
 import '../../../watch/presentation/screen/equelizer_screen.dart';
 import '../../controller/song_like_controller.dart';
+import '../../../../core/theme/responsive.dart';
 
 class PlayerScreen extends StatelessWidget {
   const PlayerScreen({super.key});
@@ -116,7 +117,13 @@ class PlayerScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 25),
                   Expanded(
-                    child: SingleChildScrollView(
+                    // The art, scrubber and transport are a single column of
+                    // controls; spread across a tablet they drift so far apart
+                    // they stop reading as one player.
+                    child: ContentWidth(
+                      maxWidth: 560,
+                      padded: false,
+                      child: SingleChildScrollView(
                       child: Column(
                         children: [
                           // Album art card
@@ -379,6 +386,7 @@ class PlayerScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 30),
                         ],
+                      ),
                       ),
                     ),
                   ),

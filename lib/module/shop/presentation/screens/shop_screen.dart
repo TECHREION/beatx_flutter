@@ -7,6 +7,7 @@ import '../../controller/shop_controller.dart';
 import '../../model/shop_model.dart';
 import '../widgets/event_tickets_screen.dart';
 import 'shop_detail_screen.dart';
+import '../../../../core/theme/responsive.dart';
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key});
@@ -23,7 +24,9 @@ class ShopScreen extends StatelessWidget {
             children: [
               const AppHeader(title: 'Shop', notificationBadge: '3'),
               Expanded(
-                child: CustomScrollView(
+                child: ContentWidth.wide(
+                  padded: false,
+                  child: CustomScrollView(
                   slivers: [
                     SliverToBoxAdapter(
                       child: Column(
@@ -43,7 +46,8 @@ class ShopScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],

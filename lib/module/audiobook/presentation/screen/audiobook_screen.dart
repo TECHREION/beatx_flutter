@@ -15,6 +15,7 @@ import 'audiobook_detail_screen.dart';
 import 'audiobook_new_releases_screen.dart';
 import 'audiobook_search_screen.dart';
 import 'liked_audiobooks_screen.dart';
+import '../../../../core/theme/responsive.dart';
 
 class AudiobookScreen extends StatelessWidget {
   const AudiobookScreen({super.key});
@@ -47,9 +48,12 @@ class AudiobookScreen extends StatelessWidget {
                     backgroundColor: const Color(0xFF202020),
                     color: const Color(0xFF40DDEB),
                     child: Obx(
-                      () => CustomScrollView(
-                        physics: AlwaysScrollableScrollPhysics(),
-                        slivers: [_buildBody(context, controller)],
+                      () => ContentWidth.wide(
+                        padded: false,
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [_buildBody(context, controller)],
+                        ),
                       ),
                     ),
                   ),

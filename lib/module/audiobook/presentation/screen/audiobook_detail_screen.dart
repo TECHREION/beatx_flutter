@@ -7,6 +7,7 @@ import '../../controller/audio_book_details_controller.dart';
 import '../../model/audio_book_details_model.dart' as details_model;
 import '../../model/audiobook_model.dart';
 import '../widget/book_cover.dart';
+import '../../../../core/theme/responsive.dart';
 
 class AudiobookDetailScreen extends StatelessWidget {
   const AudiobookDetailScreen({super.key, required this.book});
@@ -33,7 +34,9 @@ class AudiobookDetailScreen extends StatelessWidget {
             const _DetailGlow(),
             SafeArea(
               bottom: false,
-              child: CustomScrollView(
+              child: ContentWidth(
+                padded: false,
+                child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(child: _DetailHeader(title: book.title)),
                   SliverToBoxAdapter(
@@ -69,6 +72,7 @@ class AudiobookDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ],

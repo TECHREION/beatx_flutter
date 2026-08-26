@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../module/genre-artist/controller/genre_controller.dart';
+import '../../theme/responsive.dart';
 
 /// Chrome shared by the song, video and audiobook search screens: the same
 /// screen over a different endpoint, differing only in accent colour, what a
@@ -519,7 +520,11 @@ class SearchResultsList extends StatelessWidget {
         }
         return false;
       },
-      child: ListView.separated(
+      // Shared by every search screen, so capping the column here settles
+      // songs, podcasts, audiobooks and videos in one place.
+      child: ContentWidth(
+        padded: false,
+        child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: itemCount + 1,
@@ -545,6 +550,7 @@ class SearchResultsList extends StatelessWidget {
 
           return itemBuilder(context, index);
         },
+        ),
       ),
     );
   }

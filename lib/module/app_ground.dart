@@ -1,5 +1,6 @@
 import 'package:beatx_flutter/core/common/widget/floating_player.dart';
 import 'package:flutter/material.dart';
+import '../core/theme/responsive.dart';
 import 'package:get/get.dart';
 import 'audiobook/presentation/screen/audiobook_screen.dart';
 import 'home/presentation/screens/home_screen.dart';
@@ -40,9 +41,16 @@ class AppGround extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const FloatingPlayer(),
-          Container(
+          // Left to run the full width the bar would spread five destinations
+          // across a tablet, so each label sits alone in the middle of nowhere
+          // and the row reads as a stretched phone bar. Capped and centred, it
+          // stays a bar.
+          ContentWidth(
+            maxWidth: 620,
+            padded: false,
+            child: Container(
               height: 80,
-              margin: const EdgeInsets.only(top: 0, bottom: 0, left: 12, right: 12),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
               decoration: const BoxDecoration(
                 color: Color(0xFF202020),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
@@ -63,8 +71,9 @@ class AppGround extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }

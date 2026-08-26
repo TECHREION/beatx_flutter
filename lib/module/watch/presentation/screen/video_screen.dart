@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/theme/responsive.dart';
+
 String _formatDuration(int durationMs) {
   final totalSeconds = (durationMs / 1000).round();
   final minutes = totalSeconds ~/ 60;
@@ -163,10 +165,15 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
             // Pinned. The player holds the top of the screen and the detail
             // below scrolls under it, rather than the whole page scrolling
             // and carrying the video off screen with it.
-            _PlayerSurface(
-              chewieController: _chewieController,
-              errorMessage: controller.errorMessage,
-              onBack: Get.back<void>,
+            // A 16:9 player that keeps growing with the screen ends up
+            // taller than the space left for anything else, so it is capped.
+            ContentWidth.wide(
+              padded: false,
+              child: _PlayerSurface(
+                chewieController: _chewieController,
+                errorMessage: controller.errorMessage,
+                onBack: Get.back<void>,
+              ),
             ),
 
             /// Everything under the player scrolls.
@@ -175,9 +182,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 () => SingleChildScrollView(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  child: ContentWidth(
+                    padded: false,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       /// Title and stats
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -279,12 +288,30 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 
                             return ListTile(
                               onTap: () => _playVideo(relatedVideo.id),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: context.responsive(
+                                  phone: 16.0,
+                                  tablet: 20.0,
+                                ),
+                                vertical: context.responsive(
+                                  phone: 0.0,
+                                  tablet: 6.0,
+                                ),
+                              ),
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.network(
                                   relatedVideo.coverUrl,
-                                  width: 90,
-                                  height: 70,
+                                  // A 90pt thumbnail beside a tablet-width
+                                  // title reads as a placeholder.
+                                  width: context.responsive(
+                                    phone: 90.0,
+                                    tablet: 132.0,
+                                  ),
+                                  height: context.responsive(
+                                    phone: 70.0,
+                                    tablet: 84.0,
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -299,7 +326,8 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                             );
                           },
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

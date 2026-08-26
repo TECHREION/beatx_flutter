@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 
 import '../../controller/get_profile_controller.dart';
 import '../widgets/user_avatar.dart';
+import '../../../../core/theme/responsive.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -156,7 +157,11 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 26),
 
                   Expanded(
-                    child: ListView(
+                    // A settings row stretched the width of a tablet leaves
+                    // its label and its chevron a hand's width apart.
+                    child: ContentWidth.narrow(
+                      padded: false,
+                      child: ListView(
                       children: [
                         _settingTile(
                           icon: Icons.person_outline,
@@ -213,6 +218,7 @@ class ProfileScreen extends StatelessWidget {
                           onTap: () => _showLogoutDialog(context),
                         ),
                       ],
+                      ),
                     ),
                   ),
                 ],

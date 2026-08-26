@@ -14,6 +14,7 @@ import '../widget/podcaster_card.dart';
 import 'episode_details_screen.dart';
 import 'liked_podcasts_screen.dart';
 import 'podcast_category_screen.dart';
+import '../../../../core/theme/responsive.dart';
 
 class PodcastScreen extends StatelessWidget {
   const PodcastScreen({super.key});
@@ -43,9 +44,12 @@ class PodcastScreen extends StatelessWidget {
                       backgroundColor: const Color(0xFF202020),
                       color: const Color(0xFF40DDEB),
                       child: Obx(
-                        () => CustomScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          slivers: [_buildBody(context, controller)],
+                        () => ContentWidth.wide(
+                          padded: false,
+                          child: CustomScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [_buildBody(context, controller)],
+                          ),
                         ),
                       ),
                     ),
