@@ -775,6 +775,12 @@ class _ReleaseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      // Without this the tap only lands on what the row actually paints — the
+      // artwork and the glyphs of the two labels. The spacing between them,
+      // the blank space beside the shorter label and the gap under the meta
+      // column all fall through, so most of the tile looks tappable and is
+      // not.
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         if (item.listenId != null) {
           Get.find<HomeController>().playSong(item.listenId!);

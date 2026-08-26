@@ -26,6 +26,18 @@ class MusicPlayerController extends GetxController {
 
   final upNextList = <VideoModel>[].obs;
 
+  /// Id of whatever is loaded, so the screen can tell what is already playing.
+  String? get currentVideoId => _loadedVideoId;
+
+  /// What auto-play rolls on to when the current video ends: the top of Up
+  /// Next, skipping the current video in case the related list includes it.
+  VideoModel? get nextUpNext {
+    for (final video in upNextList) {
+      if (video.id != _loadedVideoId) return video;
+    }
+    return null;
+  }
+
   VideoInterface _videoInterface() {
     if (!Get.isRegistered<VideoInterface>() &&
         Get.isRegistered<AuthorizedPigeon>()) {
@@ -42,6 +54,11 @@ class MusicPlayerController extends GetxController {
 
     isLoading.value = true;
     errorMessage.value = '';
+    // Dropped so the screen shows this video's own state while it loads, and
+    // so the stream url lands as a fresh value for the player to react to
+    // rather than the previous video's still sitting there.
+    streamUrlData.value = null;
+    details.value = null;
 
     final videoInterface = _videoInterface();
     final detailsRequest = videoInterface.videoDetails(videoId);

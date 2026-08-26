@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
 import 'package:beatx_flutter/module/watch/model/get_stream_url_model.dart';
 import 'package:chewie/chewie.dart';
@@ -28,6 +30,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   Worker? _streamUrlWorker;
+  final _scrollController = ScrollController();
+
+  /// Guards the end-of-video handler: the player keeps ticking once it has
+  /// stopped at the end, and auto-play must only advance once.
+  bool _reachedEnd = false;
 
   @override
   void initState() {
@@ -43,9 +50,69 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     );
   }
 
+  /// Switches the player to [videoId] without leaving the screen.
+  ///
+  /// Replacing the route instead — which is what tapping Up Next used to do —
+  /// re-registered the controller this screen is bound to while the outgoing
+  /// screen was still being torn down, so the new video never started.
+  Future<void> _playVideo(String videoId) async {
+    if (videoId.isEmpty || videoId == controller.currentVideoId) return;
+
+    await _teardownPlayer();
+    if (!mounted) return;
+    // Back to the player, which is off screen when the tap came from Up Next.
+    if (_scrollController.hasClients) {
+      unawaited(
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        ),
+      );
+    }
+    setState(() {});
+    await controller.loadVideo(videoId);
+  }
+
+  Future<void> _teardownPlayer() async {
+    _videoController?.removeListener(_onVideoTick);
+    final chewie = _chewieController;
+    final video = _videoController;
+    _chewieController = null;
+    _videoController = null;
+    _reachedEnd = false;
+    chewie?.dispose();
+    await video?.dispose();
+  }
+
+  void _onVideoTick() {
+    final video = _videoController?.value;
+    if (video == null || !video.isInitialized || _reachedEnd) return;
+
+    if (video.duration > Duration.zero &&
+        !video.isPlaying &&
+        video.position >= video.duration) {
+      _reachedEnd = true;
+      _advanceIfAutoPlaying();
+    }
+  }
+
+  /// Rolls on to the top of Up Next when the switch is on. Before this the
+  /// toggle only stored a flag and nothing ever read it.
+  void _advanceIfAutoPlaying() {
+    if (!controller.autoPlay.value) return;
+    final next = controller.nextUpNext;
+    if (next == null) return;
+    // Off the notification. This runs inside the player's own listener, and
+    // swapping videos disposes that player — doing it here would tear it down
+    // part-way through notifying.
+    scheduleMicrotask(() => _playVideo(next.id));
+  }
+
   void _initializePlayer(String streamUrl) {
     if (_videoController != null) return;
     _videoController = VideoPlayerController.networkUrl(Uri.parse(streamUrl))
+      ..addListener(_onVideoTick)
       ..initialize().then((_) {
         if (!mounted) return;
         setState(() {
@@ -78,6 +145,8 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   @override
   void dispose() {
     _streamUrlWorker?.dispose();
+    _scrollController.dispose();
+    _videoController?.removeListener(_onVideoTick);
     _chewieController?.dispose();
     _videoController?.dispose();
     super.dispose();
@@ -91,6 +160,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           SafeArea(
             child: Obx(
               () => SingleChildScrollView(
+                controller: _scrollController,
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
@@ -288,11 +358,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                                   .upNextList[index];
 
                           return ListTile(
-                            onTap: () => Get.off(
-                              () => MusicPlayerScreen(
-                                videoId: relatedVideo.id,
-                              ),
-                            ),
+                            onTap: () => _playVideo(relatedVideo.id),
                             leading: ClipRRect(
                               borderRadius:
                                   BorderRadius
