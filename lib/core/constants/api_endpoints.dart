@@ -110,7 +110,7 @@ class _Auth {
   static const String signup = '$_authRoute/register';
   static const String emailVerification = '$_authRoute/verify-email';
   static const String forgetPassword = '$_authRoute/forgot-password';
-  static const String refreshToken = '$_authRoute/refresh-token';
+  static const String refreshToken = '$_authRoute/refresh';
   static const String verifyCode = '$_authRoute/verify-otp';
   static const String resetPassword = '$_authRoute/reset-password';
   static const String resendEmailOtp = '$_authRoute/resend-verification';

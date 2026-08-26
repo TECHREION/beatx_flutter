@@ -1,4 +1,5 @@
 import 'package:app_pigeon/app_pigeon.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../constants/api_endpoints.dart';
 
@@ -30,6 +31,7 @@ class MyRefreshTokenManager implements RefreshTokenManagerInterface {
     required Dio dio,
   }) async {
     final res = await dio.post(url, data: {'refreshToken': refreshToken});
+    debugPrint('refresh response [${res.statusCode}]: ${res.data}');
 
     if (res.data is! Map || res.data['data'] is! Map) {
       throw DioException(
@@ -54,6 +56,9 @@ class MyRefreshTokenManager implements RefreshTokenManagerInterface {
     return RefreshTokenResponse(
       accessToken: accessToken,
       refreshToken: nextRefreshToken,
+      // Left null on purpose: the storage keeps the record's existing data
+      // when this is null, and the refresh payload does not carry the
+      // email/role that was saved at login.
       data: data,
     );
   }
@@ -66,7 +71,7 @@ class MyRefreshTokenManager implements RefreshTokenManagerInterface {
     if (err.response?.statusCode != 401) return false;
 
     // Never refresh for refresh endpoint failures themselves.
-    if (err.requestOptions.path.contains('/auth/refresh-token')) {
+    if (err.requestOptions.path.contains('/auth/refresh')) {
       return false;
     }
 
