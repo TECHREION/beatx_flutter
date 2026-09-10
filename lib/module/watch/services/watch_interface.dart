@@ -5,6 +5,7 @@ import '../../../core/helpers/typedefs.dart';
 import '../model/get_stream_url_model.dart';
 import '../model/like_unlike_model.dart';
 import '../model/video_details_model.dart';
+import '../model/video_progress_model.dart';
 import '../model/watch_model.dart';
 
 abstract base class VideoInterface extends BaseRepository {
@@ -20,5 +21,15 @@ abstract base class VideoInterface extends BaseRepository {
     required String genreId,
     required int page,
     required int limit,
+  });
+  /// Saves how far the signed-in user has watched [id].
+  ///
+  /// There is no matching read: the position saved here comes back on the
+  /// video details response as `userProgress`, which is what playback resumes
+  /// from.
+  FutureRequest<Success<VideoProgressModel>> saveVideoProgress(
+    String id, {
+    required int positionMs,
+    bool completed = false,
   });
 }

@@ -5,6 +5,7 @@ import 'package:beatx_flutter/core/helpers/search_query.dart';
 import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/watch/model/get_stream_url_model.dart';
 import 'package:beatx_flutter/module/watch/model/like_unlike_model.dart';
+import 'package:beatx_flutter/module/watch/model/video_progress_model.dart';
 import 'package:beatx_flutter/module/watch/model/watch_model.dart';
 
 import '../../../core/constants/api_endpoints.dart';
@@ -165,6 +166,35 @@ final class VideoInterfaceImpl extends VideoInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: PagedResult.fromJson(data, VideoModel.fromJson),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<VideoProgressModel>> saveVideoProgress(
+    String id, {
+    required int positionMs,
+    bool completed = false,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.videoProgress(videoId: id),
+          data: {'positionMs': positionMs, 'completed': completed},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: VideoProgressModel.fromJson(data),
         );
       },
     );

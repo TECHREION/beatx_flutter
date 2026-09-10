@@ -80,11 +80,28 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     _videoController?.removeListener(_onVideoTick);
     final chewie = _chewieController;
     final video = _videoController;
+    final position = _playedPosition();
     _chewieController = null;
     _videoController = null;
     _reachedEnd = false;
+
+    // Sent before the controller is pointed at another video, so it is saved
+    // against the right one. Not awaited: swapping videos should not wait on
+    // a network round trip.
+    if (position != null) {
+      unawaited(controller.flushProgress(position.$1, position.$2));
+    }
+
     chewie?.dispose();
     await video?.dispose();
+  }
+
+  /// Where playback has reached and how long the video is, or null while
+  /// there is nothing initialized to read it off.
+  (Duration, Duration)? _playedPosition() {
+    final video = _videoController?.value;
+    if (video == null || !video.isInitialized) return null;
+    return (video.position, video.duration);
   }
 
   void _onVideoTick() {
@@ -95,7 +112,16 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
         !video.isPlaying &&
         video.position >= video.duration) {
       _reachedEnd = true;
+      // Watched to the end, so next time it starts over rather than
+      // resuming on the last frame.
+      unawaited(controller.markCompleted(video.duration));
       _advanceIfAutoPlaying();
+      return;
+    }
+
+    // Throttled controller side — this runs several times a second.
+    if (video.isPlaying) {
+      controller.reportProgress(video.position, video.duration);
     }
   }
 
@@ -113,16 +139,31 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 
   void _initializePlayer(String streamUrl) {
     if (_videoController != null) return;
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(streamUrl))
+    final video = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
+    _videoController = video;
+    video
       ..addListener(_onVideoTick)
-      ..initialize().then((_) {
-        if (!mounted) return;
+      ..initialize().then((_) async {
+        // A tap on Up Next while this was loading has already replaced the
+        // player this call was setting up.
+        if (!mounted || _videoController != video) return;
+
+        // Picks up where this user left off. Seeking before Chewie is built
+        // means playback starts there rather than jumping once it is under
+        // way; the details carrying the resume point are loaded before the
+        // stream url that triggers this.
+        final resumeAt = controller.resumePosition;
+        if (resumeAt > Duration.zero && resumeAt < video.value.duration) {
+          await video.seekTo(resumeAt);
+          if (!mounted || _videoController != video) return;
+        }
+
         setState(() {
           _chewieController = ChewieController(
-            videoPlayerController: _videoController!,
+            videoPlayerController: video,
             autoPlay: true,
             looping: false,
-            aspectRatio: _videoController!.value.aspectRatio,
+            aspectRatio: video.value.aspectRatio,
             allowFullScreen: true,
             allowMuting: true,
             deviceOrientationsOnEnterFullScreen: const [
@@ -148,6 +189,13 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   void dispose() {
     _streamUrlWorker?.dispose();
     _scrollController.dispose();
+
+    // Leaving the screen is the last chance to record where playback got to.
+    final position = _playedPosition();
+    if (position != null) {
+      unawaited(controller.flushProgress(position.$1, position.$2));
+    }
+
     _videoController?.removeListener(_onVideoTick);
     _chewieController?.dispose();
     _videoController?.dispose();

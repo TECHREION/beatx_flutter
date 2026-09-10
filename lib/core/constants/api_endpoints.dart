@@ -54,6 +54,7 @@ base class ApiEndpoints {
   static String likeUnlike({required String videoId}) =>
       _Video._likeUnlike(videoId);
   static const String searchVideo = _Video.searchVideo;
+  static String videoProgress({required String videoId}) => _Video._videoProgress(videoId);
 
   //---------------------- home/listen -----------------------------
   static const String listenHome = _Listen.listenHome;
@@ -159,6 +160,7 @@ class _Video {
   static String _likeUnlike(String videoId) =>
       '$videoRoute/$videoId/like';
   static const String searchVideo = '$videoRoute/search';
+  static String _videoProgress(String videoId) => '$videoRoute/$videoId/progress';
 }
 
 // ---------------------- Listen/Home -----------------------------

@@ -1,3 +1,5 @@
+import 'video_progress_model.dart';
+
 class VideoDetailsModel {
   final String id;
   final String title;
@@ -24,6 +26,10 @@ class VideoDetailsModel {
   final int version;
   final bool isLiked;
 
+  /// How far the signed-in user has already watched, or null when they have
+  /// never played this video.
+  final VideoProgressModel? userProgress;
+
   VideoDetailsModel({
     required this.id,
     required this.title,
@@ -49,6 +55,7 @@ class VideoDetailsModel {
     this.updatedAt,
     required this.version,
     required this.isLiked,
+    this.userProgress,
   });
 
   factory VideoDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -85,6 +92,11 @@ class VideoDetailsModel {
           : null,
       version: json['__v'] ?? 0,
       isLiked: json['isLiked'] ?? false,
+      userProgress: json['userProgress'] is Map
+          ? VideoProgressModel.fromJson(
+              Map<String, dynamic>.from(json['userProgress'] as Map),
+            )
+          : null,
     );
   }
 
@@ -114,6 +126,7 @@ class VideoDetailsModel {
       'updatedAt': updatedAt?.toIso8601String(),
       '__v': version,
       'isLiked': isLiked,
+      'userProgress': userProgress?.toJson(),
     };
   }
 }
