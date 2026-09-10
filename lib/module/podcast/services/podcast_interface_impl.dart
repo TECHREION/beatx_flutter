@@ -1,4 +1,5 @@
 import 'package:app_pigeon/app_pigeon.dart';
+import 'package:beatx_flutter/core/api_handler/paged_result.dart';
 import 'package:beatx_flutter/core/api_handler/success.dart';
 import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/podcast/model/episodes_details.dart';
@@ -138,6 +139,42 @@ final class PodcastInterfaceImpl extends PodcastInterface {
   }
 
   @override
+  FutureRequest<Success<PagedResult<CategoryPodcast>>> searchPodcast({
+    required String query,
+    required String genreId,
+    required int page,
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.searchPodcast(
+            query: query,
+            genreId: genreId,
+            page: page,
+            limit: limit,
+          ),
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            // A response that answers with the list alone still has to reach
+            // the same parser, which reads the entries off `data`.
+            : {'data': body['data']};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: PagedResult.fromJson(data, CategoryPodcast.fromJson),
+        );
+      },
+    );
+  }
+
+  @override
   FutureRequest<Success<SearchCategoryData>> searchCategory(String id) async {
     return await asyncTryCatch(
       tryFunc: () async {
@@ -236,9 +273,6 @@ final class PodcastInterfaceImpl extends PodcastInterface {
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
-
-        // Toggle endpoints often answer with the new state at the top level
-        // rather than wrapped in `data`, so fall back to the body itself.
         final data = body['data'] is Map
             ? Map<String, dynamic>.from(body['data'] as Map)
             : body;

@@ -158,48 +158,70 @@ class _SearchQueryFieldState extends State<SearchQueryField> {
 ///
 /// The backend matches on genre id, so the chips carry ids and "All" carries
 /// an empty one.
+/// One filter chip: the id sent to the backend, and what it is called.
+typedef SearchFilterOption = ({String id, String label});
+
+/// The filter strip above the results.
+///
+/// Defaults to the genres behind `/genre`, which is what the song, video and
+/// audiobook searches filter by. Pass [options] for a search that filters by
+/// something else — podcast categories are their own set of ids, so the
+/// podcast search supplies them rather than taking genres it cannot match.
 class SearchGenreBar extends StatelessWidget {
   const SearchGenreBar({
     super.key,
     required this.accent,
     required this.selectedId,
     required this.onSelected,
+    this.options,
   });
 
   final Color accent;
   final String selectedId;
   final ValueChanged<String> onSelected;
+  final List<SearchFilterOption>? options;
 
   @override
   Widget build(BuildContext context) {
+    final supplied = options;
+    if (supplied != null) return _bar(supplied);
+
     final genres = GenreController.instance;
 
-    return Obx(() {
-      // Nothing to filter by until the genres land, and an empty strip beats
-      // a row of placeholder chips.
-      if (genres.genres.isEmpty) return const SizedBox(height: 8);
+    return Obx(
+      () => _bar([
+        for (final genre in genres.genres)
+          (id: genre.id, label: genre.name),
+      ]),
+    );
+  }
 
-      return SizedBox(
-        height: 38,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: genres.genres.length + 1,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (_, index) {
-            final id = index == 0 ? '' : genres.genres[index - 1].id;
-            final label = index == 0 ? 'All' : genres.genres[index - 1].name;
+  Widget _bar(List<SearchFilterOption> options) {
+    // Nothing to filter by until the options land, and an empty strip beats
+    // a row of placeholder chips.
+    if (options.isEmpty) return const SizedBox(height: 8);
 
-            return _GenreChip(
-              label: label,
-              accent: accent,
-              selected: selectedId == id,
-              onTap: () => onSelected(id),
-            );
-          },
-        ),
-      );
-    });
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: options.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, index) {
+          // The first chip clears the filter rather than setting one.
+          final id = index == 0 ? '' : options[index - 1].id;
+          final label = index == 0 ? 'All' : options[index - 1].label;
+
+          return _GenreChip(
+            label: label,
+            accent: accent,
+            selected: selectedId == id,
+            onTap: () => onSelected(id),
+          );
+        },
+      ),
+    );
   }
 }
 

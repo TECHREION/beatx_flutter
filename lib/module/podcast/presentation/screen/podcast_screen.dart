@@ -14,6 +14,7 @@ import '../widget/podcaster_card.dart';
 import 'episode_details_screen.dart';
 import 'liked_podcasts_screen.dart';
 import 'podcast_category_screen.dart';
+import 'podcast_search_screen.dart';
 import '../../../../core/theme/responsive.dart';
 
 class PodcastScreen extends StatelessWidget {
@@ -37,7 +38,12 @@ class PodcastScreen extends StatelessWidget {
               bottom: false,
               child: Column(
                 children: [
-                  const AppHeader(title: 'Podcasts', notificationBadge: '3'),
+                  AppHeader(
+                    title: 'Podcasts',
+                    notificationBadge: '3',
+                    // Without this the icon falls through to the song search.
+                    onSearchTap: () => Get.to(() => PodcastSearchScreen()),
+                  ),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: controller.fetchHome,

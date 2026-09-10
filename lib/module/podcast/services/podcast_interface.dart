@@ -1,4 +1,5 @@
 import '../../../core/api_handler/base_repository.dart';
+import '../../../core/api_handler/paged_result.dart';
 import '../../../core/api_handler/success.dart';
 import '../../../core/helpers/typedefs.dart';
 import '../model/episodes_details.dart';
@@ -21,8 +22,18 @@ abstract base class PodcastInterface extends BaseRepository {
     int positionMs,
   );
   FutureRequest<Success<SearchCategoryData>> searchCategory(String id);
-  /// Toggles the like on [podcastid] — the same call likes and unlikes.
+
+  /// Podcasts matching [query] and/or [genreId]. Both are empty when unset,
+  /// and an unset filter is left off the request rather than sent blank.
+  ///
+  /// [genreId] is a podcast *category* id — the ids on a show's `category`,
+  /// which are a different set from the ones `/genre` hands out.
+  FutureRequest<Success<PagedResult<CategoryPodcast>>> searchPodcast({
+    required String query,
+    required String genreId,
+    required int page,
+    required int limit,
+  });
   FutureRequest<Success<PodcastLikeModel>> likePodcast(String podcastid);
-  /// Every podcast the signed-in user has liked.
   FutureRequest<Success<List<Podcast>>> getLikedPodcast();
 }

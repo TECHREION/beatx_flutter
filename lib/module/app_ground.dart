@@ -2,19 +2,28 @@ import 'package:beatx_flutter/core/common/widget/floating_player.dart';
 import 'package:flutter/material.dart';
 import '../core/theme/responsive.dart';
 import 'package:get/get.dart';
+import 'app_ground_controller.dart';
 import 'audiobook/presentation/screen/audiobook_screen.dart';
 import 'home/presentation/screens/home_screen.dart';
 import 'podcast/presentation/screen/podcast_screen.dart';
 import 'shop/presentation/screens/shop_screen.dart';
 import 'watch/presentation/screen/watch_screen.dart';
 
-class AppGround extends StatelessWidget {
-  AppGround({super.key, this.initialIndex = 0})
-    : currentIndex = initialIndex.obs;
+class AppGround extends StatefulWidget {
+  const AppGround({super.key, this.initialIndex = 0});
 
   final int initialIndex;
-  final RxInt currentIndex;
 
+  @override
+  State<AppGround> createState() => _AppGroundState();
+}
+
+class _AppGroundState extends State<AppGround> {
+  /// The selected destination lives on a shared controller so screens inside
+  /// a tab can switch to another one.
+  final AppGroundController nav = AppGroundController.instance;
+
+  /// Built once, in the order of [AppTab].
   final List<Widget> pages = [
     HomeScreen(),
     const WatchScreen(),
@@ -32,11 +41,20 @@ class AppGround extends StatelessWidget {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // The controller outlives the shell, so a freshly opened one starts on
+    // the destination it was opened for rather than wherever the last
+    // session was left.
+    nav.goToIndex(widget.initialIndex);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
       extendBody: true,
-      body: Obx(() => pages[currentIndex.value]),
+      body: Obx(() => pages[nav.currentIndex.value]),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -59,12 +77,12 @@ class AppGround extends StatelessWidget {
                 () => Row(
                   children: List.generate(_navItems.length, (index) {
                     final item = _navItems[index];
-                    final selected = currentIndex.value == index;
+                    final selected = nav.currentIndex.value == index;
                     return Expanded(
                       child: _NavItem(
                         item: item,
                         selected: selected,
-                        onTap: () => currentIndex.value = index,
+                        onTap: () => nav.goToIndex(index),
                       ),
                     );
                   }),

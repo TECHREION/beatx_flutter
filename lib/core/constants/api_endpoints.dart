@@ -84,6 +84,12 @@ base class ApiEndpoints {
       _Podcast._saveProgress(episodeId);
   static String searchCategory({required String categoryId}) =>
       _Podcast._searchCategory(categoryId);
+  static String searchPodcast({
+    required String query,
+    required String genreId,
+    required int page,
+    required int limit,
+  }) => _Podcast._searchPodcast(query, genreId, page, limit);
   static String likpodcast({required String podcastid}) =>_Podcast._likesong(podcastid);
   static const String getLikepodcast = _Podcast.getLikesong;
 }
@@ -197,6 +203,29 @@ class _Podcast {
       '$podcastRoute/episodes/$episodeId/progress';
   static String _searchCategory(String categoryId) =>
       '$podcastRoute/search?category=${Uri.encodeQueryComponent(categoryId)}';
+
+  /// One page of `/podcasts/search`.
+  ///
+  /// The filter here is `category`, not the `genre` the song, video and
+  /// audiobook routes take — this route rejects `genre` outright, and podcast
+  /// category ids are their own set rather than the ids `/genre` hands out.
+  /// An unset filter or name is left off rather than sent blank, which the
+  /// route treats as matching nothing.
+  static String _searchPodcast(
+    String query,
+    String categoryId,
+    int page,
+    int limit,
+  ) {
+    return Uri.parse('$podcastRoute/search').replace(
+      queryParameters: <String, String>{
+        if (query.isNotEmpty) 'q': query,
+        if (categoryId.isNotEmpty) 'category': categoryId,
+        'page': '$page',
+        'limit': '$limit',
+      },
+    ).toString();
+  }
   static String _likesong(String podcastid) =>
       '$podcastRoute/$podcastid/like';
   static const String getLikesong = '$podcastRoute/liked';

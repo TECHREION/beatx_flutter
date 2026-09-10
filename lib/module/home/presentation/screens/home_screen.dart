@@ -13,6 +13,7 @@ import 'package:beatx_flutter/module/home/presentation/screens/recently_played_s
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app_ground_controller.dart';
 import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
 import '../../../../core/theme/app_sizes.dart';
@@ -588,29 +589,37 @@ class _ExploreRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    // Each of these already has a destination in the bar along the bottom,
+    // so the tiles move the shell to it rather than pushing a second copy of
+    // the section over the nav bar.
+    final nav = AppGroundController.instance;
+
+    return Row(
       children: [
         Expanded(
           child: _ExploreTile(
             icon: Icons.storefront_rounded,
             label: 'SHOP',
-            color: Color(0xFFC777FF),
+            color: const Color(0xFFC777FF),
+            onTap: () => nav.goTo(AppTab.shop),
           ),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: _ExploreTile(
             icon: Icons.mic_rounded,
             label: 'PODCASTS',
-            color: Color(0xFF64FF8F),
+            color: const Color(0xFF64FF8F),
+            onTap: () => nav.goTo(AppTab.podcast),
           ),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: _ExploreTile(
             icon: Icons.menu_book_rounded,
             label: 'AUDIOBOOKS',
-            color: Color(0xFF45E6F1),
+            color: const Color(0xFF45E6F1),
+            onTap: () => nav.goTo(AppTab.audiobook),
           ),
         ),
       ],
@@ -623,45 +632,52 @@ class _ExploreTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 104,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1F),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: onTap,
+      // The gaps between icon and label are part of the tile, not holes in it.
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 104,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1F),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 23),
             ),
-            child: Icon(icon, color: color, size: 23),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0,
+            const SizedBox(height: 12),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

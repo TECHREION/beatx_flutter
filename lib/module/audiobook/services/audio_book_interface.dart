@@ -14,8 +14,6 @@ abstract base class AudioBookInterface extends BaseRepository {
   FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(String audiobookId, String chapterId);
   FutureRequest<Success<AudioBookLikeModel>> likeAudiobook(String audiobookId);
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks();
-  /// Audiobooks matching [query] and/or [genreId]. Both are empty when unset,
-  /// and an unset filter is left off the request rather than sent blank.
   FutureRequest<Success<PagedResult<Audiobook>>> searchAudiobook({
     required String query,
     required String genreId,
