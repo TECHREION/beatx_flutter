@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/common/background_image.dart';
 import '../../../../../core/common/widget/app_header.dart';
 import '../../../../../core/theme/app_sizes.dart';
 import '../../controller/audiobook_controller.dart';
@@ -25,43 +26,39 @@ class AudiobookScreen extends StatelessWidget {
     final controller = Get.put(AudiobookController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080909),
-      body: Stack(
-        children: [
-          const _AudiobookGlow(),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                AppHeader(
-                  title: 'Audiobook',
-                  notificationBadge: '3',
-                  onSearchTap: () => Get.to(
-                    () => AudiobookSearchScreen(),
-                    transition: Transition.rightToLeft,
-                    preventDuplicates: true,
-                  ),
+      backgroundColor: const Color(0xFF0B0B0C),
+      body: AppBackgroundImage(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              AppHeader(
+                title: 'Audiobook',
+                onSearchTap: () => Get.to(
+                  () => AudiobookSearchScreen(),
+                  transition: Transition.rightToLeft,
+                  preventDuplicates: true,
                 ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: controller.fetchHome,
-                    backgroundColor: const Color(0xFF202020),
-                    color: const Color(0xFF40DDEB),
-                    child: Obx(
-                      () => ContentWidth.wide(
-                        padded: false,
-                        child: CustomScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          slivers: [_buildBody(context, controller)],
-                        ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: controller.fetchHome,
+                  backgroundColor: const Color(0xFF202020),
+                  color: const Color(0xFF40DDEB),
+                  child: Obx(
+                    () => ContentWidth.wide(
+                      padded: false,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [_buildBody(context, controller)],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -368,33 +365,6 @@ class _EmptySection extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w600,
           letterSpacing: 0,
-        ),
-      ),
-    );
-  }
-}
-
-class _AudiobookGlow extends StatelessWidget {
-  const _AudiobookGlow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: -78,
-      left: 40,
-      right: -36,
-      child: Container(
-        height: 318,
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            colors: [
-              const Color(0xFFB334D7).withValues(alpha: 0.96),
-              const Color(0xFF5125B8).withValues(alpha: 0.6),
-              const Color(0xFF0C1515).withValues(alpha: 0.1),
-              Colors.transparent,
-            ],
-            stops: const [0, 0.39, 0.75, 1],
-          ),
         ),
       ),
     );

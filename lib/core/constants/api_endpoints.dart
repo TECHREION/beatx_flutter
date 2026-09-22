@@ -92,6 +92,16 @@ base class ApiEndpoints {
   }) => _Podcast._searchPodcast(query, genreId, page, limit);
   static String likpodcast({required String podcastid}) =>_Podcast._likesong(podcastid);
   static const String getLikepodcast = _Podcast.getLikesong;
+
+  //---------------------- Notification -----------------------------
+  /// ### get
+  static String notifications({int page = 1, int limit = 30}) =>
+      _Notification._list(page, limit);
+
+  /// ### patch
+  static String markNotificationRead({required String notificationId}) =>
+      _Notification._markRead(notificationId);
+  static const String markAllNotificationsRead = _Notification.markAllRead;
 }
 
 
@@ -232,7 +242,18 @@ class _Podcast {
 }
 
 // ---------------------- Notification -----------------------------
-class _Notification {}
+class _Notification {
+  static const String notificationRoute = '${ApiEndpoints.baseUrl}/notifications';
+
+  static String _list(int page, int limit) =>
+      Uri.parse(notificationRoute).replace(
+        queryParameters: <String, String>{'page': '$page', 'limit': '$limit'},
+      ).toString();
+
+  static String _markRead(String notificationId) =>
+      '$notificationRoute/$notificationId/read';
+  static const String markAllRead = '$notificationRoute/read-all';
+}
 
 class _Checklist {}
 

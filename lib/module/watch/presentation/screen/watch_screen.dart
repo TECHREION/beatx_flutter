@@ -32,7 +32,6 @@ class WatchScreen extends StatelessWidget {
             children: [
               AppHeader(
                 title: 'Watch',
-                notificationBadge: '3',
                 onSearchTap: () => Get.to(
                   () => VideoSearchScreen(),
                   transition: Transition.rightToLeft,

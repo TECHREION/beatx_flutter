@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/equalizer_screen.dart';
 import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/music_history_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
@@ -212,6 +213,18 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 18),
+                        _arrowRow(
+                          "Equalizer",
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EqualizerScreen(),
                               ),
                             );
                           },

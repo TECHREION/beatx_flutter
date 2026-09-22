@@ -22,30 +22,30 @@ class ShopScreen extends StatelessWidget {
           bottom: false,
           child: Column(
             children: [
-              const AppHeader(title: 'Shop', notificationBadge: '3'),
+              const AppHeader(title: 'Shop'),
               Expanded(
                 child: ContentWidth.wide(
                   padded: false,
                   child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          _BannersSection(banners: controller.banners),
-                          const SizedBox(height: 20),
-                          _CategoryChipsSection(controller: controller),
-                          const SizedBox(height: 20),
-                          _ProductGridSection(products: controller.products),
-                          const SizedBox(height: 32),
-                          _ArtistCollectionsSection(
-                            collections: controller.artistCollections,
-                          ),
-                          const SizedBox(height: 100),
-                        ],
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 12),
+                            _BannersSection(banners: controller.banners),
+                            const SizedBox(height: 20),
+                            _CategoryChipsSection(controller: controller),
+                            const SizedBox(height: 20),
+                            _ProductGridSection(products: controller.products),
+                            const SizedBox(height: 32),
+                            _ArtistCollectionsSection(
+                              collections: controller.artistCollections,
+                            ),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
                       ),
-                    ),
                     ],
                   ),
                 ),

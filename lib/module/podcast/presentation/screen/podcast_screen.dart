@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../../core/common/background_image.dart';
 import '../../../../../core/common/widget/app_header.dart';
 import '../../../../../core/notifiers/snackbar_notifier.dart';
 import '../../../../../core/theme/app_sizes.dart';
@@ -30,40 +31,36 @@ class PodcastScreen extends StatelessWidget {
         systemNavigationBarColor: const Color(0xFF202020),
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFF080909),
-        body: Stack(
-          children: [
-            const _PodcastGlow(),
-            SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  AppHeader(
-                    title: 'Podcasts',
-                    notificationBadge: '3',
-                    // Without this the icon falls through to the song search.
-                    onSearchTap: () => Get.to(() => PodcastSearchScreen()),
-                  ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: controller.fetchHome,
-                      backgroundColor: const Color(0xFF202020),
-                      color: const Color(0xFF40DDEB),
-                      child: Obx(
-                        () => ContentWidth.wide(
-                          padded: false,
-                          child: CustomScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            slivers: [_buildBody(context, controller)],
-                          ),
+        backgroundColor: const Color(0xFF0B0B0C),
+        body: AppBackgroundImage(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                AppHeader(
+                  title: 'Podcasts',
+                  // Without this the icon falls through to the song search.
+                  onSearchTap: () => Get.to(() => PodcastSearchScreen()),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: controller.fetchHome,
+                    backgroundColor: const Color(0xFF202020),
+                    color: const Color(0xFF40DDEB),
+                    child: Obx(
+                      () => ContentWidth.wide(
+                        padded: false,
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [_buildBody(context, controller)],
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -278,34 +275,6 @@ class _EmptySection extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w600,
           letterSpacing: 0,
-        ),
-      ),
-    );
-  }
-}
-
-class _PodcastGlow extends StatelessWidget {
-  const _PodcastGlow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: -74,
-      left: 52,
-      right: -40,
-      child: Container(
-        height: 310,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(160),
-          gradient: RadialGradient(
-            colors: [
-              const Color(0xFFB334D7).withValues(alpha: 0.96),
-              const Color(0xFF5125B8).withValues(alpha: 0.64),
-              const Color(0xFF0C1515).withValues(alpha: 0.12),
-              Colors.transparent,
-            ],
-            stops: const [0, 0.38, 0.74, 1],
-          ),
         ),
       ),
     );

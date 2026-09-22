@@ -12,5 +12,10 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // Registered by hand: this lives in the app target, not a pub package, so
+    // GeneratedPluginRegistrant does not know about it.
+    EqualizerPlugin.register(
+      with: engineBridge.pluginRegistry.registrar(forPlugin: "EqualizerPlugin")!
+    )
   }
 }

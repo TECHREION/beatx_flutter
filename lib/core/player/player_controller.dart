@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:app_pigeon/app_pigeon.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:get/get.dart';
+import 'package:just_audio/just_audio.dart';
 
 class PlayerController extends GetxController {
   static const _measuredDurationsKey = 'measured_track_durations';
@@ -10,8 +13,38 @@ class PlayerController extends GetxController {
   // bound. The least recently measured ids drop off first.
   static const _maxMeasuredDurations = 200;
 
-  final _player = AudioPlayer();
+  /// The equalizer effect attached to this player's audio pipeline.
+  ///
+  /// just_audio fixes the effect list at player-construction time, so the
+  /// effect cannot be created independently and handed to the player later.
+  /// [EqualizerService] reads this instance off the controller rather than
+  /// building its own.
+  ///
+  /// Android-only, and it must only ever be added to the pipeline on Android.
+  ///
+  /// just_audio activates every effect in an [AudioPipeline] regardless of
+  /// platform, and the Darwin plugin has no implementation for
+  /// `androidEqualizerGetParameters`. Including this effect on iOS therefore
+  /// throws a MissingPluginException out of `setUrl`, which stops the source
+  /// loading at all — playback silently never starts.
+  final androidEqualizer = AndroidEqualizer();
+
+  /// True only where the native equalizer effect actually exists.
+  static final bool _supportsAndroidEffects = !kIsWeb && Platform.isAndroid;
+
+  late final AudioPlayer _player = AudioPlayer(
+    audioPipeline: AudioPipeline(
+      androidAudioEffects: [
+        if (_supportsAndroidEffects) androidEqualizer,
+      ],
+    ),
+  );
   final _storage = const FlutterSecureStorage();
+
+  /// The underlying player, exposed solely so [BeatxAudioHandler] can mirror
+  /// its streams into the notification/lock-screen playback state. Feature
+  /// code must go through this controller's own API instead.
+  AudioPlayer get internalPlayer => _player;
 
   final isPlaying = false.obs;
   final title = ''.obs;
@@ -27,6 +60,11 @@ class PlayerController extends GetxController {
   // does not track one. Lets a screen tell whether it owns the active track.
   final trackId = ''.obs;
 
+  /// Set when a track could not be loaded, cleared when one loads. Lets a
+  /// screen tell the user why nothing is playing instead of showing a
+  /// transport that claims to be running.
+  final loadError = RxnString();
+
   // Lengths read off the stream, in milliseconds by track id. The API reports
   // 0ms for media whose audio has not been measured, so screens that need a
   // length keep getting the real one after the player has moved on — and
@@ -34,16 +72,28 @@ class PlayerController extends GetxController {
   // a remembered length updates once [_restoreMeasuredDurations] lands.
   final _measuredDurations = <String, int>{}.obs;
 
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration?>? _durationSub;
+  StreamSubscription<PlayerState>? _stateSub;
+
   @override
   void onInit() {
     super.onInit();
     _restoreMeasuredDurations();
-    _player.onPositionChanged.listen((pos) => position.value = pos);
-    _player.onDurationChanged.listen((dur) {
+    _positionSub = _player.positionStream.listen((pos) => position.value = pos);
+    _durationSub = _player.durationStream.listen((dur) {
+      // just_audio reports null until the length is known; the old player
+      // simply never emitted in that case, so keep the last known value.
+      if (dur == null) return;
       duration.value = dur;
       _rememberDuration(trackId.value, dur);
     });
-    _player.onPlayerComplete.listen((_) {
+    // audioplayers had a dedicated completion callback. just_audio folds it
+    // into the player state, so filter for the completed edge and reproduce
+    // the previous behaviour exactly: stop reporting playback and rewind the
+    // reported position. Deliberately no auto-advance — there is no queue.
+    _stateSub = _player.playerStateStream.listen((state) {
+      if (state.processingState != ProcessingState.completed) return;
       isPlaying.value = false;
       position.value = Duration.zero;
     });
@@ -59,7 +109,7 @@ class PlayerController extends GetxController {
     Duration startAt = Duration.zero,
     String trackId = '',
   }) async {
-    playCount.value++;
+    final session = ++playCount.value;
     this.title.value = title;
     this.artist.value = artist;
     this.imageAsset.value = imageAsset;
@@ -71,11 +121,45 @@ class PlayerController extends GetxController {
     await _player.stop();
     final isNetworkSource =
         audioAsset.startsWith('http://') || audioAsset.startsWith('https://');
-    await _player.play(
-      isNetworkSource ? UrlSource(audioAsset) : AssetSource(audioAsset),
-      position: startAt > Duration.zero ? startAt : null,
-    );
+    final initialPosition = startAt > Duration.zero ? startAt : null;
+
+    // Callers invoke play() without awaiting or catching, so a load failure
+    // here would otherwise surface as nothing at all: the transport would sit
+    // showing a pause button over silence. Report it instead.
+    try {
+      if (isNetworkSource) {
+        await _player.setUrl(audioAsset, initialPosition: initialPosition);
+      } else {
+        await _player.setAsset(
+          _assetPath(audioAsset),
+          initialPosition: initialPosition,
+        );
+      }
+    } catch (error, stackTrace) {
+      // A newer play() already superseded this one; its state must stand.
+      if (playCount.value != session) return;
+      isPlaying.value = false;
+      loadError.value = 'This track could not be played.';
+      if (kDebugMode) {
+        debugPrint('[Player] failed to load source: $error\n$stackTrace');
+      }
+      return;
+    }
+
+    if (playCount.value != session) return;
+    loadError.value = null;
+
+    // Deliberately not awaited: just_audio's play() future completes when
+    // playback *finishes*, not when it starts. Awaiting it would leave every
+    // caller hanging for the length of the track.
+    unawaited(_player.play());
   }
+
+  /// audioplayers resolved an [AssetSource] relative to `assets/`, so callers
+  /// pass paths like `audio/music1.mp3`. just_audio wants the full asset key,
+  /// so restore the prefix the old player used to add implicitly.
+  String _assetPath(String asset) =>
+      asset.startsWith('assets/') ? asset : 'assets/$asset';
 
   /// Length the player measured for [trackId] the last time it was played, or
   /// null if it has never been played on this device.
@@ -142,7 +226,8 @@ class PlayerController extends GetxController {
 
   Future<void> resume() async {
     isPlaying.value = true;
-    await _player.resume();
+    // Same as in [play]: this future completes on playback end, never await it.
+    unawaited(_player.play());
   }
 
   Future<void> stop() async {
@@ -155,10 +240,16 @@ class PlayerController extends GetxController {
     trackId.value = '';
     position.value = Duration.zero;
     duration.value = Duration.zero;
+    loadError.value = null;
   }
 
   @override
   void onClose() {
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _stateSub?.cancel();
+    // Disposing the player also tears down the audio pipeline, which releases
+    // the native equalizer effect. Nothing else releases it.
     _player.dispose();
     super.onClose();
   }

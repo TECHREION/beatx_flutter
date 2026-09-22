@@ -22,12 +22,6 @@ abstract base class PodcastInterface extends BaseRepository {
     int positionMs,
   );
   FutureRequest<Success<SearchCategoryData>> searchCategory(String id);
-
-  /// Podcasts matching [query] and/or [genreId]. Both are empty when unset,
-  /// and an unset filter is left off the request rather than sent blank.
-  ///
-  /// [genreId] is a podcast *category* id — the ids on a show's `category`,
-  /// which are a different set from the ones `/genre` hands out.
   FutureRequest<Success<PagedResult<CategoryPodcast>>> searchPodcast({
     required String query,
     required String genreId,

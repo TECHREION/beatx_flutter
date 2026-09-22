@@ -39,7 +39,6 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (context) => SongSearchScreen()),
                 ),
-                notificationBadge: '3',
               ),
               Expanded(
                 // Capped and centred: past this width the column stops

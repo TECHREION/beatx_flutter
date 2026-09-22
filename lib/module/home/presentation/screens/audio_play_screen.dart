@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../audiobook/controller/audiobook_like_controller.dart';
 import '../../../podcast/controller/podcast_like_controller.dart';
-import '../../../watch/presentation/screen/equelizer_screen.dart';
+import 'equalizer_screen.dart';
 import '../../controller/song_like_controller.dart';
 import '../../../../core/theme/responsive.dart';
 
@@ -106,12 +106,18 @@ class PlayerScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Always reachable. Where the platform has no real
+                      // equalizer the screen says so plainly — it never shows
+                      // controls that cannot change the audio.
                       GestureDetector(
                         onTap: () => Get.to(
                           () => const EqualizerScreen(),
                           transition: Transition.downToUp,
                         ),
-                        child: const Icon(Icons.more_vert, color: Colors.white),
+                        child: const Icon(
+                          Icons.graphic_eq,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../theme/app_sizes.dart';
 import '../../../module/home/presentation/screens/explore_screen.dart';
+import '../../../module/notification/controller/notification_controller.dart';
+import '../../../module/notification/presentation/screen/notification_screen.dart';
 import '../../../module/onbording/common/app_logo.dart';
 import '../../../module/profile/controller/get_profile_controller.dart';
 import '../../../module/profile/presentation/screens/my_profile_screen.dart';
@@ -26,6 +28,10 @@ class AppHeader extends StatelessWidget {
   final String? title;
   final VoidCallback? onSearchTap;
   final VoidCallback? onNotificationTap;
+
+  /// Overrides the live unread count on the bell. Left unset everywhere in
+  /// the app — the header reads the count from [NotificationController] — and
+  /// exists so a screen with its own source of truth can say otherwise.
   final String? notificationBadge;
 
   @override
@@ -59,10 +65,9 @@ class AppHeader extends StatelessWidget {
             onTap: onSearchTap ?? () => Get.to(() => ExploreScreen()),
           ),
           const SizedBox(width: 12),
-          _ActionButton(
-            icon: Icons.notifications_rounded,
+          _NotificationButton(
             badge: notificationBadge,
-            onTap: onNotificationTap ?? () {},
+            onTap: onNotificationTap,
           ),
         ],
       ),
@@ -117,6 +122,44 @@ class _ProfileAvatar extends StatelessWidget {
             );
           }),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Notification Button ─────────────────────────────────────────────────────
+
+/// The bell, with the unread count on it.
+///
+/// Kept as its own widget so the [Obx] around the count rebuilds the badge
+/// alone — a notification arriving must not rebuild the avatar, the logo and
+/// the search button along with it.
+class _NotificationButton extends StatelessWidget {
+  const _NotificationButton({required this.badge, required this.onTap});
+
+  final String? badge;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = onTap ?? () => Get.to(() => const NotificationScreen());
+
+    // An explicit badge is taken at its word and asks for no controller, so a
+    // caller can show a count without the feed being registered at all.
+    if (badge != null) {
+      return _ActionButton(
+        icon: Icons.notifications_rounded,
+        badge: badge,
+        onTap: open,
+      );
+    }
+
+    final controller = NotificationController.instance;
+    return Obx(
+      () => _ActionButton(
+        icon: Icons.notifications_rounded,
+        badge: controller.badge,
+        onTap: open,
       ),
     );
   }
