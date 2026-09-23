@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/player/equalizer/equalizer_controller.dart';
+import 'package:beatx_flutter/core/player/equalizer/equalizer_curve.dart';
 import 'package:beatx_flutter/core/player/equalizer/models/equalizer_preset.dart';
 import 'package:beatx_flutter/core/player/equalizer/models/equalizer_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,15 +30,25 @@ void main() {
   tearDown(() => controller.onClose());
 
   group('bootstrap', () {
-    test('exposes the device bands once ready', () async {
+    test('exposes the fixed display bands, not the device ones', () async {
+      // The fake reports Android's usual five bands; the screen must still
+      // show the same ten everywhere, or iOS and Android look different.
       await boot();
       expect(controller.isSupported.value, isTrue);
       expect(controller.isReady.value, isTrue);
-      expect(controller.bands, hasLength(5));
+      expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
       expect(
         controller.bands.map((b) => b.centerFrequencyHz),
-        [60, 230, 910, 3600, 14000],
+        kDisplayFrequenciesHz,
       );
+      expect(service.getBandFrequencies(), [60, 230, 910, 3600, 14000]);
+    });
+
+    test('offers the fixed display range whatever the device accepts',
+        () async {
+      await boot(withService: FakeEqualizerService(minDb: -4, maxDb: 4));
+      expect(controller.minDb, kDisplayMinDb);
+      expect(controller.maxDb, kDisplayMaxDb);
     });
 
     test('stays unsupported and does nothing when the platform has no EQ',
@@ -45,7 +56,9 @@ void main() {
       await boot(withService: FakeEqualizerService(isSupported: false));
       expect(controller.isSupported.value, isFalse);
       expect(controller.isReady.value, isFalse);
-      expect(controller.bands, isEmpty);
+      // The display curve exists regardless of hardware; the screen hides the
+      // whole feature when unsupported rather than reading an empty list.
+      expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
       // No pointless platform work when the feature cannot exist.
       expect(service.initializeCalls, 0);
     });
@@ -54,13 +67,15 @@ void main() {
       await boot(withService: FakeEqualizerService(readyImmediately: false));
       expect(controller.isSupported.value, isTrue);
       expect(controller.isReady.value, isFalse);
-      expect(controller.bands, isEmpty);
+      // The axis renders flat while waiting rather than collapsing to nothing.
+      expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
+      expect(controller.bands.map((b) => b.gainDb), everyElement(0.0));
 
       service.becomeReady();
       await settle();
 
       expect(controller.isReady.value, isTrue);
-      expect(controller.bands, hasLength(5));
+      expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
     });
 
     test('ignores gain changes while not ready', () async {
@@ -73,11 +88,16 @@ void main() {
   });
 
   group('presets', () {
-    test('applies a preset resampled onto the device bands', () async {
+    test('applies a preset to the display curve and resamples it down',
+        () async {
       await boot();
       await controller.selectPreset(EqualizerPreset.bassBooster);
 
       expect(controller.currentPreset.value, EqualizerPreset.bassBooster);
+      // The user sees the authored ten-band curve...
+      expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
+      expect(controller.bands.first.gainDb, closeTo(7, 1e-9));
+      // ...while the five-band device gets it resampled.
       expect(service.getBandGains(), hasLength(5));
       expect(service.getBandGains().first, greaterThan(3));
     });
@@ -159,42 +179,53 @@ void main() {
       await controller.commitGain(1, 3.9);
       await settle(120);
 
-      expect(service.writes.last.$1, 1);
-      expect(service.writes.last.$2, closeTo(3.9, 1e-9));
-      expect(service.getBandGains()[1], closeTo(3.9, 1e-9));
+      // The display band holds exactly what the finger left behind...
+      expect(controller.bands[1].gainDb, closeTo(3.9, 1e-9));
+      // ...and the device ends up with the whole curve, not a stale one. The
+      // 62 Hz display band sits between the device's 60 Hz and 230 Hz bands,
+      // so both move and neither reaches the full 3.9.
+      expect(service.getBandGains(), hasLength(5));
+      expect(service.getBandGains()[0], greaterThan(0));
+      expect(service.getBandGains()[0], lessThanOrEqualTo(3.9));
     });
   });
 
   group('restoration', () {
     test('restores gains, preset and enabled state', () async {
+      const curve = <double>[1, 2, 3, 4, 5, 4, 3, 2, 1, 0];
       await boot(
         withStore: FakeEqualizerStore(
           const EqualizerSettings(
             enabled: true,
             preset: EqualizerPreset.custom,
-            gains: [1, 2, 3, 4, 5],
+            gains: curve,
           ),
         ),
       );
 
       expect(controller.enabled.value, isTrue);
       expect(controller.currentPreset.value, EqualizerPreset.custom);
-      expect(service.getBandGains(), [1, 2, 3, 4, 5]);
+      expect(controller.bands.map((b) => b.gainDb), curve);
+      // Stored curves are display-shaped now, so they survive a move to a
+      // device with a different band layout.
+      expect(service.getBandGains(), hasLength(5));
     });
 
-    test('re-derives from the preset when the band count differs', () async {
-      // Settings written on a 10-band device, restored on a 5-band one.
+    test('re-derives from the preset when stored gains are device-shaped',
+        () async {
+      // Written by an older build that stored the device's five gains.
       await boot(
         withStore: FakeEqualizerStore(
           EqualizerSettings(
             enabled: true,
             preset: EqualizerPreset.rock,
-            gains: List<double>.filled(10, 5),
+            gains: List<double>.filled(5, 5),
           ),
         ),
       );
 
       expect(controller.currentPreset.value, EqualizerPreset.rock);
+      expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
       expect(service.getBandGains(), hasLength(5));
       // Rock lifts the low end; a blind copy of the old vector would have
       // been rejected outright.
@@ -208,7 +239,7 @@ void main() {
           EqualizerSettings(
             enabled: false,
             preset: EqualizerPreset.custom,
-            gains: List<double>.filled(10, 5),
+            gains: List<double>.filled(5, 5),
           ),
         ),
       );
@@ -218,18 +249,21 @@ void main() {
       expect(controller.errorMessage.value, isNull);
     });
 
-    test('re-derives when stored gains exceed this device range', () async {
-      // Same band count, but the old device allowed +/-12 and this one +/-4.
+    test('clamps to a narrower device without losing the display curve',
+        () async {
+      // The display range is always +/-12; this device only accepts +/-4.
       await boot(
         withService: FakeEqualizerService(minDb: -4, maxDb: 4),
         withStore: FakeEqualizerStore(
-          const EqualizerSettings(
+          EqualizerSettings(
             enabled: true,
             preset: EqualizerPreset.rock,
-            gains: [10, 10, 10, 10, 10],
+            gains: List<double>.filled(kDisplayFrequenciesHz.length, 10),
           ),
         ),
       );
+
+      expect(controller.bands.first.gainDb, closeTo(10, 1e-9));
 
       expect(controller.errorMessage.value, isNull);
       for (final gain in service.getBandGains()) {

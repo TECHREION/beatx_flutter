@@ -1,13 +1,11 @@
-import 'dart:math' as math;
+import '../equalizer_curve.dart';
 
 /// The frequencies the preset curves are authored against, in hertz.
 ///
-/// These are reference points only. They are **not** the bands the app
-/// displays or drives — the device decides those. [EqualizerPreset.gainsFor]
-/// resamples a curve onto whatever the device actually reports.
-const kReferenceFrequenciesHz = <double>[
-  31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000,
-];
+/// The same frequencies the screen shows, so applying a preset is a straight
+/// copy for the UI; [EqualizerPreset.gainsFor] resamples onto other bands when
+/// the hardware needs different ones.
+const kReferenceFrequenciesHz = kDisplayFrequenciesHz;
 
 /// A named gain curve.
 ///
@@ -56,38 +54,16 @@ enum EqualizerPreset {
 
   /// Resamples this preset's curve onto [frequenciesHz].
   ///
-  /// Interpolation happens in log-frequency space, which is how the ear (and
-  /// every EQ axis) treats pitch: the gap from 31 Hz to 62 Hz is one octave,
-  /// the same as 8 kHz to 16 kHz, and linear interpolation would badly skew
-  /// the low end. Frequencies outside the reference range hold the nearest
-  /// endpoint value rather than extrapolating into nonsense.
-  ///
   /// Throws [StateError] if called on [custom], which has no curve.
   List<double> gainsFor(List<double> frequenciesHz) {
     final curve = _curve;
     if (curve == null) {
       throw StateError('EqualizerPreset.custom has no curve to apply.');
     }
-    return frequenciesHz
-        .map((hz) => _interpolate(curve, hz))
-        .toList(growable: false);
-  }
-
-  static double _interpolate(List<double> curve, double hz) {
-    if (hz <= kReferenceFrequenciesHz.first) return curve.first;
-    if (hz >= kReferenceFrequenciesHz.last) return curve.last;
-
-    final target = math.log(hz);
-    for (var i = 0; i < kReferenceFrequenciesHz.length - 1; i++) {
-      final lowHz = kReferenceFrequenciesHz[i];
-      final highHz = kReferenceFrequenciesHz[i + 1];
-      if (hz < lowHz || hz > highHz) continue;
-
-      final low = math.log(lowHz);
-      final high = math.log(highHz);
-      final t = (target - low) / (high - low);
-      return curve[i] + (curve[i + 1] - curve[i]) * t;
-    }
-    return curve.last;
+    return resampleCurve(
+      curve,
+      fromHz: kReferenceFrequenciesHz,
+      toHz: frequenciesHz,
+    );
   }
 }

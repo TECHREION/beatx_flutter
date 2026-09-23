@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../audiobook/controller/audiobook_like_controller.dart';
 import '../../../podcast/controller/podcast_like_controller.dart';
+import '../widgets/live_waveform.dart';
 import 'equalizer_screen.dart';
 import '../../controller/song_like_controller.dart';
 import '../../../../core/theme/responsive.dart';
@@ -18,11 +19,6 @@ class PlayerScreen extends StatelessWidget {
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
-
-  static const _waveHeights = [
-    24.0, 40.0, 58.0, 42.0, 20.0, 52.0, 64.0, 68.0, 56.0, 46.0,
-    32.0, 38.0, 24.0, 44.0, 28.0, 54.0, 22.0, 36.0, 48.0, 30.0,
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -196,35 +192,16 @@ class PlayerScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
 
-                          // Live waveform — bars light up as song progresses
+                          // Live waveform — bars react while audio plays
                           Obx(() {
                             final progress =
                                 ctrl.duration.value.inMilliseconds > 0
                                     ? ctrl.position.value.inMilliseconds /
                                         ctrl.duration.value.inMilliseconds
                                     : 0.0;
-                            final activeCount = (progress * 20).round();
-                            return SizedBox(
-                              height: 70,
-                              child: Row(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.end,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: List.generate(20, (i) {
-                                  return Container(
-                                    width: 3,
-                                    height: _waveHeights[i],
-                                    decoration: BoxDecoration(
-                                      borderRadius:
-                                          BorderRadius.circular(20),
-                                      color: i < activeCount
-                                          ? const Color(0xFF9BFF4D)
-                                          : Colors.white24,
-                                    ),
-                                  );
-                                }),
-                              ),
+                            return LiveWaveform(
+                              isPlaying: ctrl.isPlaying.value,
+                              progress: progress,
                             );
                           }),
                           const SizedBox(height: 14),

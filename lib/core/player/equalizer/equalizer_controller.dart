@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import 'equalizer_curve.dart';
 import 'equalizer_service.dart';
 import 'equalizer_service_ios.dart';
 import 'equalizer_store.dart';
@@ -16,6 +17,13 @@ import 'models/equalizer_settings.dart';
 /// Owns everything that is not the native effect itself: preset selection,
 /// "custom" detection, persistence, and the write throttling that keeps a
 /// slider drag from flooding the platform channel.
+///
+/// It also owns the gap between what the user edits and what the hardware
+/// exposes. [bands] is always the fixed [kDisplayFrequenciesHz] set at
+/// [kDisplayMinDb]..[kDisplayMaxDb], identical on every device and both
+/// platforms; the curve is resampled onto the device's real bands on the way
+/// down to the service. On iOS that mapping is the identity — our engine runs
+/// on exactly these frequencies and range — so only Android does real work.
 class EqualizerController extends GetxController {
   EqualizerController({
     required EqualizerService service,
@@ -57,7 +65,17 @@ class EqualizerController extends GetxController {
   final isReady = false.obs;
 
   final enabled = false.obs;
-  final bands = <EqualizerBand>[].obs;
+
+  /// The curve the user edits: always ten bands, the same everywhere.
+  final bands = <EqualizerBand>[
+    for (var i = 0; i < kDisplayFrequenciesHz.length; i++)
+      EqualizerBand(
+        index: i,
+        centerFrequencyHz: kDisplayFrequenciesHz[i],
+        gainDb: 0,
+      ),
+  ].obs;
+
   final currentPreset = EqualizerPreset.normal.obs;
 
   /// Set when an operation failed in a way the user should know about.
@@ -67,10 +85,17 @@ class EqualizerController extends GetxController {
   /// rather than just saying "unavailable".
   final unavailableReason = EqualizerUnavailableReason.needsPlayback.obs;
 
-  double get minDb => _service.minDb;
-  double get maxDb => _service.maxDb;
+  /// The range the screen offers. Fixed, not the device's — a curve is fitted
+  /// to whatever the hardware accepts only when it is written.
+  double get minDb => kDisplayMinDb;
+  double get maxDb => kDisplayMaxDb;
 
-  final _pendingGains = <int, double>{};
+  /// The gains as the user set them, one per display band.
+  List<double> get _displayGains =>
+      bands.map((band) => band.gainDb).toList(growable: false);
+
+  /// Set while a curve write is waiting on the throttle.
+  bool _writePending = false;
   Timer? _availabilityTimer;
   Timer? _writeTimer;
   Timer? _persistTimer;
@@ -104,7 +129,6 @@ class EqualizerController extends GetxController {
       return;
     }
 
-    bands.assignAll(_service.bands);
     isReady.value = true;
     unavailableReason.value = EqualizerUnavailableReason.none;
     await _restoreSettings();
@@ -127,19 +151,20 @@ class EqualizerController extends GetxController {
 
       timer.cancel();
       _availabilityTimer = null;
-      bands.assignAll(_service.bands);
       isReady.value = true;
       unavailableReason.value = EqualizerUnavailableReason.none;
       unawaited(_restoreSettings());
     });
   }
 
-  /// Reapplies the stored configuration onto this device's bands.
+  /// Reapplies the stored configuration.
   ///
-  /// Stored gains belong to whichever device wrote them. If the band count or
-  /// the supported range differs, the gains are meaningless here, so the
-  /// preset is re-derived instead — that is what makes a preset portable and
-  /// a raw gain vector not.
+  /// Stored gains are display gains — ten bands at a fixed range, the same on
+  /// every device — so unlike the device-shaped gains this used to store, they
+  /// carry over from one handset to another. A vector that still does not fit
+  /// (written by an older build, or corrupted) falls back to re-deriving the
+  /// stored preset, and only a custom curve with no preset to fall back on
+  /// goes flat.
   Future<void> _restoreSettings() async {
     if (_restored) return;
     _restored = true;
@@ -155,32 +180,28 @@ class EqualizerController extends GetxController {
     }
     if (stored == null) return;
 
-    final frequencies = _service.getBandFrequencies();
     var gains = stored.gains;
+    final fits = gains.length == kDisplayFrequenciesHz.length &&
+        gains.every((gain) => gain >= kDisplayMinDb && gain <= kDisplayMaxDb);
 
-    final matchesDevice = gains.length == frequencies.length &&
-        gains.every((gain) => gain >= minDb && gain <= maxDb);
-
-    if (!matchesDevice) {
+    if (!fits) {
       if (stored.preset.hasCurve) {
-        // Fit to this device: a curve authored at +/-8 dB can exceed what the
-        // hardware allows, and the service rejects rather than clamps.
-        gains = _fitToDevice(stored.preset.gainsFor(frequencies));
+        gains = stored.preset.gainsFor(kDisplayFrequenciesHz);
       } else {
         if (kDebugMode) {
           debugPrint(
-            '[Equalizer] stored gains do not fit this device and the preset '
+            '[Equalizer] stored gains are not a display curve and the preset '
             'is custom; falling back to flat.',
           );
         }
-        gains = List<double>.filled(frequencies.length, 0);
+        gains = List<double>.filled(kDisplayFrequenciesHz.length, 0);
       }
     }
 
+    await _applyDisplayCurve(gains);
+    currentPreset.value = stored.preset;
+
     try {
-      await _service.setAllBandGains(gains);
-      bands.assignAll(_service.bands);
-      currentPreset.value = stored.preset;
       await _service.setEnabled(stored.enabled);
       enabled.value = stored.enabled;
     } on EqualizerException catch (error) {
@@ -211,8 +232,10 @@ class EqualizerController extends GetxController {
     bands.refresh();
     _updatePresetFor(bandIndex, gainDb);
 
-    _pendingGains[bandIndex] = gainDb;
-    _writeTimer ??= Timer(_writeThrottle, _flushPendingGains);
+    // One display band does not map to one device band, so the whole curve is
+    // rewritten rather than a single gain.
+    _writePending = true;
+    _writeTimer ??= Timer(_writeThrottle, _flushCurve);
   }
 
   /// Called when a drag ends: flush immediately so the last value is never
@@ -221,62 +244,80 @@ class EqualizerController extends GetxController {
     previewGain(bandIndex, gainDb);
     _writeTimer?.cancel();
     _writeTimer = null;
-    await _flushPendingGains();
+    await _flushCurve();
     _schedulePersist();
   }
 
-  Future<void> _flushPendingGains() async {
+  Future<void> _flushCurve() async {
     _writeTimer = null;
-    if (_pendingGains.isEmpty) return;
+    if (!_writePending) return;
+    _writePending = false;
 
-    final batch = Map<int, double>.from(_pendingGains);
-    _pendingGains.clear();
+    await _writeCurveToDevice(_displayGains);
 
-    for (final entry in batch.entries) {
-      try {
-        await _service.setBandGain(entry.key, entry.value);
-      } on EqualizerException catch (error) {
-        _report(error);
-        // One bad band must not strand the others.
-        continue;
-      }
-    }
-
-    // Values that arrived while awaiting still need a write — this is the
+    // A value that arrived while awaiting still needs a write — this is the
     // trailing edge that keeps the audio matching the final slider position.
-    if (_pendingGains.isNotEmpty) {
-      _writeTimer ??= Timer(_writeThrottle, _flushPendingGains);
+    if (_writePending) {
+      _writeTimer ??= Timer(_writeThrottle, _flushCurve);
     }
   }
 
-  /// Switches the active preset, resampled onto this device's real bands.
-  Future<void> selectPreset(EqualizerPreset preset) async {
-    if (!isReady.value || !preset.hasCurve) return;
+  /// Projects the display curve onto the device's real bands and pushes it.
+  ///
+  /// This is the only place the two models meet. On iOS the frequencies and
+  /// range match exactly, so the resample is the identity.
+  Future<void> _writeCurveToDevice(List<double> displayGains) async {
+    if (!isReady.value) return;
 
-    final fitted = _fitToDevice(preset.gainsFor(_service.getBandFrequencies()));
+    final deviceGains = _fitToDevice(
+      resampleCurve(
+        displayGains,
+        fromHz: kDisplayFrequenciesHz,
+        toHz: _service.getBandFrequencies(),
+      ),
+    );
+    if (deviceGains.isEmpty) return;
 
     try {
-      await _service.setAllBandGains(fitted);
-      bands.assignAll(_service.bands);
-      currentPreset.value = preset;
-      _schedulePersist();
+      await _service.setAllBandGains(deviceGains);
     } on EqualizerException catch (error) {
       _report(error);
     }
   }
 
+  /// Replaces the whole display curve and pushes it to the device.
+  Future<void> _applyDisplayCurve(List<double> gains) async {
+    bands.assignAll([
+      for (var i = 0; i < kDisplayFrequenciesHz.length; i++)
+        EqualizerBand(
+          index: i,
+          centerFrequencyHz: kDisplayFrequenciesHz[i],
+          gainDb: gains[i].clamp(kDisplayMinDb, kDisplayMaxDb).toDouble(),
+        ),
+    ]);
+    await _writeCurveToDevice(_displayGains);
+  }
+
+  /// Switches the active preset.
+  Future<void> selectPreset(EqualizerPreset preset) async {
+    if (!isReady.value || !preset.hasCurve) return;
+
+    await _applyDisplayCurve(preset.gainsFor(kDisplayFrequenciesHz));
+    currentPreset.value = preset;
+    _schedulePersist();
+  }
+
   /// Returns every band to 0 dB and selects [EqualizerPreset.normal].
   Future<void> reset() => selectPreset(EqualizerPreset.normal);
 
-  /// Fits an authored curve to what the hardware actually accepts.
+  /// Fits a curve to what the hardware actually accepts.
   ///
-  /// Preset curves go to ±8 dB, but plenty of devices report a narrower range,
-  /// and the service rejects an out-of-range gain rather than clamping it.
-  /// Losing curve detail is the right trade here, and it is made explicitly in
-  /// one place rather than hidden inside the service.
-  List<double> _fitToDevice(List<double> gains) => gains
-      .map((gain) => gain.clamp(minDb, maxDb).toDouble())
-      .toList(growable: false);
+  /// The display range is fixed at ±12 dB, but plenty of devices report a
+  /// narrower one, and the service rejects an out-of-range gain rather than
+  /// clamping it. Losing curve detail is the right trade here, and it is made
+  /// explicitly in one place rather than hidden inside the service.
+  List<double> _fitToDevice(List<double> gains) =>
+      clampCurve(gains, _service.minDb, _service.maxDb);
 
   /// Flips to [EqualizerPreset.custom] as soon as the user's gains stop
   /// matching the active preset's curve.
@@ -284,8 +325,7 @@ class EqualizerController extends GetxController {
     final preset = currentPreset.value;
     if (!preset.hasCurve) return;
 
-    final reference =
-        _fitToDevice(preset.gainsFor(_service.getBandFrequencies()));
+    final reference = preset.gainsFor(kDisplayFrequenciesHz);
     if (bandIndex >= reference.length) return;
 
     if ((reference[bandIndex] - gainDb).abs() > _gainEpsilon) {
