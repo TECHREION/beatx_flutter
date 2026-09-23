@@ -1,3 +1,21 @@
+/// Pulls the entry list out of a paged envelope's `data` object.
+///
+/// The songs routes answer `{ "data": { "songs": [...], "total", "page",
+/// "limit" } }`, while others use `items` or nest the list under `data` again,
+/// and a couple answer with the bare list. Reading whichever is present keeps
+/// one endpoint's choice of key from silently emptying a screen: a missing key
+/// yields no entries and no error, which looks exactly like "the user has
+/// nothing here".
+List<dynamic> pagedEntries(Object? json) {
+  if (json is List) return json;
+  if (json is! Map) return const [];
+  for (final key in const ['songs', 'items', 'data']) {
+    final value = json[key];
+    if (value is List) return value;
+  }
+  return const [];
+}
+
 /// One page of a list endpoint that answers `{ data: [...], total, page,
 /// limit }` — the shape every `/search` route uses.
 class PagedResult<T> {
@@ -17,15 +35,13 @@ class PagedResult<T> {
 
   /// Reads a page out of [json], mapping each entry with [fromItem].
   ///
-  /// Pass the envelope's `data` object. A response that answers with the list
-  /// alone is tolerated too, so long as the caller hands it over as
-  /// `{'data': theList}`.
+  /// Pass the envelope's `data` object; [pagedEntries] finds the list inside
+  /// it whichever key it arrived under.
   static PagedResult<T> fromJson<T>(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromItem,
   ) {
-    final raw = json['data'];
-    final entries = raw is List ? raw : const [];
+    final entries = pagedEntries(json);
 
     final items = entries
         .whereType<Map>()

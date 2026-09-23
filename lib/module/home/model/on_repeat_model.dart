@@ -1,3 +1,4 @@
+import '../../../core/api_handler/paged_result.dart';
 import 'listem_miusic_detalis_model.dart';
 
 /// One entry of `GET /songs/on-repeat`: the song, plus how many times the
@@ -50,10 +51,9 @@ class OnRepeatPage {
   final int limit;
 
   factory OnRepeatPage.fromJson(Map<String, dynamic> json) {
-    // `data` is the envelope's inner list — `{ data: [...], total, page,
-    // limit }` — but tolerate a bare list in case the shape is flattened.
-    final raw = json['data'];
-    final entries = raw is List ? raw : const [];
+    // The route answers `{ songs: [...], total, page, limit }`; pagedEntries
+    // also tolerates the other shapes this API uses.
+    final entries = pagedEntries(json);
 
     final items = entries
         .whereType<Map>()

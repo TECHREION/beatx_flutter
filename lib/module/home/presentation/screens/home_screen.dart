@@ -102,8 +102,6 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: 16),
                           const _ExploreRow(),
                           const SizedBox(height: 32),
-                          const _NewReleaseHeader(),
-                          const SizedBox(height: 16),
                           Obx(() {
                             final releases = controller.newReleases;
                             final items = releases.isEmpty
@@ -130,7 +128,7 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                   ];
 
-                            return _NewReleaseList(items: items);
+                            return _NewReleaseSection(items: items);
                           }),
                           const SizedBox(height: 28),
                           const _SectionTitle(title: 'Artists to Watch'),
@@ -682,24 +680,6 @@ class _ExploreTile extends StatelessWidget {
   }
 }
 
-class _NewReleaseHeader extends StatelessWidget {
-  const _NewReleaseHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(child: _SectionTitle(title: 'New Releases')),
-        _PagerLine(active: true),
-        SizedBox(width: 8),
-        _PagerLine(active: false),
-        SizedBox(width: 8),
-        _PagerLine(active: false),
-      ],
-    );
-  }
-}
-
 class _PagerLine extends StatelessWidget {
   const _PagerLine({required this.active});
 
@@ -762,21 +742,95 @@ String _formatDurationMs(int durationMs) {
   return '$minutes:${seconds.toString().padLeft(2, '0')}';
 }
 
-class _NewReleaseList extends StatelessWidget {
-  const _NewReleaseList({required this.items});
+/// New Releases as a horizontal pager: five songs to a page, swipe for the
+/// next five.
+///
+/// The page count follows the list, so the section grows with whatever the
+/// home endpoint returns without any further change here.
+class _NewReleaseSection extends StatefulWidget {
+  const _NewReleaseSection({required this.items});
 
   final List<_ReleaseData> items;
 
   @override
+  State<_NewReleaseSection> createState() => _NewReleaseSectionState();
+}
+
+class _NewReleaseSectionState extends State<_NewReleaseSection> {
+  static const _perPage = 5;
+  static const _rowSpacing = 14.0;
+
+  final _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  List<List<_ReleaseData>> get _pages {
+    final items = widget.items;
+    return [
+      for (var start = 0; start < items.length; start += _perPage)
+        items.sublist(
+          start,
+          start + _perPage < items.length ? start + _perPage : items.length,
+        ),
+    ];
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // A release row needs roughly this much width before its title stops
-    // wrapping awkwardly; below that it stays one per row.
-    return ResponsiveGrid(
-      minItemWidth: 380,
-      maxColumns: 2,
-      spacing: 24,
-      runSpacing: 14,
-      children: [for (final item in items) _ReleaseTile(item: item)],
+    final pages = _pages;
+    if (pages.isEmpty) return const SizedBox.shrink();
+
+    // A row is exactly as tall as its artwork — the text column beside it is
+    // shorter — so a page's height is known without measuring, which is what
+    // lets a PageView live inside the scrolling home feed.
+    final rowHeight = context.responsive(phone: 72.0, tablet: 88.0);
+    final pageHeight = rowHeight * _perPage + _rowSpacing * (_perPage - 1);
+
+    // Clamp in case the feed ever returns enough pages to crowd the title.
+    final visiblePage = _page.clamp(0, pages.length - 1);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(child: _SectionTitle(title: 'New Releases')),
+            for (var i = 0; i < pages.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              _PagerLine(active: i == visiblePage),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: pageHeight,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: pages.length,
+            onPageChanged: (index) => setState(() => _page = index),
+            itemBuilder: (context, index) {
+              final page = pages[index];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < page.length; i++) ...[
+                    if (i > 0) const SizedBox(height: _rowSpacing),
+                    SizedBox(
+                      height: rowHeight,
+                      child: _ReleaseTile(item: page[i]),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

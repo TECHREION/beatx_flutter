@@ -96,12 +96,9 @@ final class ListenInterfaceImpl extends ListenInterface {
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
 
-        final data = body['data'];
-        final items = data is List
-            ? data
-            : data is Map && data['data'] is List
-                ? data['data'] as List
-                : const [];
+        // `/songs/liked` answers `{ data: { songs: [...], total, ... } }`,
+        // daily-discovery answers a bare list — pagedEntries reads either.
+        final items = pagedEntries(body['data']);
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
@@ -257,12 +254,7 @@ final class ListenInterfaceImpl extends ListenInterface {
 
         // The picks arrive as a bare list on `data`; a wrapped one is read the
         // same way so either shape lands.
-        final data = body['data'];
-        final items = data is List
-            ? data
-            : data is Map && data['data'] is List
-                ? data['data'] as List
-                : const [];
+        final items = pagedEntries(body['data']);
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
