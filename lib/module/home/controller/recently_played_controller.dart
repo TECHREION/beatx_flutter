@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/app_manager.dart';
 import '../../../core/helpers/auth_role.dart';
 import '../model/recently_played_model.dart';
-import '../services/linter_interface_impl.dart';
+import '../services/lister_interface_impl.dart';
 import '../services/listen_interface.dart';
 import 'home_controller.dart';
 import 'liked_songs_controller.dart';

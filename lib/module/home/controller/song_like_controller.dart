@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/player/player_controller.dart';
 import '../../../core/player/player_like_target.dart';
-import '../services/linter_interface_impl.dart';
+import '../services/lister_interface_impl.dart';
 import '../services/listen_interface.dart';
 
 /// Like state of the song the player is on, toggled through

@@ -2,7 +2,7 @@ import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
 import '../model/on_repeat_model.dart';
-import '../services/linter_interface_impl.dart';
+import '../services/lister_interface_impl.dart';
 import '../services/listen_interface.dart';
 import 'home_controller.dart';
 import 'liked_songs_controller.dart';

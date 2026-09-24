@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../model/genre_model.dart';
 import '../model/listen_model.dart';
 import '../services/listen_interface.dart';
-import '../services/linter_interface_impl.dart';
+import '../services/lister_interface_impl.dart';
 
 class ExploreController extends GetxController {
   final searchText = ''.obs;

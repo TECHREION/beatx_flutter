@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../core/player/player_controller.dart';
 import '../model/listen_model.dart';
 import '../presentation/screens/audio_play_screen.dart';
-import '../services/linter_interface_impl.dart';
+import '../services/lister_interface_impl.dart';
 import '../services/listen_interface.dart';
 import 'song_like_controller.dart';
 

@@ -6,7 +6,7 @@ import '../../../core/api_handler/success.dart';
 import '../../../core/base/search_list_controller.dart';
 import '../../../core/helpers/typedefs.dart';
 import '../model/listem_miusic_detalis_model.dart';
-import '../services/linter_interface_impl.dart';
+import '../services/lister_interface_impl.dart';
 import '../services/listen_interface.dart';
 import 'home_controller.dart';
 
