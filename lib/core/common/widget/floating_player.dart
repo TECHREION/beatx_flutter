@@ -169,18 +169,7 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                                 child: SizedBox(
                                   width: 44,
                                   height: 44,
-                                  child: Image.asset(
-                                    _ctrl.imageAsset.value,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, err, trace) => Container(
-                                      color: const Color(0xFF2A2A2D),
-                                      child: const Icon(
-                                        Icons.music_note_rounded,
-                                        color: Colors.white54,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
+                                  child: _artwork(_ctrl.imageAsset.value),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -278,4 +267,34 @@ class _FloatingPlayerState extends State<FloatingPlayer>
       ),
     );
   }
+
+  /// The cover arrives as a remote URL for library tracks and as a bundled
+  /// path for the seeded ones, so pick the loader per value rather than
+  /// assuming assets — an [Image.asset] on a URL only ever renders the
+  /// fallback note.
+  Widget _artwork(String source) {
+    if (source.isEmpty) return _artworkFallback();
+    if (source.startsWith('http')) {
+      return Image.network(
+        source,
+        fit: BoxFit.cover,
+        errorBuilder: (_, err, trace) => _artworkFallback(),
+      );
+    }
+    return Image.asset(
+      source,
+      fit: BoxFit.cover,
+      errorBuilder: (_, err, trace) => _artworkFallback(),
+    );
+  }
+
+  Widget _artworkFallback() => Container(
+        color: const Color(0xFF2A2A2D),
+        child: const Icon(
+          Icons.music_note_rounded,
+          color: Colors.white54,
+          size: 20,
+        ),
+      );
+
 }
