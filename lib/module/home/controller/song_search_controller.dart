@@ -47,7 +47,7 @@ class SongSearchController
 
   @override
   String searchableText(ListenMusicDetailsModel song) =>
-      '${song.title} ${song.artist} ${song.album ?? ''}';
+      '${song.title} ${song.artist} ${song.album?.title ?? ''}';
 
   /// Plays [song] and opens the player, through the same path the home screen
   /// uses.

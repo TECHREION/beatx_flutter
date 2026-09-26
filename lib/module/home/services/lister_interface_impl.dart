@@ -8,6 +8,7 @@ import 'package:beatx_flutter/module/home/model/listen_model.dart';
 import 'package:beatx_flutter/module/home/model/miusic_stream.dart';
 import 'package:beatx_flutter/module/home/model/on_repeat_model.dart';
 import 'package:beatx_flutter/module/home/model/recently_played_model.dart';
+import 'package:beatx_flutter/module/home/model/save_progress_model.dart';
 import 'package:beatx_flutter/module/home/model/song_like_model.dart';
 
 import '../../../core/constants/api_endpoints.dart';
@@ -266,6 +267,35 @@ final class ListenInterfaceImpl extends ListenInterface {
                 ),
               )
               .toList(),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<SaveProgressModel>> saveProgress(
+    String songId, {
+    required int positionMs,
+    bool completed = false,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.songSaveProgress(songId: songId),
+          data: {'positionMs': positionMs, 'completed': completed},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : <String, dynamic>{};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: SaveProgressModel.fromJson(data),
         );
       },
     );

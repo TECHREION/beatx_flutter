@@ -1,3 +1,5 @@
+import 'save_progress_model.dart';
+
 class ListenMusicDetailsModel {
   final String id;
 
@@ -13,7 +15,7 @@ class ListenMusicDetailsModel {
   // Basic information
   final String title;
   final String artist;
-  final String? album;
+  final AlbumModel? album;
   final GenreModel genre;
 
   // Media
@@ -43,6 +45,10 @@ class ListenMusicDetailsModel {
   /// Whether the signed-in user has liked this song. Absent from responses
   /// that are not user-scoped, in which case it reads false.
   final bool isLiked;
+
+  /// How far the signed-in user got last time, or null if they have never
+  /// played it. Only the details response carries it.
+  final SaveProgressModel? userProgress;
 
   final int version;
 
@@ -78,6 +84,7 @@ class ListenMusicDetailsModel {
     this.trendDirection,
     required this.likeCount,
     this.isLiked = false,
+    this.userProgress,
     required this.version,
   });
 
@@ -102,10 +109,16 @@ class ListenMusicDetailsModel {
 
       title: json['title'] ?? '',
       artist: json['artist'] ?? '',
-      album: json['album'],
+      album: json['album'] is Map
+          ? AlbumModel.fromJson(
+              Map<String, dynamic>.from(json['album'] as Map),
+            )
+          : null,
 
       genre: GenreModel.fromJson(
-        json['genre'] ?? {},
+        json['genre'] is Map
+            ? Map<String, dynamic>.from(json['genre'] as Map)
+            : <String, dynamic>{},
       ),
 
       coverUrl: json['coverUrl'] ?? '',
@@ -155,6 +168,12 @@ class ListenMusicDetailsModel {
       isLiked:
           json['isLiked'] ?? false,
 
+      userProgress: json['userProgress'] is Map
+          ? SaveProgressModel.fromJson(
+              Map<String, dynamic>.from(json['userProgress'] as Map),
+            )
+          : null,
+
       version:
           json['__v'] ?? 0,
     );
@@ -181,7 +200,7 @@ class ListenMusicDetailsModel {
 
       'title': title,
       'artist': artist,
-      'album': album,
+      'album': album?.toJson(),
 
       'genre': genre.toJson(),
 
@@ -220,6 +239,7 @@ class ListenMusicDetailsModel {
 
       'likeCount': likeCount,
       'isLiked': isLiked,
+      'userProgress': userProgress?.toJson(),
 
       '__v': version,
     };
@@ -228,6 +248,38 @@ class ListenMusicDetailsModel {
   static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     return DateTime.tryParse(value.toString());
+  }
+}
+
+class AlbumModel {
+  final String id;
+  final String title;
+  final String artist;
+  final String coverUrl;
+
+  AlbumModel({
+    required this.id,
+    required this.title,
+    required this.artist,
+    required this.coverUrl,
+  });
+
+  factory AlbumModel.fromJson(Map<String, dynamic> json) {
+    return AlbumModel(
+      id: json['_id'] ?? '',
+      title: json['title'] ?? '',
+      artist: json['artist'] ?? '',
+      coverUrl: json['coverUrl'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'title': title,
+      'artist': artist,
+      'coverUrl': coverUrl,
+    };
   }
 }
 

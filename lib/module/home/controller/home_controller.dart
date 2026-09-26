@@ -7,6 +7,7 @@ import '../presentation/screens/audio_play_screen.dart';
 import '../services/lister_interface_impl.dart';
 import '../services/listen_interface.dart';
 import 'song_like_controller.dart';
+import 'song_progress_controller.dart';
 
 class HomeController extends GetxController {
   final isLoading = true.obs;
@@ -61,6 +62,11 @@ class HomeController extends GetxController {
     if (isLoadingSong.value) return;
     isLoadingSong.value = true;
 
+    // Lands whatever was reached in the song playing now before the details
+    // are read, so replaying it straight away resumes from the latest point.
+    final songProgress = SongProgressController.instance;
+    await songProgress.flush();
+
     final interface = _listenInterface();
     final detailsFuture = interface.getListenDetails(listenId);
     final streamFuture = interface.getListenStreamUrl(listenId);
@@ -75,6 +81,7 @@ class HomeController extends GetxController {
     var streamUrl = '';
     var isLiked = false;
     var likeCount = 0;
+    var startAt = Duration.zero;
 
     detailsResult.fold((failure) => error = failure.uiMessage, (success) {
       title = success.data?.title ?? '';
@@ -82,6 +89,11 @@ class HomeController extends GetxController {
       coverUrl = success.data?.coverUrl ?? '';
       isLiked = success.data?.isLiked ?? false;
       likeCount = success.data?.likeCount ?? 0;
+      startAt =
+          success.data?.userProgress?.resumePosition(
+            success.data?.durationMs ?? 0,
+          ) ??
+          Duration.zero;
     });
     streamResult.fold((failure) => error ??= failure.uiMessage, (success) {
       streamUrl = success.data?.streamUrl ?? '';
@@ -99,8 +111,10 @@ class HomeController extends GetxController {
       artist: artist,
       imageAsset: coverUrl,
       audioAsset: streamUrl,
+      startAt: startAt,
       trackId: listenId,
     );
+    songProgress.start(listenId);
 
     // After play(), which has already opened the session the like state binds
     // to — the player screen reads the like off this controller.

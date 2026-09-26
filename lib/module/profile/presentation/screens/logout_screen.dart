@@ -1,6 +1,7 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
 import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:beatx_flutter/module/auth/services/auth_interface.dart';
+import 'package:beatx_flutter/module/home/controller/song_progress_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -38,6 +39,11 @@ class _LogoutDialogState extends State<LogoutDialog> {
 
   Future<void> _logout() async {
     _logoutButtonStatus.setLoading();
+
+    // Saved while still signed in: the progress belongs to this account.
+    if (Get.isRegistered<SongProgressController>()) {
+      await Get.find<SongProgressController>().flush();
+    }
 
     final result = await Get.find<AuthInterface>().logout();
 

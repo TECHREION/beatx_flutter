@@ -7,6 +7,7 @@ import '../model/listen_model.dart';
 import '../model/miusic_stream.dart';
 import '../model/on_repeat_model.dart';
 import '../model/recently_played_model.dart';
+import '../model/save_progress_model.dart';
 import '../model/song_like_model.dart';
 
 abstract base class ListenInterface extends BaseRepository {
@@ -36,5 +37,12 @@ abstract base class ListenInterface extends BaseRepository {
   /// capped at [limit].
   FutureRequest<Success<List<ListenMusicDetailsModel>>> dailyDiscover({
     required int limit,
+  });
+  /// Records how far the signed-in user has listened to [songId]. The saved
+  /// position comes back as the song details' `userProgress`.
+  FutureRequest<Success<SaveProgressModel>> saveProgress(
+    String songId, {
+    required int positionMs,
+    bool completed = false,
   });
 }

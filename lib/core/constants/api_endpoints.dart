@@ -69,6 +69,8 @@ base class ApiEndpoints {
   static const String onRepeatedSong = _Listen._onRepeatedSong;
   static const String searchSong = _Listen._searchSong;
   static const String dailyDiscover = _Listen.dailyDiscover;
+  static String songSaveProgress({required String songId}) =>
+      _Listen._songsaveProgress(songId);
 
   //---------------------- podcast -----------------------------
   static const String podcastHome = _Podcast.podcastHome;
@@ -195,6 +197,8 @@ class _Listen {
   static const String _onRepeatedSong = '$listen/on-repeat';
   static const String searchSong = '$listen/search';
   static const String dailyDiscover = '$listen/daily-discovery';
+  static String _songsaveProgress(String songId) =>
+      '$listen/$songId/progress';
 }
 
 // ---------------------- podcast -----------------------------
