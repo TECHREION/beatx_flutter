@@ -121,6 +121,8 @@ class PlayerController extends GetxController {
     await _player.stop();
     final isNetworkSource =
         audioAsset.startsWith('http://') || audioAsset.startsWith('https://');
+    // A song saved for offline listening, played from the app's own storage.
+    final isLocalFile = isLocalFilePath(audioAsset);
     final initialPosition = startAt > Duration.zero ? startAt : null;
 
     // Callers invoke play() without awaiting or catching, so a load failure
@@ -129,6 +131,13 @@ class PlayerController extends GetxController {
     try {
       if (isNetworkSource) {
         await _player.setUrl(audioAsset, initialPosition: initialPosition);
+      } else if (isLocalFile) {
+        await _player.setFilePath(
+          audioAsset.startsWith('file://')
+              ? Uri.parse(audioAsset).toFilePath()
+              : audioAsset,
+          initialPosition: initialPosition,
+        );
       } else {
         await _player.setAsset(
           _assetPath(audioAsset),
@@ -154,6 +163,12 @@ class PlayerController extends GetxController {
     // caller hanging for the length of the track.
     unawaited(_player.play());
   }
+
+  /// Whether [source] names a file on the device rather than a url or a
+  /// bundled asset. Bundled assets are always relative (`audio/…`), device
+  /// files always absolute.
+  static bool isLocalFilePath(String source) =>
+      source.startsWith('/') || source.startsWith('file://');
 
   /// audioplayers resolved an [AssetSource] relative to `assets/`, so callers
   /// pass paths like `audio/music1.mp3`. just_audio wants the full asset key,

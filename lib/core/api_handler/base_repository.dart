@@ -56,6 +56,14 @@ base class BaseRepository {
               fullError: 'Connection timeout! Make sure internet is connected!',
             ),
           );
+        case DioExceptionType.connectionError:
+          return Left(
+            DataCRUDFailure(
+              failure: Failure.socketFailure,
+              fullError: 'No internet connection. Check your connection and '
+                  'try again.',
+            ),
+          );
         case DioExceptionType.cancel:
           return Left(
             DataCRUDFailure(

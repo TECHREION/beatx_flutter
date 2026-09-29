@@ -17,6 +17,7 @@ import '../../module/notification/services/notification_interface.dart';
 import '../../module/notification/services/notification_interface_impl.dart';
 import '../../module/watch/services/watch_interface.dart';
 import '../../module/watch/services/watch_interface_impl.dart';
+import '../../module/home/controller/download_controller.dart';
 
 void internalServiceDI() {
   Get.lazyPut<AuthInterface>(
@@ -42,6 +43,10 @@ void internalServiceDI() {
   Get.put<AppManager>(AppManager());
 
   Get.put<PlayerController>(PlayerController(), permanent: true);
+
+  // Reads the saved-songs index at launch, so downloads show as downloaded
+  // and play offline straight away after a restart.
+  Get.put<DownloadController>(DownloadController(), permanent: true);
 
   // Must come after PlayerController: on Android just_audio fixes a player's
   // audio effects at construction time, so the equalizer effect belongs to the

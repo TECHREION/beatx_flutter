@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
+import 'package:beatx_flutter/module/home/controller/download_controller.dart';
 import 'package:beatx_flutter/module/home/controller/home_controller.dart';
 import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/daily_discover_screen.dart';
+import 'package:beatx_flutter/module/home/presentation/screens/downloads_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/liked_songs_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/song_search_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/on_repeat_screen.dart';
@@ -491,6 +493,29 @@ class _MixGrid extends StatelessWidget {
               preventDuplicates: true,
             ),
           ),
+        ),
+        _sized(
+          context,
+          Obx(() {
+            // Local only, so the tile and the screen behind it work offline.
+            final downloads = DownloadController.instance;
+            final count = downloads.songs.length;
+            return _MixTile(
+              icon: Icons.download_for_offline_rounded,
+              title: 'Downloads',
+              subtitle: !downloads.isReady.value || count == 0
+                  ? 'Listen offline'
+                  : count == 1
+                  ? '1 track'
+                  : '$count tracks',
+              iconColor: const Color(0xFF9BFF4D),
+              onTap: () => Get.to(
+                () => const DownloadsScreen(),
+                transition: Transition.rightToLeft,
+                preventDuplicates: true,
+              ),
+            );
+          }),
         ),
         _sized(
           context,

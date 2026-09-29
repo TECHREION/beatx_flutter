@@ -99,6 +99,9 @@ class BeatxAudioHandler extends BaseAudioHandler with SeekHandler {
 
   Uri? _artUri(String imageAsset) {
     if (imageAsset.isEmpty) return null;
+    // A downloaded song's cover is a plain path; the notification needs it
+    // as a file uri.
+    if (imageAsset.startsWith('/')) return Uri.file(imageAsset);
     return Uri.tryParse(imageAsset);
   }
 

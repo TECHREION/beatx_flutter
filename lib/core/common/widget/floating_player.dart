@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
@@ -277,6 +278,13 @@ class _FloatingPlayerState extends State<FloatingPlayer>
     if (source.startsWith('http')) {
       return Image.network(
         source,
+        fit: BoxFit.cover,
+        errorBuilder: (_, err, trace) => _artworkFallback(),
+      );
+    }
+    if (PlayerController.isLocalFilePath(source)) {
+      return Image.file(
+        File(source),
         fit: BoxFit.cover,
         errorBuilder: (_, err, trace) => _artworkFallback(),
       );

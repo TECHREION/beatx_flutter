@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/core/player/player_like_target.dart';
@@ -6,6 +8,8 @@ import 'package:get/get.dart';
 
 import '../../../audiobook/controller/audiobook_like_controller.dart';
 import '../../../podcast/controller/podcast_like_controller.dart';
+import '../../controller/download_controller.dart';
+import '../widgets/download_actions.dart';
 import '../widgets/live_waveform.dart';
 import 'equalizer_screen.dart';
 import '../../controller/song_like_controller.dart';
@@ -142,6 +146,13 @@ class PlayerScreen extends StatelessWidget {
                                                 .startsWith('http')
                                             ? NetworkImage(
                                                 ctrl.imageAsset.value,
+                                              )
+                                            // A downloaded song's saved cover.
+                                            : PlayerController.isLocalFilePath(
+                                                ctrl.imageAsset.value,
+                                              )
+                                            ? FileImage(
+                                                File(ctrl.imageAsset.value),
                                               )
                                             : AssetImage(
                                                     ctrl.imageAsset.value,
@@ -364,6 +375,8 @@ class PlayerScreen extends StatelessWidget {
                                         : () => _toggleLike(context, target),
                                   );
                                 }),
+                                _divider(),
+                                const _DownloadAction(),
                               ],
                             ),
                           ),
@@ -458,5 +471,99 @@ class _BottomAction extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Saves the song that is playing for offline listening, and shows how far
+/// that has got. Only a song can be downloaded; for an episode or an
+/// audiobook the action is shown inert, like the others in the row.
+class _DownloadAction extends StatelessWidget {
+  const _DownloadAction();
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      // Reading canLike subscribes to the play session, so the action moves
+      // on with the player when it switches to another track.
+      final song = SongLikeController.instance;
+      if (!song.canLike || song.songId.value.isEmpty) {
+        return const _BottomAction(icon: Icons.download, title: 'DOWNLOAD');
+      }
+
+      final songId = song.songId.value;
+      final state = DownloadController.instance.stateFor(songId);
+
+      switch (state.status.value) {
+        case DownloadStatus.downloading:
+          final percent = state.percent;
+          return GestureDetector(
+            onTap: () => DownloadActions.confirmCancel(
+              context,
+              songId: songId,
+              title: Get.find<PlayerController>().title.value,
+            ),
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    // Spins when the size is unknown rather than showing a
+                    // made-up fraction.
+                    value: state.progress.value,
+                    strokeWidth: 2.4,
+                    color: const Color(0xFF9BFF4D),
+                    backgroundColor: Colors.white12,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  percent == null ? 'SAVING' : '$percent%',
+                  style: const TextStyle(
+                    color: Color(0xFF9BFF4D),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          );
+        case DownloadStatus.downloaded:
+          return _BottomAction(
+            icon: Icons.download_done_rounded,
+            title: 'DOWNLOADED',
+            active: true,
+            onTap: () => DownloadActions.confirmRemove(
+              context,
+              songId: songId,
+              title: Get.find<PlayerController>().title.value,
+            ),
+          );
+        case DownloadStatus.failed:
+          return _BottomAction(
+            icon: Icons.refresh_rounded,
+            title: 'RETRY',
+            onTap: () => DownloadActions.retry(context, songId),
+          );
+        case DownloadStatus.notDownloaded:
+          return _BottomAction(
+            icon: Icons.download,
+            title: 'DOWNLOAD',
+            onTap: () {
+              final player = Get.find<PlayerController>();
+              DownloadActions.start(
+                context,
+                DownloadRequest(
+                  songId: songId,
+                  title: player.title.value,
+                  artist: player.artist.value,
+                  coverUrl: player.imageAsset.value,
+                  durationMs: player.duration.value.inMilliseconds,
+                ),
+              );
+            },
+          );
+      }
+    });
   }
 }
