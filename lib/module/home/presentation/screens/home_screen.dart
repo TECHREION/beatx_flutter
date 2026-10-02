@@ -49,102 +49,122 @@ class HomeScreen extends StatelessWidget {
                   padded: false,
                   child: CustomScrollView(
                     slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSizes.screenHorizontalPadding,
-                        20,
-                        AppSizes.screenHorizontalPadding,
-                        0,
-                      ),
-                      sliver: SliverList.list(
-                        children: [
-                          const _SectionTitle(
-                            title: 'Trending Now',
-                            action: 'See all',
-                          ),
-                          const SizedBox(height: 16),
-                          Obx(() {
-                            final item = controller.trending.isNotEmpty
-                                ? controller.trending.first
-                                : null;
-                            final title = item?.title ?? 'Tumi Acho Bole';
-                            final artist = item?.artist ?? 'Imran Mahmudul';
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSizes.screenHorizontalPadding,
+                          20,
+                          AppSizes.screenHorizontalPadding,
+                          0,
+                        ),
+                        sliver: SliverList.list(
+                          children: [
+                            const _SectionTitle(
+                              title: 'Trending Now',
+                              action: 'See all',
+                            ),
+                            const SizedBox(height: 16),
+                            Obx(() {
+                              final item = controller.trending.isNotEmpty
+                                  ? controller.trending.first
+                                  : null;
+                              final title = item?.title ?? 'Tumi Acho Bole';
+                              final artist = item?.artist ?? 'Imran Mahmudul';
 
-                            return _TrendingCard(
-                              title: title,
-                              artist: artist,
-                              coverUrl: item?.coverUrl,
-                              onPlay: () {
-                                if (item != null) {
-                                  controller.playSong(item.id);
-                                  return;
+                              return _TrendingCard(
+                                title: title,
+                                artist: artist,
+                                coverUrl: item?.coverUrl,
+                                onPlay: () {
+                                  if (item != null) {
+                                    controller.playSong(item.id);
+                                    return;
+                                  }
+                                  Get.find<PlayerController>().play(
+                                    title: title,
+                                    artist: artist,
+                                    imageAsset: 'assets/image/a4.png',
+                                    audioAsset: 'audio/music1.m4a',
+                                  );
+                                  Get.to(
+                                    () => const PlayerScreen(),
+                                    transition: Transition.downToUp,
+                                    preventDuplicates: true,
+                                  );
+                                },
+                              );
+                            }),
+                            const SizedBox(height: 36),
+                            const _SectionTitle(title: 'Your Mix'),
+                            const SizedBox(height: 16),
+                            const _DailyDiscoverCard(),
+                            const SizedBox(height: 16),
+                            const _MixGrid(),
+                            const SizedBox(height: 16),
+                            const _SectionTitle(title: 'Explore More'),
+                            const SizedBox(height: 16),
+                            const _ExploreRow(),
+                            const SizedBox(height: 32),
+                            Obx(() {
+                              final releases = controller.newReleases;
+                              if (releases.isEmpty) {
+                                if (controller.isLoading.value) {
+                                  return const SizedBox.shrink();
                                 }
-                                Get.find<PlayerController>().play(
-                                  title: title,
-                                  artist: artist,
-                                  imageAsset: 'assets/image/a4.png',
-                                  audioAsset: 'audio/music1.m4a',
-                                );
-                                Get.to(
-                                  () => const PlayerScreen(),
-                                  transition: Transition.downToUp,
-                                  preventDuplicates: true,
-                                );
-                              },
-                            );
-                          }),
-                          const SizedBox(height: 36),
-                          const _SectionTitle(title: 'Your Mix'),
-                          const SizedBox(height: 16),
-                          const _DailyDiscoverCard(),
-                          const SizedBox(height: 16),
-                          const _MixGrid(),
-                          const SizedBox(height: 16),
-                          const _SectionTitle(title: 'Explore More'),
-                          const SizedBox(height: 16),
-                          const _ExploreRow(),
-                          const SizedBox(height: 32),
-                          Obx(() {
-                            final releases = controller.newReleases;
-                            final items = releases.isEmpty
-                                ? _defaultNewReleases
-                                : [
-                                    for (
-                                      var i = 0;
-                                      i < releases.length;
-                                      i++
-                                    )
-                                      _ReleaseData(
-                                        title: releases[i].title,
-                                        subtitle:
-                                            '${releases[i].artist} - Single',
-                                        artist: releases[i].artist,
-                                        meta: _formatDurationMs(
-                                          releases[i].durationMs,
-                                        ),
-                                        asset: 'assets/image/Container.png',
-                                        audioAsset: _placeholderAudioAssets[i %
+                                if (controller.isOffline.value) {
+                                  return _NewReleasesMessage(
+                                    icon: Icons.wifi_off_rounded,
+                                    message: "You're offline",
+                                    detail:
+                                        'Connect to the internet to see new releases.',
+                                    onRetry: controller.fetchListenData,
+                                  );
+                                }
+                                if (controller.errorMessage.value.isNotEmpty) {
+                                  return _NewReleasesMessage(
+                                    icon: Icons.error_outline_rounded,
+                                    message: "Couldn't load new releases",
+                                    detail: controller.errorMessage.value,
+                                    onRetry: controller.fetchListenData,
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }
+                              final items = [
+                                for (var i = 0; i < releases.length; i++)
+                                  _ReleaseData(
+                                    title: releases[i].title,
+                                    subtitle: '${releases[i].artist} - Single',
+                                    artist: releases[i].artist,
+                                    meta: _formatDurationMs(
+                                      releases[i].durationMs,
+                                    ),
+                                    asset: 'assets/image/Container.png',
+                                    audioAsset:
+                                        _placeholderAudioAssets[i %
                                             _placeholderAudioAssets.length],
-                                        coverUrl: releases[i].coverUrl,
-                                        listenId: releases[i].id,
-                                      ),
-                                  ];
+                                    coverUrl: releases[i].coverUrl,
+                                    listenId: releases[i].id,
+                                  ),
+                              ];
 
-                            return _NewReleaseSection(items: items);
-                          }),
-                          const SizedBox(height: 28),
-                          const _SectionTitle(title: 'Artists to Watch'),
-                          const SizedBox(height: 14),
-                          const _ArtistWatchList(),
-                          Obx(() {
-                            final hasActiveTrack = Get.find<PlayerController>()
-                                .title
-                                .value
-                                .isNotEmpty;
-                            return SizedBox(height: hasActiveTrack ? 196 : 104);
-                          }),
-                        ],
-                      ),
+                              return _NewReleaseSection(items: items);
+                            }),
+                            const SizedBox(height: 28),
+                            const _SectionTitle(title: 'Artists to Watch'),
+                            const SizedBox(height: 14),
+                            const _ArtistWatchList(),
+                            Obx(() {
+                              final hasActiveTrack =
+                                  Get.find<PlayerController>()
+                                      .title
+                                      .value
+                                      .isNotEmpty;
+                              return SizedBox(
+                                height: hasActiveTrack ? 196 : 104,
+                              );
+                            }),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -561,46 +581,46 @@ class _MixTile extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1F),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.13),
-              shape: BoxShape.circle,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1F),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.13),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 25),
             ),
-            child: Icon(icon, color: iconColor, size: 25),
-          ),
-          const SizedBox(height: 13),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0,
+            const SizedBox(height: 13),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFA7A3AA),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0,
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFFA7A3AA),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -723,33 +743,6 @@ class _PagerLine extends StatelessWidget {
   }
 }
 
-const _defaultNewReleases = [
-  _ReleaseData(
-    title: 'Tumi Onek Dami',
-    subtitle: 'Fahim Islam - Single',
-    artist: 'Fahim Islam',
-    meta: 'NEW',
-    asset: 'assets/image/Container.png',
-    audioAsset: 'audio/music2.mp3',
-  ),
-  _ReleaseData(
-    title: 'Amar Hote Hote Mokhlesul Islam Nilu',
-    subtitle: 'Amar Hote Hote - Single',
-    artist: 'Mokhlesul Islam Nilu',
-    meta: '4:20',
-    asset: 'assets/image/Album Art.png',
-    audioAsset: 'audio/music3.m4a',
-  ),
-  _ReleaseData(
-    title: 'Emon Ekta Golpo',
-    subtitle: 'Nabila - Single',
-    artist: 'Nabila',
-    meta: '3:15',
-    asset: 'assets/image/Album Art (1).png',
-    audioAsset: 'audio/music4.mp3',
-  ),
-];
-
 /// Local demo audio bundled with the app — the `songs/home` API has no
 /// audio stream url yet, so playback still cycles through these assets.
 const _placeholderAudioAssets = [
@@ -765,6 +758,72 @@ String _formatDurationMs(int durationMs) {
   final minutes = totalSeconds ~/ 60;
   final seconds = totalSeconds % 60;
   return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
+
+/// Stands in for the New Releases list when it could not be loaded, so the
+/// section never falls back to songs that are not really there.
+class _NewReleasesMessage extends StatelessWidget {
+  const _NewReleasesMessage({
+    required this.icon,
+    required this.message,
+    required this.detail,
+    required this.onRetry,
+  });
+
+  final IconData icon;
+  final String message;
+  final String detail;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle(title: 'New Releases'),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: Colors.white70, size: 32),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                detail,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white60, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: onRetry,
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(
+                    color: Color(0xFF64FF8F),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// New Releases as a horizontal pager: five songs to a page, swipe for the

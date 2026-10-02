@@ -16,6 +16,9 @@ import 'song_progress_controller.dart';
 class HomeController extends GetxController {
   final isLoading = true.obs;
   final errorMessage = ''.obs;
+
+  /// The last home fetch failed because there was no connection.
+  final isOffline = false.obs;
   final listenData = ListenMusicModel().obs;
 
   @override
@@ -37,14 +40,19 @@ class HomeController extends GetxController {
   Future<void> fetchListenData() async {
     isLoading.value = true;
     errorMessage.value = '';
+    isOffline.value = false;
 
     final result = await _listenInterface().getListen();
 
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (
-      success,
-    ) {
-      listenData.value = success.data ?? ListenMusicModel();
-    });
+    result.fold(
+      (failure) {
+        errorMessage.value = failure.uiMessage;
+        isOffline.value = failure.failure == Failure.socketFailure;
+      },
+      (success) {
+        listenData.value = success.data ?? ListenMusicModel();
+      },
+    );
 
     isLoading.value = false;
   }
@@ -133,13 +141,10 @@ class HomeController extends GetxController {
             Duration.zero;
       },
     );
-    streamResult?.fold(
-      (failure) {
-        error ??= failure.uiMessage;
-        offline = offline || failure.failure == Failure.socketFailure;
-      },
-      (success) => streamUrl = success.data?.streamUrl ?? '',
-    );
+    streamResult?.fold((failure) {
+      error ??= failure.uiMessage;
+      offline = offline || failure.failure == Failure.socketFailure;
+    }, (success) => streamUrl = success.data?.streamUrl ?? '');
 
     isLoadingSong.value = false;
 
@@ -153,9 +158,9 @@ class HomeController extends GetxController {
           : error ?? 'Unable to load song.';
       final context = Get.context;
       if (context != null && context.mounted) {
-        SnackbarNotifier(context: context).notifyError(
-          message: errorMessage.value,
-        );
+        SnackbarNotifier(
+          context: context,
+        ).notifyError(message: errorMessage.value);
       }
       return;
     }
