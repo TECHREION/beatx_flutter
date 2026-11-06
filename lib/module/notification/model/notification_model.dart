@@ -9,6 +9,9 @@ enum NotificationType {
   song,
   video,
   subscription,
+  tickets,
+  rewards,
+  social,
   system,
   general;
 
@@ -20,6 +23,9 @@ enum NotificationType {
       'song' || 'track' || 'music' || 'release' => NotificationType.song,
       'video' || 'watch' => NotificationType.video,
       'subscription' || 'billing' || 'payment' => NotificationType.subscription,
+      'tickets' || 'ticket' => NotificationType.tickets,
+      'rewards' || 'reward' || 'coins' => NotificationType.rewards,
+      'social' => NotificationType.social,
       'system' || 'account' || 'security' => NotificationType.system,
       _ => NotificationType.general,
     };

@@ -13,10 +13,11 @@ class HomeAudiobookData {
 
   factory HomeAudiobookData.fromJson(Map<String, dynamic> json) {
     return HomeAudiobookData(
+      // An entry with no id could only open a blank page.
       continueListening: _mapList(
         json['continueListening'],
         ContinueListeningBook.fromJson,
-      ),
+      ).where((book) => book.id.isNotEmpty).toList(),
       newReleases: _mapList(json['newReleases'], Audiobook.fromJson),
       bestsellers: _mapList(json['bestsellers'], Bestseller.fromJson),
       trending: _mapList(json['trending'], TrendingAudiobook.fromJson),
@@ -122,13 +123,14 @@ class Genre {
   Map<String, dynamic> toJson() => {'_id': id, 'name': name};
 }
 
-/// A `newReleases`/`trending` entry the user has already started.
-///
-/// The backend returned an empty `continueListening` array while this was
-/// written, so playback keys are read leniently from the aliases the rest of
-/// the API uses.
+/// A book the user has already started, from `continueListening`, where each
+/// entry is `{ book, progress }`.
 class ContinueListeningBook extends Audiobook {
+  /// Within the current chapter, so not comparable with the book's duration;
+  /// the server works out [percentComplete] and [remainingMs] for the book.
   final int positionMs;
+  final double percentComplete;
+  final int remainingMs;
   final String chapterTitle;
 
   const ContinueListeningBook({
@@ -142,12 +144,20 @@ class ContinueListeningBook extends Audiobook {
     super.ratingAverage,
     super.publishedAt,
     this.positionMs = 0,
+    this.percentComplete = 0,
+    this.remainingMs = 0,
     this.chapterTitle = '',
   });
 
   factory ContinueListeningBook.fromJson(Map<String, dynamic> json) {
-    final book = Audiobook.fromJson(json);
-    final chapter = json['currentChapter'];
+    final bookJson = json['book'];
+    final progressJson = json['progress'];
+    final book = Audiobook.fromJson(
+      bookJson is Map ? Map<String, dynamic>.from(bookJson) : const {},
+    );
+    final progress = progressJson is Map
+        ? Map<String, dynamic>.from(progressJson)
+        : const <String, dynamic>{};
 
     return ContinueListeningBook(
       id: book.id,
@@ -159,10 +169,10 @@ class ContinueListeningBook extends Audiobook {
       genre: book.genre,
       ratingAverage: book.ratingAverage,
       publishedAt: book.publishedAt,
-      positionMs: parseInt(json['positionMs'] ?? json['lastPositionMs']),
-      chapterTitle: chapter is Map
-          ? (chapter['title']?.toString() ?? '')
-          : (json['chapterTitle']?.toString() ?? ''),
+      positionMs: parseInt(progress['positionMs']),
+      percentComplete: parseDouble(progress['percentComplete']),
+      remainingMs: parseInt(progress['remainingMs']),
+      chapterTitle: progress['currentChapterTitle']?.toString() ?? '',
     );
   }
 
@@ -170,17 +180,13 @@ class ContinueListeningBook extends Audiobook {
   Map<String, dynamic> toJson() => {
     ...super.toJson(),
     'positionMs': positionMs,
+    'percentComplete': percentComplete,
+    'remainingMs': remainingMs,
     'chapterTitle': chapterTitle,
   };
 
-  /// 0..1, safe against a zero or missing `totalDurationMs`.
-  double get progress {
-    if (totalDurationMs <= 0) return 0;
-    return (positionMs / totalDurationMs).clamp(0.0, 1.0);
-  }
-
-  int get remainingMs =>
-      (totalDurationMs - positionMs).clamp(0, totalDurationMs);
+  /// 0..1.
+  double get progress => (percentComplete / 100).clamp(0.0, 1.0);
 
   String get formattedRemaining {
     final remaining = formatDuration(remainingMs);

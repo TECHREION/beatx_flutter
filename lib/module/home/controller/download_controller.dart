@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
+import '../../../core/api_handler/failure.dart';
 import '../model/downloaded_song_model.dart';
 import '../services/listen_interface.dart';
 import '../services/lister_interface_impl.dart';
@@ -77,8 +78,17 @@ class DownloadController extends GetxController {
   /// False until the saved list has been read from disk.
   final isReady = false.obs;
 
+  /// True when the downloads went too long without checking in with the
+  /// server. They are hidden, not deleted, until the next successful sync.
+  final isLocked = false.obs;
+
+  /// The saved songs the user may see and play right now.
+  List<DownloadedSong> get visibleSongs =>
+      isLocked.value ? const [] : songs.toList();
+
   final _states = <String, SongDownloadState>{};
   Future<void>? _loading;
+  Future<void>? _syncing;
 
   /// Index writes are chained so two downloads finishing together cannot
   /// interleave their writes.
@@ -111,11 +121,96 @@ class DownloadController extends GetxController {
       for (final song in loaded) {
         stateFor(song.id).status.value = DownloadStatus.downloaded;
       }
+      await _applyValidity();
     } catch (_) {
       // Storage unreadable: nothing reads as downloaded, and streaming is
       // unaffected.
     }
     isReady.value = true;
+  }
+
+  Future<void> _applyValidity() async {
+    final validUntil = await _service.validUntil();
+    isLocked.value = validUntil != null && DateTime.now().isAfter(validUntil);
+  }
+
+  /// Checks the saved songs in with the server. Run on every launch with a
+  /// signed-in user; a second call joins one already running.
+  Future<void> syncWithServer() =>
+      _syncing ??= _sync().whenComplete(() => _syncing = null);
+
+  Future<void> _sync() async {
+    await ready();
+    try {
+      final deviceId = await _service.deviceId();
+      await _registerUntrackedSongs(deviceId);
+
+      final result = await _listenInterface().syncDownloads(
+        deviceId: deviceId,
+        downloadIds: [
+          for (final song in songs)
+            if (song.downloadId.isNotEmpty) song.downloadId,
+        ],
+      );
+      final sync = result.fold((_) => null, (success) => success.data);
+      if (sync != null) {
+        // Taken down, deleted, or removed from the website.
+        final removed = sync.remove.toSet();
+        for (final song in songs.toList()) {
+          if (removed.contains(song.downloadId)) {
+            await _forget(song, tellServer: false);
+          }
+        }
+        await _service.saveValidUntil(sync.validUntil);
+      }
+      await _applyValidity();
+    } catch (_) {
+      // Storage trouble. The next launch tries again.
+    }
+  }
+
+  /// Gives songs saved before downloads were tracked a server record, so the
+  /// sync can cover them too. One the server says is not available (404) is no
+  /// longer published, so it goes the way of anything the sync says to remove.
+  /// Any other failure is left for the next sync.
+  Future<void> _registerUntrackedSongs(String deviceId) async {
+    final untracked = songs.where((song) => song.downloadId.isEmpty).toList();
+    for (final song in untracked) {
+      final result = await _listenInterface().createSongDownload(
+        songId: song.id,
+        deviceId: deviceId,
+        deviceName: _deviceName,
+      );
+      final unavailable = result.fold(
+        (failure) => failure.failure == Failure.notFound,
+        (_) => false,
+      );
+      if (unavailable) {
+        await _forget(song, tellServer: false);
+        continue;
+      }
+
+      final downloadId = result.fold(
+        (_) => '',
+        (success) => success.data?.downloadId ?? '',
+      );
+      if (downloadId.isEmpty) continue;
+
+      final index = songs.indexWhere((entry) => entry.id == song.id);
+      if (index >= 0) songs[index] = song.withDownloadId(downloadId);
+      await _listenInterface().reportDownloadStatus(
+        downloadId,
+        completed: true,
+      );
+    }
+    if (untracked.isNotEmpty) await _persist();
+  }
+
+  /// How this install is named on the website's device list.
+  static String get _deviceName {
+    if (Platform.isIOS) return 'BeatX on iOS';
+    if (Platform.isAndroid) return 'BeatX on Android';
+    return 'BeatX app';
   }
 
   /// The observable state for [songId], created on first ask.
@@ -143,6 +238,7 @@ class DownloadController extends GetxController {
   /// downloaded, so playback falls back to streaming instead of failing.
   Future<DownloadedSong?> playableDownload(String songId) async {
     await ready();
+    if (isLocked.value) return null;
     final song = _find(songId);
     if (song == null) return null;
     if (File(audioPath(song)).existsSync()) return song;
@@ -171,18 +267,22 @@ class DownloadController extends GetxController {
       ..progress.value = 0
       ..status.value = DownloadStatus.downloading;
 
+    var downloadId = '';
     try {
-      // The stream url is a signed link that expires within the hour, so a
-      // fresh one is fetched for every attempt — which is also what makes
-      // Retry recover from an expired link.
-      final streamResult = await _listenInterface().getListenStreamUrl(
-        request.songId,
+      // The link is signed and expires within the hour, so a fresh one is
+      // fetched for every attempt — which is also what makes Retry recover
+      // from an expired link. Repeating this for a song does not add a record.
+      final grantResult = await _listenInterface().createSongDownload(
+        songId: request.songId,
+        deviceId: await _service.deviceId(),
+        deviceName: _deviceName,
       );
-      final stream = streamResult.fold(
+      final grant = grantResult.fold(
         (failure) => throw SongDownloadException(failure.uiMessage),
         (success) => success.data,
       );
-      final url = stream?.streamUrl ?? '';
+      downloadId = grant?.downloadId ?? '';
+      final url = grant?.url ?? '';
       if (cancelToken.isCancelled) {
         throw const SongDownloadException('', cancelled: true);
       }
@@ -190,7 +290,7 @@ class DownloadController extends GetxController {
       final audio = await _service.downloadAudio(
         songId: request.songId,
         url: url,
-        fallbackExtension: stream?.streamType,
+        fallbackExtension: grant?.format,
         cancelToken: cancelToken,
         onProgress: (value) => state.progress.value = value,
       );
@@ -203,13 +303,14 @@ class DownloadController extends GetxController {
 
       final song = DownloadedSong(
         id: request.songId,
+        downloadId: downloadId,
         title: request.title,
         artist: request.artist,
         artworkUrl: request.coverUrl,
         fileName: audio.fileName,
         coverFileName: coverFileName,
         fileSize: audio.fileSize,
-        durationMs: stream?.durationMs ?? request.durationMs,
+        durationMs: grant?.durationMs ?? request.durationMs,
         genre: request.genre,
         downloadedAt: DateTime.now(),
       );
@@ -232,20 +333,36 @@ class DownloadController extends GetxController {
       state
         ..progress.value = 1
         ..status.value = DownloadStatus.downloaded;
+      _reportResult(downloadId, completed: true);
       return null;
     } on SongDownloadException catch (error) {
       if (error.cancelled) {
         state
           ..progress.value = null
           ..status.value = DownloadStatus.notDownloaded;
+        // The record would otherwise hold one of the account's device slots.
+        if (downloadId.isNotEmpty) {
+          unawaited(_listenInterface().deleteDownload(downloadId));
+        }
         return null;
       }
+      _reportResult(downloadId, completed: false);
       return _fail(state, error.message);
     } catch (_) {
+      _reportResult(downloadId, completed: false);
       return _fail(state, 'Download failed. Tap Retry.');
     } finally {
       state._cancelToken = null;
     }
+  }
+
+  /// Tells the server how the attempt ended. Best effort: the outcome on this
+  /// device does not depend on it.
+  void _reportResult(String downloadId, {required bool completed}) {
+    if (downloadId.isEmpty) return;
+    unawaited(
+      _listenInterface().reportDownloadStatus(downloadId, completed: completed),
+    );
   }
 
   String _fail(SongDownloadState state, String message) {
@@ -286,10 +403,14 @@ class DownloadController extends GetxController {
       ..status.value = DownloadStatus.notDownloaded;
   }
 
-  Future<void> _forget(DownloadedSong song) async {
+  Future<void> _forget(DownloadedSong song, {bool tellServer = true}) async {
     songs.removeWhere((entry) => entry.id == song.id);
     stateFor(song.id).status.value = DownloadStatus.notDownloaded;
     await _service.delete(song);
+    if (tellServer && song.downloadId.isNotEmpty) {
+      // Best effort, so removing a download also works offline.
+      unawaited(_listenInterface().deleteDownload(song.downloadId));
+    }
     try {
       await _persist();
     } catch (_) {

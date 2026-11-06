@@ -168,6 +168,18 @@ class _Leading extends StatelessWidget {
       Icons.workspace_premium_rounded,
       const Color(0xFFFFD166),
     ),
+    NotificationType.tickets => (
+      Icons.confirmation_number_rounded,
+      const Color(0xFFFF8FB1),
+    ),
+    NotificationType.rewards => (
+      Icons.monetization_on_rounded,
+      const Color(0xFFFFD166),
+    ),
+    NotificationType.social => (
+      Icons.people_alt_rounded,
+      const Color(0xFF5CC8FF),
+    ),
     NotificationType.system => (Icons.shield_rounded, const Color(0xFF8FA6FF)),
     NotificationType.general => (
       Icons.notifications_rounded,

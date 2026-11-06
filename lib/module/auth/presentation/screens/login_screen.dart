@@ -9,6 +9,7 @@ import 'package:beatx_flutter/module/app_ground.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../core/availability/app_availability_controller.dart';
 import '../../../../core/theme/app_gap.dart';
 import '../../../onbording/common/app_logo.dart';
 import '../../controller/login_controller.dart';
@@ -228,39 +229,48 @@ class _LoginCard extends StatelessWidget {
             const SizedBox(height: 19),
             const SocialAuthButtons(),
             const SizedBox(height: 19),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SignupScreen()),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFCFCBD1),
-                minimumSize: Size.zero,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text.rich(
-                TextSpan(
-                  text: 'New to BeatX? ',
-                  style: const TextStyle(
-                    color: Color(0xFFCFCBD1),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0,
+            // New accounts can be closed server-side; signing in is unaffected.
+            Obx(
+              () => !AppAvailabilityController
+                      .instance
+                      .settings
+                      .value
+                      .allowNewRegistrations
+                  ? const SizedBox.shrink()
+                  : TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignupScreen()),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFCFCBD1),
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  children: [
+                  child: Text.rich(
                     TextSpan(
-                      text: 'Register Now',
-                      style: TextStyle(
-                        color: Color(0xFFD27BFF),
-                        fontWeight: FontWeight.w800,
+                      text: 'New to BeatX? ',
+                      style: const TextStyle(
+                        color: Color(0xFFCFCBD1),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0,
                       ),
+                      children: [
+                        TextSpan(
+                          text: 'Register Now',
+                          style: TextStyle(
+                            color: Color(0xFFD27BFF),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
             ),
           ],
         ),

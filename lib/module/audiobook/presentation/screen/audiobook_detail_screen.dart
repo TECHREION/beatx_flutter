@@ -37,41 +37,47 @@ class AudiobookDetailScreen extends StatelessWidget {
               child: ContentWidth(
                 padded: false,
                 child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(child: _DetailHeader(title: book.title)),
-                  SliverToBoxAdapter(
-                    child: AspectRatio(
-                      aspectRatio: 1.0,
-                      child: BookCover(url: book.coverUrl, iconSize: 72),
+                  slivers: [
+                    SliverToBoxAdapter(child: _DetailHeader(title: book.title)),
+                    SliverToBoxAdapter(
+                      child: AspectRatio(
+                        aspectRatio: 1.0,
+                        child: BookCover(url: book.coverUrl, iconSize: 72),
+                      ),
                     ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                    sliver: SliverList.list(
-                      children: [
-                        _ActionPanel(book: book, controller: detailsController),
-                        const SizedBox(height: 20),
-                        _RatingsBlock(book: book),
-                        const SizedBox(height: 10),
-                        Obx(
-                          () => _SynopsisBlock(
-                            synopsis:
-                                detailsController.details.value?.book?.synopsis,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Obx(
-                          () => _ChaptersBlock(
-                            chapters:
-                                detailsController.details.value?.chapters ??
-                                const [],
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                      sliver: SliverList.list(
+                        children: [
+                          _ActionPanel(
+                            book: book,
                             controller: detailsController,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 20),
+                          _RatingsBlock(book: book),
+                          const SizedBox(height: 10),
+                          Obx(
+                            () => _SynopsisBlock(
+                              synopsis: detailsController
+                                  .details
+                                  .value
+                                  ?.book
+                                  ?.synopsis,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Obx(
+                            () => _ChaptersBlock(
+                              chapters:
+                                  detailsController.details.value?.chapters ??
+                                  const [],
+                              controller: detailsController,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
                 ),
               ),
             ),
@@ -159,11 +165,18 @@ class _ActionPanel extends StatelessWidget {
   final AudioBookDetailsController controller;
 
   Future<void> _listenNow(BuildContext context) async {
+    // Tapped before the details arrived, or after they failed to.
+    await controller.ensureLoaded(book.id);
+    if (!context.mounted) return;
+
     final chapter = controller.firstChapter;
     if (chapter == null) {
-      SnackbarNotifier(
-        context: context,
-      ).notifyError(message: 'No chapters available yet.');
+      // "No chapters" is only true of a book that actually loaded.
+      SnackbarNotifier(context: context).notifyError(
+        message: controller.errorMessage.value.isNotEmpty
+            ? controller.errorMessage.value
+            : 'No chapters available yet.',
+      );
       return;
     }
 
@@ -326,9 +339,7 @@ class _ActionPanel extends StatelessWidget {
                           ? const Color(0xFFFF4D6D)
                           : Colors.white,
                       side: BorderSide(
-                        color: liked
-                            ? const Color(0xFFFF4D6D)
-                            : Colors.white38,
+                        color: liked ? const Color(0xFFFF4D6D) : Colors.white38,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),

@@ -81,9 +81,11 @@ base class BaseRepository {
               : 'Some error occured.';
           return Left(
             DataCRUDFailure(
-              failure: statusCode == 403
-                  ? Failure.forbidden
-                  : Failure.unknownFailure,
+              failure: switch (statusCode) {
+                403 => Failure.forbidden,
+                404 => Failure.notFound,
+                _ => Failure.unknownFailure,
+              },
               uiMessage: message,
               fullError: 'Some error occured. ${'\n'} Error: ${e.toString()}',
             ),

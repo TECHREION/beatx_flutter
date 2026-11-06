@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../model/product_model.dart';
 import '../model/shop_model.dart';
+import '../services/shop_interface.dart';
 
 class ShopController extends GetxController {
-  final selectedCategory = 0.obs;
+  static const pageSize = 20;
+  static const _all = ShopFilterOption(label: 'All Gear');
+
+  final selectedCategory = ''.obs;
+  final categories = <ShopFilterOption>[_all].obs;
+  final products = <ShopProduct>[].obs;
+  final isLoading = false.obs;
+  final isLoadingMore = false.obs;
+  final errorMessage = ''.obs;
+  final total = 0.obs;
+
+  int _page = 1;
+
+  /// Bumped by every fresh load, so a slow answer for a category the user has
+  /// already left is dropped rather than replacing the grid.
+  int _generation = 0;
+
+  bool get hasMore => products.length < total.value;
 
   final banners = const <PromoBannerModel>[
     PromoBannerModel(
@@ -23,6 +42,7 @@ class ShopController extends GetxController {
       accentColor: Color(0xFF3BDDEB),
       image: 'assets/image/Overlay+Shadow (2).png',
       titleColor: Color(0xFF3BDDEB),
+      category: 'apparel',
     ),
     PromoBannerModel(
       title: 'Accessory Pack',
@@ -31,92 +51,74 @@ class ShopController extends GetxController {
       ctaText: 'View More',
       accentColor: Color(0xFF56E768),
       image: 'assets/image/genre_hiphop_soul.png',
+      category: 'accessories',
     ),
   ];
 
-  final categories = const <ShopCategoryModel>[
-    ShopCategoryModel(label: 'All Gear'),
-    ShopCategoryModel(label: 'Apparel'),
-    ShopCategoryModel(label: 'Vinyls'),
-    ShopCategoryModel(label: 'Accessories'),
-    ShopCategoryModel(label: 'Digital Art'),
-  ];
+  ShopInterface get _shop => Get.find<ShopInterface>();
 
-  final products = const <ShopProductModel>[
-    ShopProductModel(
-      title: 'Oversized "Void" Hoodie',
-      subtitle: 'Heavyweight Cotton / Prism Black',
-      price: '85.00',
-      currency: r'$',
-      coinPrice: 50,
-      image: 'assets/image/Container.png',
-      isNew: true,
-    ),
-    ShopProductModel(
-      title: 'Neon Pulse LP',
-      subtitle: 'Limited Cyan Pressing',
-      price: '250.00',
-      currency: '৳',
-      coinPrice: 50,
-      image: 'assets/image/Album Art.png',
-      discountLabel: '10%',
-    ),
-    ShopProductModel(
-      title: 'Oversized "Void" Backpack',
-      subtitle: 'Water-Resistant Tech-W...',
-      price: '250.00',
-      currency: '৳',
-      coinPrice: 50,
-      image: 'assets/image/Overlay+Border+OverlayBlur.png',
-      discountLabel: '5%',
-    ),
-    ShopProductModel(
-      title: 'Refraction Tee',
-      subtitle: '100% Organic Cotton / W...',
-      price: '260.00',
-      currency: '৳',
-      coinPrice: 50,
-      image: 'assets/image/Album Art (1).png',
-      isNew: true,
-    ),
-    ShopProductModel(
-      title: 'Clipart Guitar',
-      subtitle: 'Clipart guitar, old, classi...',
-      price: '860.00',
-      currency: '৳',
-      coinPrice: 50,
-      image: 'assets/image/Now Playing.png',
-    ),
-    ShopProductModel(
-      title: 'Artist Outfit Casu...',
-      subtitle: 'Welcome to [Cotton Clan]',
-      price: '260.00',
-      currency: '৳',
-      coinPrice: 50,
-      image: 'assets/image/Overlay+Shadow (2).png',
-    ),
-  ];
+  @override
+  void onInit() {
+    super.onInit();
+    _loadCategories();
+    load();
+  }
 
-  final artistCollections = const <ArtistCollectionModel>[
-    ArtistCollectionModel(
-      name: 'CYBER-MIND X BEATX',
-      genre: 'EXPERIMENTAL TECHNO',
-      itemCount: 52,
-      cover: 'assets/image/Overlay+Shadow.png',
-    ),
-    ArtistCollectionModel(
-      name: 'LUNA SOUL SIGNATURE',
-      genre: 'LO-FI BEATS',
-      itemCount: 8,
-      cover: 'assets/image/Overlay+Shadow (1).png',
-    ),
-    ArtistCollectionModel(
-      name: 'THE VOID ANTHOLOGY',
-      genre: 'INDUSTRIAL ROCK',
-      itemCount: 24,
-      cover: 'assets/image/a6.png',
-    ),
-  ];
+  Future<void> _loadCategories() async {
+    final result = await _shop.getCategories();
+    result.fold((_) {}, (success) {
+      categories.assignAll([
+        _all,
+        ...?success.data?.map(ShopFilterOption.fromSlug),
+      ]);
+    });
+  }
 
-  void selectCategory(int index) => selectedCategory.value = index;
+  void selectCategory(String value) {
+    if (selectedCategory.value == value) return;
+    selectedCategory.value = value;
+    load();
+  }
+
+  /// Loads the first page of the selected category.
+  Future<void> load() async {
+    final generation = ++_generation;
+    isLoading.value = true;
+    isLoadingMore.value = false;
+    errorMessage.value = '';
+
+    final result = await _shop.getProducts(
+      category: selectedCategory.value,
+      page: 1,
+      limit: pageSize,
+    );
+    if (generation != _generation) return;
+
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      _page = 1;
+      products.assignAll(success.data?.items ?? const []);
+      total.value = success.data?.total ?? products.length;
+    });
+    isLoading.value = false;
+  }
+
+  Future<void> loadMore() async {
+    if (isLoadingMore.value || isLoading.value || !hasMore) return;
+    final generation = _generation;
+    isLoadingMore.value = true;
+
+    final result = await _shop.getProducts(
+      category: selectedCategory.value,
+      page: _page + 1,
+      limit: pageSize,
+    );
+    if (generation != _generation) return;
+
+    result.fold((_) {}, (success) {
+      _page++;
+      products.addAll(success.data?.items ?? const []);
+      total.value = success.data?.total ?? total.value;
+    });
+    isLoadingMore.value = false;
+  }
 }

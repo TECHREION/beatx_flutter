@@ -1,3 +1,5 @@
+import '../../../core/api_handler/paged_result.dart';
+
 /// One page of the podcast search results — what `/podcasts/search` returns
 /// when filtered by category.
 class SearchCategoryData {
@@ -15,7 +17,7 @@ class SearchCategoryData {
 
   factory SearchCategoryData.fromJson(Map<String, dynamic> json) {
     return SearchCategoryData(
-      data: (json['data'] as List? ?? [])
+      data: pagedEntries(json)
           .map((e) => CategoryPodcast.fromJson(e))
           .toList(),
       total: json['total'] ?? 0,

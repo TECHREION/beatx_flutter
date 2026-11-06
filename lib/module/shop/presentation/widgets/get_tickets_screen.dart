@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../model/event_ticket_model.dart';
-import 'checkout_screen.dart';
+import '../../../../core/helpers/json_read.dart';
+import '../../../../core/notifiers/snackbar_notifier.dart';
+import '../../controller/get_ticket_controller.dart';
+import '../../model/event_model.dart';
+import '../../services/payment_flow.dart';
+import 'purchase_outcome.dart';
+import 'shop_common.dart';
 
 const _teal = Color(0xFF3BDDEB);
 const _violet = Color(0xFFAA5CE0);
@@ -14,22 +19,39 @@ const _buyButtonText = Color(0xFF2E1A47);
 class GetTicketScreen extends StatefulWidget {
   const GetTicketScreen({super.key, required this.event});
 
-  final EventTicketModel event;
+  final ShopEvent event;
 
   @override
   State<GetTicketScreen> createState() => _GetTicketScreenState();
 }
 
 class _GetTicketScreenState extends State<GetTicketScreen> {
-  int _quantity = 1;
+  late final GetTicketController controller = GetTicketController(widget.event)
+    ..onInit();
 
-  void _increment() => setState(() => _quantity = (_quantity + 1).clamp(1, 10));
-  void _decrement() => setState(() => _quantity = (_quantity - 1).clamp(1, 10));
+  @override
+  void dispose() {
+    controller.onClose();
+    super.dispose();
+  }
+
+  Future<void> _buy() async {
+    if (!controller.canBuy) return;
+    final notifier = SnackbarNotifier(context: context);
+    try {
+      final attempt = await controller.buy();
+      await completePurchase(
+        attempt: attempt,
+        onSettled: controller.settle,
+        isTicket: true,
+      );
+    } on PurchaseFailure catch (failure) {
+      notifier.notifyError(message: failure.message);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final event = widget.event;
-
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
       body: Stack(
@@ -41,114 +63,253 @@ class _GetTicketScreenState extends State<GetTicketScreen> {
                 const _TopBar(),
                 Expanded(
                   child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        _HeroImage(image: event.image),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (event.tags.isNotEmpty) ...[
-                                _TagsRow(tags: event.tags),
-                                const SizedBox(height: 14),
-                              ],
-                              Text(
-                                event.title,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.5,
-                                  height: 1.1,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  const Icon(Icons.calendar_month_outlined, color: _dimText, size: 17),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      event.dateLabel != null
-                                          ? '${event.dateLabel} • ${event.venue}'
-                                          : event.venue,
-                                      style: const TextStyle(
-                                        color: _dimText,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
+                    child: Obx(() {
+                      final event = controller.event.value;
+                      final tier = controller.selectedTier.value;
+                      final quote = controller.quote.value;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          _HeroImage(image: event.coverUrl),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (event.tags.isNotEmpty) ...[
+                                  _TagsRow(tags: event.tags),
+                                  const SizedBox(height: 14),
                                 ],
-                              ),
-                              const SizedBox(height: 26),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      if (event.showPriceLabel)
-                                        const Text(
-                                          'STARTING FROM',
-                                          style: TextStyle(
-                                            color: _dimText,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${event.currency}${event.price}',
-                                        style: const TextStyle(
-                                          color: _teal,
-                                          fontSize: 30,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: -0.5,
-                                        ),
-                                      ),
-                                    ],
+                                Text(
+                                  event.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                    height: 1.1,
                                   ),
-                                  const Spacer(),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      const Text(
-                                        'Select Quantity',
-                                        style: TextStyle(
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_month_outlined,
+                                      color: _dimText,
+                                      size: 17,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        [
+                                              event.dateLabel,
+                                              event.eventTime,
+                                              event.place,
+                                            ]
+                                            .where((p) => p.isNotEmpty)
+                                            .join(' • '),
+                                        style: const TextStyle(
                                           color: _dimText,
-                                          fontSize: 13,
+                                          fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                      const SizedBox(height: 10),
-                                      _QuantityStepper(
-                                        quantity: _quantity,
-                                        onDecrement: _decrement,
-                                        onIncrement: _increment,
-                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (event.description.isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    event.description,
+                                    style: const TextStyle(
+                                      color: _dimText,
+                                      fontSize: 13,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                                if (event.tiers.length > 1) ...[
+                                  const SizedBox(height: 22),
+                                  const Text(
+                                    'Select Ticket',
+                                    style: TextStyle(
+                                      color: _dimText,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      for (final option in event.tiers)
+                                        _TierChip(
+                                          tier: option,
+                                          isSelected: tier?.id == option.id,
+                                          onTap: () =>
+                                              controller.selectTier(option),
+                                        ),
                                     ],
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 26),
-                              const _BuyButton(),
-                              const SizedBox(height: 32),
-                            ],
+                                const SizedBox(height: 26),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'TOTAL',
+                                            style: TextStyle(
+                                              color: _dimText,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          // Only the quote for what is
+                                          // selected: blank while it loads.
+                                          Text(
+                                            quote?.totalDisplay ??
+                                                missingDisplay,
+                                            style: const TextStyle(
+                                              color: _teal,
+                                              fontSize: 30,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          if (quote?.unitPriceDisplay != null)
+                                            Text(
+                                              '${quote!.unitPriceDisplay} each',
+                                              style: const TextStyle(
+                                                color: _dimText,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          if ((quote?.coinsAwarded ?? 0) > 0)
+                                            Text(
+                                              'Earn ${quote!.coinsAwarded} coins',
+                                              style: const TextStyle(
+                                                color: Color(0xFFF5A623),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        const Text(
+                                          'Select Quantity',
+                                          style: TextStyle(
+                                            color: _dimText,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        _QuantityStepper(
+                                          quantity: controller.quantity.value,
+                                          onDecrement: controller.decrement,
+                                          onIncrement: controller.increment,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                if (controller.quoteError.value.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    controller.quoteError.value,
+                                    style: const TextStyle(
+                                      color: Color(0xFFFF6B6B),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 26),
+                                _BuyButton(
+                                  enabled: controller.canBuy,
+                                  isBusy: controller.isSubmitting.value,
+                                  onTap: _buy,
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    }),
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TierChip extends StatelessWidget {
+  const _TierChip({
+    required this.tier,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final TicketTier tier;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: tier.isSoldOut ? 0.4 : 1,
+      child: GestureDetector(
+        onTap: tier.isSoldOut ? null : onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: _chipBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? _teal : const Color(0xFF2E2E38),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                tier.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                tier.isSoldOut
+                    ? 'Sold out'
+                    : tier.priceDisplay ?? missingDisplay,
+                style: const TextStyle(color: _dimText, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -172,7 +333,10 @@ class _TopGlow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [Colors.blue.withValues(alpha: 0.4), Colors.transparent],
+                colors: [
+                  Colors.blue.withValues(alpha: 0.4),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
@@ -186,7 +350,10 @@ class _TopGlow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [Colors.purple.withValues(alpha: 0.55), Colors.transparent],
+                colors: [
+                  Colors.purple.withValues(alpha: 0.55),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
@@ -216,7 +383,11 @@ class _TopBar extends StatelessWidget {
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -229,8 +400,6 @@ class _TopBar extends StatelessWidget {
               letterSpacing: 0.2,
             ),
           ),
-          const Spacer(),
-          const Icon(Icons.more_vert_rounded, color: Colors.white, size: 24),
         ],
       ),
     );
@@ -261,17 +430,7 @@ class _HeroImage extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: AspectRatio(
-            aspectRatio: 1.05,
-            child: Image.asset(
-              image,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: const Color(0xFF1E1E25),
-                child: const Icon(Icons.image_rounded, color: Colors.white24, size: 60),
-              ),
-            ),
-          ),
+          child: AspectRatio(aspectRatio: 1.05, child: ShopImage(url: image)),
         ),
       ),
     );
@@ -387,34 +546,60 @@ class _StepperButton extends StatelessWidget {
 // ─── Buy Button ─────────────────────────────────────────────────────────────
 
 class _BuyButton extends StatelessWidget {
-  const _BuyButton();
+  const _BuyButton({
+    required this.enabled,
+    required this.isBusy,
+    required this.onTap,
+  });
+
+  final bool enabled;
+  final bool isBusy;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.to(() => const CheckoutScreen()),
-      child: Container(
-        height: 58,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _buyButtonBg,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.confirmation_number_outlined, color: _buyButtonText, size: 20),
-            SizedBox(width: 10),
-            Text(
-              'Buy Ticket Now',
-              style: TextStyle(
-                color: _buyButtonText,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
+    return Opacity(
+      opacity: enabled || isBusy ? 1 : 0.4,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          height: 58,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: _buyButtonBg,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: isBusy
+              ? const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: _buyButtonText,
+                    ),
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.confirmation_number_outlined,
+                      color: _buyButtonText,
+                      size: 20,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Buy Ticket Now',
+                      style: TextStyle(
+                        color: _buyButtonText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

@@ -22,6 +22,8 @@ class SignupModel {
       'name': username.trim(),
       'email': email.trim(),
       'password': password,
+      // The route lists role as required; only listeners sign up in this app.
+      'role': 'user',
     };
   }
 }

@@ -57,6 +57,7 @@ import '../module/app_ground.dart';
 import '../module/auth/controller/login_controller.dart';
 import '../module/onbording/onboarding1.dart';
 import '../module/audiobook/controller/liked_audiobooks_controller.dart';
+import '../module/home/controller/download_controller.dart';
 import '../module/home/controller/liked_songs_controller.dart';
 import '../module/podcast/controller/liked_podcasts_controller.dart';
 import '../module/profile/controller/get_profile_controller.dart';
@@ -162,6 +163,10 @@ class AppManager extends GetxController {
       Get.put(SettingsController());
 
       _refreshLikedCollections();
+
+      // Not awaited: offline this fails quietly, and it must not hold up
+      // opening the app.
+      unawaited(DownloadController.instance.syncWithServer());
 
       await _splashGate;
       if (_launchScreenAlreadyRouted()) return;

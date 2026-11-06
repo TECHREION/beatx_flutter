@@ -4,6 +4,7 @@ import 'package:app_pigeon/app_pigeon.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import '../../app/app_manager.dart';
+import '../availability/app_availability_controller.dart';
 import '../player/equalizer/equalizer_controller.dart';
 import '../player/equalizer/equalizer_service.dart';
 import '../player/equalizer/equalizer_service_impl.dart';
@@ -15,11 +16,25 @@ import '../../module/auth/services/auth_interface.dart';
 import '../../module/auth/services/auth_interface_impl.dart';
 import '../../module/notification/services/notification_interface.dart';
 import '../../module/notification/services/notification_interface_impl.dart';
+import '../../module/shop/controller/cart_controller.dart';
+import '../../module/shop/services/shop_interface.dart';
+import '../../module/shop/services/shop_interface_impl.dart';
 import '../../module/watch/services/watch_interface.dart';
 import '../../module/watch/services/watch_interface_impl.dart';
 import '../../module/home/controller/download_controller.dart';
 
 void internalServiceDI() {
+  Get.put<AppAvailabilityController>(
+    AppAvailabilityController(),
+    permanent: true,
+  );
+
+  Get.lazyPut<ShopInterface>(
+    () => ShopInterfaceImpl(Get.find<AuthorizedPigeon>()),
+    fenix: true,
+  );
+  Get.put<CartController>(CartController(), permanent: true);
+
   Get.lazyPut<AuthInterface>(
     () => AuthInterfaceImpl(Get.find<AuthorizedPigeon>()),
     fenix: true,

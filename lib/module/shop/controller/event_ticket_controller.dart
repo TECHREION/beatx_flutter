@@ -1,79 +1,126 @@
 import 'package:get/get.dart';
 
-import '../model/event_ticket_model.dart';
+import '../model/event_model.dart';
+import '../model/shop_model.dart';
+import '../services/shop_interface.dart';
 
 class EventTicketController extends GetxController {
-  final selectedCityIndex = 0.obs;
-  final selectedGenreIndex = 0.obs;
-  final selectedPlanIndex = 1.obs;
+  static const pageSize = 20;
+  static const _allCities = ShopFilterOption(label: 'ALL CITIES');
 
-  final cities = const <FilterChipModel>[
-    FilterChipModel(label: 'ALL CITIES'),
-    FilterChipModel(label: 'Dhaka'),
-    FilterChipModel(label: 'Chattogram'),
-    FilterChipModel(label: 'London'),
+  static const types = <ShopFilterOption>[
+    ShopFilterOption(label: 'All Types'),
+    ShopFilterOption(label: 'Concert', value: 'concert'),
+    ShopFilterOption(label: 'Festival', value: 'festival'),
+    ShopFilterOption(label: 'Session', value: 'session'),
+    ShopFilterOption(label: 'Virtual', value: 'virtual'),
+    ShopFilterOption(label: 'Other', value: 'other'),
   ];
 
-  final genres = const <FilterChipModel>[
-    FilterChipModel(label: 'All Genres'),
-    FilterChipModel(label: 'Fiction'),
-    FilterChipModel(label: 'Non-Fiction'),
-    FilterChipModel(label: 'Biography'),
-    FilterChipModel(label: 'Mystery'),
-    FilterChipModel(label: 'Fantasy'),
-    FilterChipModel(label: 'Sci-Fi'),
+  static const sorts = <ShopFilterOption>[
+    ShopFilterOption(label: 'Soonest', value: 'date'),
+    ShopFilterOption(label: 'Most popular', value: 'popular'),
+    ShopFilterOption(label: 'Lowest price', value: 'price'),
+    ShopFilterOption(label: 'Newest', value: 'newest'),
   ];
 
-  final liveStream = const LiveStreamModel(
-    markerLabel: 'Hyper pop Night',
-    statusLabel: 'LIVE NOW',
-    title: 'The Echo Chamber',
-    subtitle: 'Dhaka, Hatirjhil. Featuring Neon-X and Void Soul.',
-    ctaLabel: 'Join Stream',
-  );
+  final cities = <ShopFilterOption>[_allCities].obs;
+  final selectedCity = ''.obs;
+  final selectedType = ''.obs;
+  final selectedSort = 'date'.obs;
+  final events = <ShopEvent>[].obs;
+  final isLoading = false.obs;
+  final isLoadingMore = false.obs;
+  final errorMessage = ''.obs;
+  final total = 0.obs;
 
-  final countdown = const LiveCountdownModel(
-    title: 'The Children Of Bangladeshi',
-    artist: 'Jason Laure',
-    image: 'assets/image/audiobook_children_bangladesh.png',
-    progress: 0.62,
-    remainingLabel: '4 HOURS REMAINING',
-  );
+  int _page = 1;
+  int _generation = 0;
 
-  final events = const <EventTicketModel>[
-    EventTicketModel(
-      image: 'assets/image/a3.png',
-      title: 'Flok Wind Dreams 2026',
-      venue: 'Army Stadium, Dhaka',
-      dateLabel: 'Oct 12',
-      price: '500.00',
-      currency: '৳',
-      tags: ['FOLK SONGS', 'LOW AVAILABILITY'],
-      showPriceLabel: true,
-      isLarge: true,
-    ),
-    EventTicketModel(
-      image: 'assets/image/a1.png',
-      title: 'Prism Theory: Live',
-      venue: 'Coxbazar, Chattogram',
-      price: '250.00',
-      currency: '৳',
-    ),
-    EventTicketModel(
-      image: 'assets/image/a2.png',
-      title: 'Deep Bass Ritual',
-      venue: 'Hatiya, Noakhali',
-      price: '250.00',
-      currency: '৳',
-    ),
-  ];
+  bool get hasMore => events.length < total.value;
 
-  final plans = const <AccessPlanModel>[
-    AccessPlanModel(name: 'SILVER', price: '200', currency: '৳'),
-    AccessPlanModel(name: 'PRISM', price: '500', currency: '৳'),
-  ];
+  /// The event to feature at the top while one is live.
+  ShopEvent? get liveEvent => events.firstWhereOrNull((event) => event.isLive);
 
-  void selectCity(int index) => selectedCityIndex.value = index;
-  void selectGenre(int index) => selectedGenreIndex.value = index;
-  void selectPlan(int index) => selectedPlanIndex.value = index;
+  ShopInterface get _shop => Get.find<ShopInterface>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    load();
+  }
+
+  void selectCity(String value) {
+    selectedCity.value = value;
+    load();
+  }
+
+  void selectType(String value) {
+    selectedType.value = value;
+    load();
+  }
+
+  void selectSort(String value) {
+    selectedSort.value = value;
+    load();
+  }
+
+  Future<void> load() async {
+    final generation = ++_generation;
+    isLoading.value = true;
+    isLoadingMore.value = false;
+    errorMessage.value = '';
+
+    final result = await _shop.getEvents(
+      city: selectedCity.value,
+      eventType: selectedType.value,
+      sort: selectedSort.value,
+      page: 1,
+      limit: pageSize,
+    );
+    if (generation != _generation) return;
+
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      _page = 1;
+      events.assignAll(success.data?.items ?? const []);
+      total.value = success.data?.total ?? events.length;
+      _rememberCities();
+    });
+    isLoading.value = false;
+  }
+
+  /// The API has no list of cities, so the chips are the ones events have
+  /// turned up in. Added to rather than replaced, or choosing a city would
+  /// remove every other chip.
+  void _rememberCities() {
+    final known = cities.map((city) => city.value).toSet();
+    for (final event in events) {
+      if (event.city.isNotEmpty && known.add(event.city)) {
+        cities.add(ShopFilterOption(label: event.city, value: event.city));
+      }
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (isLoadingMore.value || isLoading.value || !hasMore) return;
+    final generation = _generation;
+    isLoadingMore.value = true;
+
+    final result = await _shop.getEvents(
+      city: selectedCity.value,
+      eventType: selectedType.value,
+      sort: selectedSort.value,
+      page: _page + 1,
+      limit: pageSize,
+    );
+    if (generation != _generation) return;
+
+    result.fold((_) {}, (success) {
+      _page++;
+      events.addAll(success.data?.items ?? const []);
+      total.value = success.data?.total ?? total.value;
+      _rememberCities();
+    });
+    isLoadingMore.value = false;
+  }
 }

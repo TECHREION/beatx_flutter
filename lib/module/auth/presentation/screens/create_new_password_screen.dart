@@ -168,8 +168,8 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                                 return "Enter new password";
                               }
 
-                              if (value.length < 6) {
-                                return "Minimum 6 characters";
+                              if (value.length < 8) {
+                                return "Minimum 8 characters";
                               }
 
                               return null;

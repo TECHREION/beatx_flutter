@@ -3,9 +3,14 @@ import 'package:get/get.dart';
 
 import '../../../../../core/common/background_image.dart';
 import '../../../../../core/common/widget/app_header.dart';
+import '../../../../core/helpers/json_read.dart';
 import '../../controller/shop_controller.dart';
+import '../../controller/cart_controller.dart';
+import '../../model/product_model.dart';
 import '../../model/shop_model.dart';
+import '../widgets/cart_screen.dart';
 import '../widgets/event_tickets_screen.dart';
+import '../widgets/shop_common.dart';
 import 'shop_detail_screen.dart';
 import '../../../../core/theme/responsive.dart';
 
@@ -33,15 +38,12 @@ class ShopScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 12),
-                            _BannersSection(banners: controller.banners),
+                            _BannersSection(controller: controller),
                             const SizedBox(height: 20),
                             _CategoryChipsSection(controller: controller),
+                            const _CartBar(),
                             const SizedBox(height: 20),
-                            _ProductGridSection(products: controller.products),
-                            const SizedBox(height: 32),
-                            _ArtistCollectionsSection(
-                              collections: controller.artistCollections,
-                            ),
+                            _ProductsSection(controller: controller),
                             const SizedBox(height: 100),
                           ],
                         ),
@@ -61,23 +63,23 @@ class ShopScreen extends StatelessWidget {
 // ─── Promo Banners ─────────────────────────────────────────────────────────────
 
 class _BannersSection extends StatelessWidget {
-  const _BannersSection({required this.banners});
+  const _BannersSection({required this.controller});
 
-  final List<PromoBannerModel> banners;
+  final ShopController controller;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        children: banners
+        children: controller.banners
             .map(
               (b) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: GestureDetector(
-                  onTap: b.title == 'Event Tickets'
-                      ? () => Get.to(() => const EventTicketsScreen())
-                      : null,
+                  onTap: b.category == null
+                      ? EventTicketsScreen.open
+                      : () => controller.selectCategory(b.category!),
                   child: _PromoBannerCard(banner: b),
                 ),
               ),
@@ -162,13 +164,17 @@ class _PromoBannerCard extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      banner.ctaText,
-                      style: TextStyle(
-                        color: banner.accentColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
+                    Flexible(
+                      child: Text(
+                        banner.ctaText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: banner.accentColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -199,18 +205,20 @@ class _CategoryChipsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: controller.categories.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final cat = controller.categories[index];
-          // Only the chip itself is reactive — categories list never changes.
-          return Obx(() {
-            final isSelected = controller.selectedCategory.value == index;
+      child: Obx(() {
+        // Read here: the item builder runs outside this Obx's tracking.
+        final selected = controller.selectedCategory.value;
+        final categories = controller.categories.toList();
+        return ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: categories.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            final cat = categories[index];
+            final isSelected = selected == cat.value;
             return GestureDetector(
-              onTap: () => controller.selectCategory(index),
+              onTap: () => controller.selectCategory(cat.value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -237,19 +245,124 @@ class _CategoryChipsSection extends StatelessWidget {
                 ),
               ),
             );
-          });
-        },
-      ),
+          },
+        );
+      }),
     );
+  }
+}
+
+// ─── Cart Bar ──────────────────────────────────────────────────────────────────
+
+/// The way back to the cart, shown once it has something in it.
+class _CartBar extends StatelessWidget {
+  const _CartBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final count = CartController.instance.itemCount;
+      if (count == 0) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+        child: GestureDetector(
+          onTap: () => Get.to(() => const CartScreen()),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E25),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: Color(0xFF3BDDEB),
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    count == 1
+                        ? '1 item in your cart'
+                        : '$count items in your cart',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Text(
+                  'View Cart',
+                  style: TextStyle(
+                    color: Color(0xFF3BDDEB),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
 
 // ─── Product Grid ──────────────────────────────────────────────────────────────
 
+class _ProductsSection extends StatelessWidget {
+  const _ProductsSection({required this.controller});
+
+  final ShopController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoading.value) return const ShopLoading();
+      if (controller.errorMessage.value.isNotEmpty) {
+        return Center(
+          child: ShopMessage(
+            icon: Icons.cloud_off_rounded,
+            message: controller.errorMessage.value,
+            onRetry: controller.load,
+          ),
+        );
+      }
+      if (controller.products.isEmpty) {
+        return const Center(
+          child: ShopMessage(
+            icon: Icons.storefront_rounded,
+            message: 'Nothing here yet. Check back soon.',
+          ),
+        );
+      }
+      return Column(
+        children: [
+          _ProductGridSection(products: controller.products.toList()),
+          ShopLoadMore(
+            hasMore: controller.hasMore,
+            isLoading: controller.isLoadingMore.value,
+            onTap: controller.loadMore,
+          ),
+        ],
+      );
+    });
+  }
+}
+
 class _ProductGridSection extends StatelessWidget {
   const _ProductGridSection({required this.products});
 
-  final List<ShopProductModel> products;
+  final List<ShopProduct> products;
+
+  Widget _cell(ShopProduct product) => Expanded(
+    child: GestureDetector(
+      onTap: () => Get.to(() => ShopDetailScreen(productId: product.id)),
+      child: _ProductCard(product: product),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -257,21 +370,12 @@ class _ProductGridSection extends StatelessWidget {
     for (var i = 0; i < products.length; i += 2) {
       rows.add(
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => Get.to(() => const ShopDetailScreen()),
-                child: _ProductCard(product: products[i]),
-              ),
-            ),
+            _cell(products[i]),
             const SizedBox(width: 12),
             if (i + 1 < products.length)
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => Get.to(() => const ShopDetailScreen()),
-                  child: _ProductCard(product: products[i + 1]),
-                ),
-              )
+              _cell(products[i + 1])
             else
               const Expanded(child: SizedBox()),
           ],
@@ -289,7 +393,7 @@ class _ProductGridSection extends StatelessWidget {
 class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.product});
 
-  final ShopProductModel product;
+  final ShopProduct product;
 
   static const _cardBg = Color(0xFF141417);
   static const _dimText = Color(0xFFA7A3AA);
@@ -326,7 +430,7 @@ class _ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  product.subtitle,
+                  product.artistName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -337,7 +441,7 @@ class _ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${product.currency}${product.price}',
+                  product.priceDisplay ?? missingDisplay,
                   style: const TextStyle(
                     color: _teal,
                     fontSize: 15,
@@ -357,7 +461,7 @@ class _ProductCard extends StatelessWidget {
 class _ProductImageArea extends StatelessWidget {
   const _ProductImageArea({required this.product});
 
-  final ShopProductModel product;
+  final ShopProduct product;
 
   @override
   Widget build(BuildContext context) {
@@ -366,33 +470,21 @@ class _ProductImageArea extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            product.image,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              color: const Color(0xFF1E1E25),
-              child: const Icon(
-                Icons.image_rounded,
-                color: Colors.white24,
-                size: 40,
-              ),
-            ),
-          ),
-          // NEW badge – top left
-          if (product.isNew)
+          ShopImage(url: product.coverUrl),
+          if (!product.inStock)
             Positioned(
               top: 10,
               left: 10,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5C518),
+                  color: Colors.black87,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
-                  'NEW',
+                  'SOLD OUT',
                   style: TextStyle(
-                    color: Color(0xFF111113),
+                    color: Colors.white,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
@@ -400,36 +492,12 @@ class _ProductImageArea extends StatelessWidget {
                 ),
               ),
             ),
-          // Discount badge – top left (when no NEW)
-          if (!product.isNew && product.discountLabel != null)
+          if (product.coinReward > 0)
             Positioned(
               top: 10,
-              left: 10,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF3BDDEB),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  product.discountLabel!,
-                  style: const TextStyle(
-                    color: Color(0xFF0B0B0C),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
+              right: 10,
+              child: _CoinBadge(coinPrice: product.coinReward),
             ),
-          // Coin badge – top right
-          Positioned(
-            top: 10,
-            right: 10,
-            child: _CoinBadge(coinPrice: product.coinPrice),
-          ),
         ],
       ),
     );
@@ -468,206 +536,6 @@ class _CoinBadge extends StatelessWidget {
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Artist Collections Section ────────────────────────────────────────────────
-
-class _ArtistCollectionsSection extends StatelessWidget {
-  const _ArtistCollectionsSection({required this.collections});
-
-  final List<ArtistCollectionModel> collections;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section header
-          const Text(
-            'CURATED VIBES',
-            style: TextStyle(
-              color: Color(0xFF3BDDEB),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Artist Collections',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: const Text(
-                  'See All Artists',
-                  style: TextStyle(
-                    color: Color(0xFF3BDDEB),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Experience the visual odyssey of the year. Directed by AudioSoul, starring the Prism collective.',
-            style: TextStyle(
-              color: Color(0xFFA7A3AA),
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Collection cards
-          ...collections.map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _ArtistCollectionCard(collection: c),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ArtistCollectionCard extends StatelessWidget {
-  const _ArtistCollectionCard({required this.collection});
-
-  final ArtistCollectionModel collection;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 210,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              collection.cover,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  Container(color: const Color(0xFF18181E)),
-            ),
-          ),
-          // Dark gradient overlay
-          DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xCC000000),
-                  Color(0x55000000),
-                  Color(0xDD000000),
-                ],
-                stops: [0.0, 0.45, 1.0],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Genre label
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: const Color(0xFF3BDDEB).withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 5,
-                        height: 5,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF3BDDEB),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        collection.genre,
-                        style: const TextStyle(
-                          color: Color(0xFF3BDDEB),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                // Artist name
-                Text(
-                  collection.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${collection.itemCount} Items',
-                  style: const TextStyle(
-                    color: Color(0xFFA7A3AA),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // Accent progress bar at bottom
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Container(
-                    height: 3,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF3BDDEB), Color(0xFF342F89)],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-              ],
             ),
           ),
         ],

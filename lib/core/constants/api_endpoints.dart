@@ -3,8 +3,8 @@
 import 'package:flutter/foundation.dart';
 
 base class ApiEndpoints {
-  static const String socketUrl = _LocalHostWifi.socketUrl;
-  static const String baseUrl = _LocalHostWifi.baseUrl;
+  static const String socketUrl = _TestServer.socketUrl;
+  static const String baseUrl = _TestServer.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
@@ -24,7 +24,6 @@ base class ApiEndpoints {
   static String getuserbyId = _User.getuserbyId;
   static String updateProfile = _User.updateProfile;
   static String changePassword = _User.changePassword;
-  static String userPreferences = _User.preferences;
 
   /// `GET` reads the settings, `PATCH` writes them back.
   static String userSettings = _User.settings;
@@ -72,6 +71,36 @@ base class ApiEndpoints {
   static String songSaveProgress({required String songId}) =>
       _Listen._songsaveProgress(songId);
 
+  //---------------------- offline downloads ---------------------------
+  /// ### post
+  static const String downloads = _Downloads.route;
+  static const String syncDownloads = _Downloads.sync;
+
+  /// ### patch, delete
+  static String download({required String downloadId}) =>
+      _Downloads._one(downloadId);
+
+  //---------------------- shop -----------------------------------------
+  static const String products = _Shop.products;
+  static const String productCategories = _Shop.categories;
+  static String product({required String id}) => _Shop._product(id);
+  static String productReviews({required String id}) => _Shop._reviews(id);
+  static const String orderQuote = _Shop.orderQuote;
+  static const String orders = _Shop.orders;
+  static String order({required String id}) => _Shop._order(id);
+
+  //---------------------- events and tickets ---------------------------
+  static const String events = _Events.events;
+  static String event({required String id}) => _Events._event(id);
+  static String eventQuote({required String id}) => _Events._quote(id);
+  static String eventBuy({required String id}) => _Events._buy(id);
+  static const String tickets = _Events.tickets;
+  static String ticket({required String id}) => _Events._ticket(id);
+
+  //---------------------- app availability -----------------------------
+  /// ### get
+  static const String publicSettings = _Settings.public;
+
   //---------------------- podcast -----------------------------
   static const String podcastHome = _Podcast.podcastHome;
   static String podcastDetails({required String podcastId}) =>
@@ -115,9 +144,9 @@ base class ApiEndpoints {
 //       'https://backend-mattiaiarriccio.onrender.com/api/v1';
 // }
 
-class _LocalHostWifi {
-  static const String socketUrl = 'http://13.200.168.40:3000/';
-  static const String baseUrl = 'http://13.200.168.40:3000/api/v1';
+class _TestServer {
+  static const String socketUrl = 'https://fahimstack.tech/';
+  static const String baseUrl = 'https://fahimstack.tech/beatx-api/api/v1';
 }
 
 class _Auth {
@@ -141,7 +170,6 @@ class _User {
   static String getuserbyId = '$_userRoute/me';
   static String updateProfile = '$_userRoute/profile';
   static String changePassword = '$_userRoute/change-password';
-  static String preferences = '$_userRoute/me/preferences';
   static String settings = '$_userRoute/settings';
 }
 // /=======================genre/artist========================
@@ -245,6 +273,39 @@ class _Podcast {
   static const String getLikesong = '$podcastRoute/liked';
 }
 
+// ---------------------- Offline downloads -----------------------------
+class _Downloads {
+  static const String route = '${ApiEndpoints.baseUrl}/downloads';
+  static const String sync = '$route/sync';
+  static String _one(String downloadId) => '$route/$downloadId';
+}
+
+// ---------------------- Shop -----------------------------
+class _Shop {
+  static const String products = '${ApiEndpoints.baseUrl}/products';
+  static const String categories = '$products/categories';
+  static String _product(String id) => '$products/$id';
+  static String _reviews(String id) => '$products/$id/reviews';
+  static const String orders = '${ApiEndpoints.baseUrl}/orders';
+  static const String orderQuote = '$orders/quote';
+  static String _order(String id) => '$orders/$id';
+}
+
+// ---------------------- Events and tickets -----------------------------
+class _Events {
+  static const String events = '${ApiEndpoints.baseUrl}/events';
+  static String _event(String id) => '$events/$id';
+  static String _quote(String id) => '$events/$id/quote';
+  static String _buy(String id) => '$events/$id/buy';
+  static const String tickets = '${ApiEndpoints.baseUrl}/tickets';
+  static String _ticket(String id) => '$tickets/$id';
+}
+
+// ---------------------- Settings -----------------------------
+class _Settings {
+  static const String public = '${ApiEndpoints.baseUrl}/settings/public';
+}
+
 // ---------------------- Notification -----------------------------
 class _Notification {
   static const String notificationRoute = '${ApiEndpoints.baseUrl}/notifications';
@@ -279,9 +340,6 @@ class _Category {}
 
 //---------------------- Cart -----------------------------
 class _Cart {}
-
-//---------------------- Shop -----------------------------
-class _Shop {}
 
 //---------------------- Order -----------------------------
 class _Order {}

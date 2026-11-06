@@ -6,6 +6,10 @@
 /// downloads folder at runtime.
 class DownloadedSong {
   final String id;
+
+  /// The backend's record of this download (`POST /downloads`), or empty for
+  /// a song saved before downloads were registered there.
+  final String downloadId;
   final String title;
   final String artist;
 
@@ -26,6 +30,7 @@ class DownloadedSong {
 
   const DownloadedSong({
     required this.id,
+    this.downloadId = '',
     required this.title,
     required this.artist,
     required this.artworkUrl,
@@ -40,6 +45,7 @@ class DownloadedSong {
   factory DownloadedSong.fromJson(Map<String, dynamic> json) {
     return DownloadedSong(
       id: json['id']?.toString() ?? '',
+      downloadId: json['downloadId']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       artist: json['artist']?.toString() ?? '',
       artworkUrl: json['artworkUrl']?.toString() ?? '',
@@ -54,9 +60,24 @@ class DownloadedSong {
     );
   }
 
+  DownloadedSong withDownloadId(String value) => DownloadedSong(
+    id: id,
+    downloadId: value,
+    title: title,
+    artist: artist,
+    artworkUrl: artworkUrl,
+    fileName: fileName,
+    coverFileName: coverFileName,
+    fileSize: fileSize,
+    durationMs: durationMs,
+    genre: genre,
+    downloadedAt: downloadedAt,
+  );
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'downloadId': downloadId,
       'title': title,
       'artist': artist,
       'artworkUrl': artworkUrl,

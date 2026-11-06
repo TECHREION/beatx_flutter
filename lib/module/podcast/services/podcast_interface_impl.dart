@@ -238,13 +238,8 @@ final class PodcastInterfaceImpl extends PodcastInterface {
 
         final data = body['data'];
 
-        // Lists arrive either bare or inside the `{data, total, page, limit}`
-        // envelope this API uses for its other paginated lists.
-        final items = data is List
-            ? data
-            : data is Map && data['data'] is List
-                ? data['data'] as List
-                : const [];
+        // Lists arrive either bare or inside a paged envelope.
+        final items = pagedEntries(data);
 
         return Success(
           message: body['message']?.toString() ?? 'Success',

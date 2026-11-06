@@ -12,12 +12,86 @@ import 'package:beatx_flutter/module/home/model/save_progress_model.dart';
 import 'package:beatx_flutter/module/home/model/song_like_model.dart';
 
 import '../../../core/constants/api_endpoints.dart';
+import '../model/offline_download_model.dart';
 import 'listen_interface.dart';
 
 final class ListenInterfaceImpl extends ListenInterface {
   ListenInterfaceImpl(this.appPigeon);
 
   final AuthorizedPigeon appPigeon;
+
+  @override
+  FutureRequest<Success<SongDownloadGrant>> createSongDownload({
+    required String songId,
+    required String deviceId,
+    required String deviceName,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.downloads,
+          data: {
+            'contentType': 'song',
+            'contentId': songId,
+            'deviceId': deviceId,
+            'deviceName': deviceName,
+          },
+        );
+        return Success(
+          data: SongDownloadGrant.fromJson(_downloadData(response.data)),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<void>> reportDownloadStatus(
+    String downloadId, {
+    required bool completed,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        await appPigeon.patch(
+          ApiEndpoints.download(downloadId: downloadId),
+          data: {'status': completed ? 'completed' : 'failed'},
+        );
+        return Success<void>();
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<void>> deleteDownload(String downloadId) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        await appPigeon.delete(ApiEndpoints.download(downloadId: downloadId));
+        return Success<void>();
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<DownloadSyncResult>> syncDownloads({
+    required String deviceId,
+    required List<String> downloadIds,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.syncDownloads,
+          data: {'deviceId': deviceId, 'ids': downloadIds},
+        );
+        return Success(
+          data: DownloadSyncResult.fromJson(_downloadData(response.data)),
+        );
+      },
+    );
+  }
+
+  Map<String, dynamic> _downloadData(dynamic body) {
+    final data = body is Map ? body['data'] : null;
+    return data is Map ? Map<String, dynamic>.from(data) : {};
+  }
 
   @override
   FutureRequest<Success<ListenMusicModel>> getListen() async {

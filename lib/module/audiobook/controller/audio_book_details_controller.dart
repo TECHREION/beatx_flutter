@@ -40,10 +40,26 @@ class AudioBookDetailsController extends GetxController {
     return Get.find<PlayerController>();
   }
 
+  Future<void>? _loading;
+
   Future<void> loadDetails(String audiobookId) async {
     if (audiobookId.isEmpty || _loadedAudiobookId == audiobookId) return;
 
     _loadedAudiobookId = audiobookId;
+    await (_loading = _fetchDetails(audiobookId));
+  }
+
+  /// Completes once the details are here: joins a load still running, and
+  /// tries again if the last one failed.
+  Future<void> ensureLoaded(String audiobookId) async {
+    await _loading;
+    if (details.value == null && audiobookId.isNotEmpty) {
+      _loadedAudiobookId = audiobookId;
+      await (_loading = _fetchDetails(audiobookId));
+    }
+  }
+
+  Future<void> _fetchDetails(String audiobookId) async {
     isLoading.value = true;
     errorMessage.value = '';
 

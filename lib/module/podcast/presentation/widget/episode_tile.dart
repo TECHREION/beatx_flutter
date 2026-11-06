@@ -25,7 +25,9 @@ class EpisodeTile extends StatelessWidget {
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       child: Container(
-        height: 92,
+        // A minimum, not a height: a two-line title needs more than one-line
+        // rows do, and a fixed height clips it.
+        constraints: const BoxConstraints(minHeight: 92),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: const Color(0xFF111112),
@@ -48,8 +50,8 @@ class EpisodeTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
                     children: [

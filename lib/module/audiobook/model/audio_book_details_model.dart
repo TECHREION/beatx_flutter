@@ -1,22 +1,21 @@
+import '../../../core/api_handler/paged_result.dart';
+
 class AudiobookDetailsData {
   final Book? book;
   final List<Chapter>? chapters;
   final UserProgress? userProgress;
 
-  AudiobookDetailsData({
-    this.book,
-    this.chapters,
-    this.userProgress,
-  });
+  AudiobookDetailsData({this.book, this.chapters, this.userProgress});
 
   factory AudiobookDetailsData.fromJson(Map<String, dynamic> json) {
     return AudiobookDetailsData(
       book: json['book'] != null ? Book.fromJson(json['book']) : null,
-      chapters: json['chapters'] != null
-          ? List<Chapter>.from(
-              json['chapters'].map((x) => Chapter.fromJson(x)),
-            )
-          : [],
+      // The server sends these paged (`{data, total, page, limit}`), though
+      // Swagger documents a plain array; pagedEntries reads either.
+      chapters: pagedEntries(json['chapters'])
+          .whereType<Map>()
+          .map((x) => Chapter.fromJson(Map<String, dynamic>.from(x)))
+          .toList(),
       userProgress: json['userProgress'] != null
           ? UserProgress.fromJson(json['userProgress'])
           : null,
@@ -156,23 +155,14 @@ class Genre {
   final String? id;
   final String? name;
 
-  Genre({
-    this.id,
-    this.name,
-  });
+  Genre({this.id, this.name});
 
   factory Genre.fromJson(Map<String, dynamic> json) {
-    return Genre(
-      id: json['_id'],
-      name: json['name'],
-    );
+    return Genre(id: json['_id'], name: json['name']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
@@ -182,12 +172,7 @@ class Chapter {
   final String? title;
   final int? durationMs;
 
-  Chapter({
-    this.id,
-    this.chapterNumber,
-    this.title,
-    this.durationMs,
-  });
+  Chapter({this.id, this.chapterNumber, this.title, this.durationMs});
 
   factory Chapter.fromJson(Map<String, dynamic> json) {
     return Chapter(
@@ -223,19 +208,13 @@ class UserProgress {
 class Metadata {
   final String? duration;
 
-  Metadata({
-    this.duration,
-  });
+  Metadata({this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'],
-    );
+    return Metadata(duration: json['duration']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }

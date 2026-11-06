@@ -102,11 +102,7 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
             : <String, dynamic>{};
 
         final data = body['data'];
-        final items = data is List
-            ? data
-            : data is Map && data['data'] is List
-                ? data['data'] as List
-                : const [];
+        final items = pagedEntries(data);
 
         return Success(
           message: body['message']?.toString() ?? 'Success',

@@ -519,7 +519,7 @@ class _MixGrid extends StatelessWidget {
           Obx(() {
             // Local only, so the tile and the screen behind it work offline.
             final downloads = DownloadController.instance;
-            final count = downloads.songs.length;
+            final count = downloads.visibleSongs.length;
             return _MixTile(
               icon: Icons.download_for_offline_rounded,
               title: 'Downloads',

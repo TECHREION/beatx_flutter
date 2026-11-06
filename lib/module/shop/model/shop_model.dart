@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// A static promotion at the top of the shop. It opens the event list, or
+/// filters the grid to [category].
 class PromoBannerModel {
   const PromoBannerModel({
     required this.title,
@@ -8,6 +10,7 @@ class PromoBannerModel {
     required this.accentColor,
     required this.image,
     this.titleColor = Colors.white,
+    this.category,
   });
 
   final String title;
@@ -16,46 +19,23 @@ class PromoBannerModel {
   final Color accentColor;
   final String image;
   final Color titleColor;
+  final String? category;
 }
 
-class ShopCategoryModel {
-  const ShopCategoryModel({required this.label});
+/// A filter chip. An empty [value] means no filter.
+class ShopFilterOption {
+  const ShopFilterOption({required this.label, this.value = ''});
 
   final String label;
-}
+  final String value;
 
-class ShopProductModel {
-  const ShopProductModel({
-    required this.title,
-    required this.subtitle,
-    required this.price,
-    required this.currency,
-    required this.coinPrice,
-    required this.image,
-    this.isNew = false,
-    this.discountLabel,
-  });
-
-  final String title;
-  final String subtitle;
-  final String price;
-  final String currency;
-  final int coinPrice;
-  final String image;
-  final bool isNew;
-  final String? discountLabel;
-}
-
-class ArtistCollectionModel {
-  const ArtistCollectionModel({
-    required this.name,
-    required this.genre,
-    required this.itemCount,
-    required this.cover,
-  });
-
-  final String name;
-  final String genre;
-  final int itemCount;
-  final String cover;
+  /// `digital-art` as a chip spells it: `Digital Art`.
+  factory ShopFilterOption.fromSlug(String slug) => ShopFilterOption(
+    value: slug,
+    label: slug
+        .split(RegExp(r'[-_ ]'))
+        .where((word) => word.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' '),
+  );
 }

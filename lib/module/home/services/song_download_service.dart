@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,12 +22,11 @@ class SongDownloadException implements Exception {
 
 /// Saves songs to app-private storage and keeps the list of what is saved.
 ///
-/// The audio is fetched straight from the same stream url the player uses —
-/// there is no separate download endpoint. That url is a short-lived signed
-/// link, so callers ask for a fresh one right before each download.
+/// The audio comes from the signed link `POST /downloads` hands out. It expires
+/// within the hour, so callers ask for a fresh one right before each download.
 ///
-/// This does not protect the audio: anyone who obtains the stream url can
-/// fetch the same file outside the app. Content protection would have to come
+/// This does not protect the audio: anyone who obtains the link can fetch the
+/// same file outside the app. Content protection would have to come
 /// from the backend (DRM or encrypted segments), not from where Flutter
 /// writes the file.
 ///
@@ -36,6 +36,7 @@ class SongDownloadException implements Exception {
 /// ```
 /// downloads/
 ///   index.json        metadata for every saved song
+///   device.json       this install's id and when its downloads must check in
 ///   <songId>.<ext>    audio, named by id so titles never reach the filesystem
 ///   covers/<songId>.<ext>
 /// ```
@@ -60,6 +61,7 @@ class SongDownloadService {
   static const _folder = 'downloads';
   static const _coversFolder = 'covers';
   static const _indexFile = 'index.json';
+  static const _deviceFile = 'device.json';
   static const _partSuffix = '.part';
 
   static const _audioExtensions = {
@@ -161,7 +163,7 @@ class SongDownloadService {
     await for (final entity in dir.list()) {
       if (entity is! File) continue;
       final name = entity.uri.pathSegments.last;
-      if (name == _indexFile) continue;
+      if (name == _indexFile || name == _deviceFile) continue;
       if (!keepAudio.contains(name)) await _deleteQuietly(entity);
     }
 
@@ -172,6 +174,57 @@ class SongDownloadService {
         await _deleteQuietly(entity);
       }
     }
+  }
+
+  // --------------------------------------------------------------- device
+
+  Future<Map<String, dynamic>> _readDevice() async {
+    final dir = await root();
+    try {
+      final decoded = jsonDecode(
+        await File('${dir.path}/$_deviceFile').readAsString(),
+      );
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    } catch (_) {
+      // Missing on first run. If it was corrupted, a new id only costs one of
+      // the account's device slots.
+    }
+    return {};
+  }
+
+  Future<void> _writeDevice(Map<String, dynamic> device) async {
+    final dir = await root();
+    final temp = File('${dir.path}/$_deviceFile.tmp');
+    await temp.writeAsString(jsonEncode(device), flush: true);
+    await temp.rename('${dir.path}/$_deviceFile');
+  }
+
+  /// This install's stable id, generated the first time it is needed.
+  Future<String> deviceId() async {
+    final device = await _readDevice();
+    final existing = device['deviceId']?.toString() ?? '';
+    if (existing.isNotEmpty) return existing;
+
+    final random = Random.secure();
+    final id = List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    await _writeDevice({...device, 'deviceId': id});
+    return id;
+  }
+
+  /// When the saved songs must next have checked in with the server by, or
+  /// null if they never have.
+  Future<DateTime?> validUntil() async =>
+      DateTime.tryParse((await _readDevice())['validUntil']?.toString() ?? '');
+
+  Future<void> saveValidUntil(DateTime? value) async {
+    if (value == null) return;
+    await _writeDevice({
+      ...await _readDevice(),
+      'validUntil': value.toUtc().toIso8601String(),
+    });
   }
 
   // ------------------------------------------------------------- download

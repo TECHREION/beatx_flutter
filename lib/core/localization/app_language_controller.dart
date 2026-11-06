@@ -6,6 +6,11 @@ import 'package:get/get.dart';
 class AppLanguageController extends GetxController {
   static const String _storageKey = 'preferred_language';
 
+  /// What `PATCH /users/settings` accepts for `language`.
+  static const Set<String> _backendLanguages = {
+    'en', 'bn', 'ar', 'es', 'fr', 'de', 'zh',
+  };
+
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final RxString languageCode = AppTranslations.fallbackLocaleCode.obs;
 
@@ -26,14 +31,18 @@ class AppLanguageController extends GetxController {
     final nextCode = _normalize(code);
     await _applyLanguage(nextCode);
 
-    if (!syncBackend || !Get.isRegistered<AppPigeon>()) {
+    // A language the backend has no value for (Italian) is kept on the device
+    // only; sending it would be refused and read as a failed change.
+    if (!syncBackend ||
+        !_backendLanguages.contains(nextCode) ||
+        !Get.isRegistered<AppPigeon>()) {
       return true;
     }
 
     try {
       await Get.find<AppPigeon>().patch(
-        ApiEndpoints.userPreferences,
-        data: <String, dynamic>{'preferredLanguage': nextCode},
+        ApiEndpoints.userSettings,
+        data: <String, dynamic>{'language': nextCode},
         options: Options(headers: headers),
       );
       return true;

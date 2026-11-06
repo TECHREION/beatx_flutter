@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/helpers/json_read.dart';
+import '../../../../core/notifiers/snackbar_notifier.dart';
 import '../../controller/checkout_controller.dart';
-import '../../model/checkout_model.dart';
-import 'congratulation_screen.dart';
+import '../../model/cart_model.dart';
+import '../../model/purchase_model.dart';
+import '../../services/payment_flow.dart';
+import 'purchase_outcome.dart';
+import 'shop_common.dart';
 
 const _teal = Color(0xFF3BDDEB);
 const _dimText = Color(0xFFA7A3AA);
@@ -15,13 +20,41 @@ const _confirmGradient = LinearGradient(
   end: Alignment.centerRight,
 );
 
-class CheckoutScreen extends StatelessWidget {
-  const CheckoutScreen({super.key});
+class CheckoutScreen extends StatefulWidget {
+  const CheckoutScreen({super.key, required this.lines, this.fromCart = false});
+
+  final List<CartLine> lines;
+  final bool fromCart;
+
+  @override
+  State<CheckoutScreen> createState() => _CheckoutScreenState();
+}
+
+class _CheckoutScreenState extends State<CheckoutScreen> {
+  late final CheckoutController controller = CheckoutController(
+    lines: widget.lines,
+    fromCart: widget.fromCart,
+  )..onInit();
+
+  @override
+  void dispose() {
+    controller.onClose();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    if (controller.isSubmitting.value) return;
+    final notifier = SnackbarNotifier(context: context);
+    try {
+      final attempt = await controller.confirm();
+      await completePurchase(attempt: attempt, onSettled: controller.settle);
+    } on PurchaseFailure catch (failure) {
+      notifier.notifyError(message: failure.message);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(CheckoutController());
-
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
       body: Stack(
@@ -79,50 +112,16 @@ class CheckoutScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Payment Method',
-                          style: TextStyle(
-                            color: _dimText,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _PaymentMethodRow(controller: controller),
-                        const SizedBox(height: 14),
-                        _SavedCard(cardNumber: controller.savedCardNumber),
-                        const SizedBox(height: 20),
-                        const Divider(color: _fieldBorder, height: 1),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Order Summary',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _SummaryLine(label: 'Sub-total', value: '${controller.currency}${controller.subTotal}'),
-                        const SizedBox(height: 8),
-                        _SummaryLine(label: 'VAT (%)', value: '${controller.currency}0.00'),
-                        const SizedBox(height: 8),
-                        _SummaryLine(label: 'Shipping Fee', value: '${controller.currency}${controller.shippingFee}'),
-                        const SizedBox(height: 12),
-                        const Divider(color: _fieldBorder, height: 1),
-                        const SizedBox(height: 12),
-                        _SummaryLine(
-                          label: 'Total',
-                          value: '${controller.currency}${controller.total}',
-                          isTotal: true,
-                        ),
-                        const SizedBox(height: 20),
-                        _PromoCodeRow(controller: controller.promoCodeController),
                         const SizedBox(height: 24),
                         _OrderSummaryCard(controller: controller),
                         const SizedBox(height: 20),
-                        const _ConfirmButton(),
+                        Obx(
+                          () => _ConfirmButton(
+                            enabled: controller.quote.value != null,
+                            isBusy: controller.isSubmitting.value,
+                            onTap: _confirm,
+                          ),
+                        ),
                         const SizedBox(height: 14),
                         const _SecureNotice(),
                       ],
@@ -156,7 +155,10 @@ class _TopGlow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [Colors.blue.withValues(alpha: 0.4), Colors.transparent],
+                colors: [
+                  Colors.blue.withValues(alpha: 0.4),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
@@ -170,7 +172,10 @@ class _TopGlow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [Colors.purple.withValues(alpha: 0.6), Colors.transparent],
+                colors: [
+                  Colors.purple.withValues(alpha: 0.6),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
@@ -201,7 +206,11 @@ class _TopBar extends StatelessWidget {
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -219,7 +228,7 @@ class _TopBar extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Complete your transaction to unlock premium soundscapes.',
+                  'You will pay on a secure page after confirming your order.',
                   style: TextStyle(
                     color: _dimText,
                     fontSize: 12,
@@ -230,7 +239,6 @@ class _TopBar extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.more_vert_rounded, color: Colors.white, size: 24),
         ],
       ),
     );
@@ -256,7 +264,11 @@ class _StepHeader extends StatelessWidget {
           alignment: Alignment.center,
           child: const Text(
             '1',
-            style: TextStyle(color: _teal, fontSize: 13, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: _teal,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -298,10 +310,17 @@ class _LabeledField extends StatelessWidget {
         const SizedBox(height: 6),
         TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: _fieldBorder),
@@ -321,117 +340,14 @@ class _LabeledField extends StatelessWidget {
   }
 }
 
-// ─── Payment Method Row ───────────────────────────────────────────────────────
-
-class _PaymentMethodRow extends StatelessWidget {
-  const _PaymentMethodRow({required this.controller});
-
-  final CheckoutController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < controller.paymentMethods.length; i++) ...[
-          Expanded(
-            child: Obx(
-              () => _PaymentMethodChip(
-                method: controller.paymentMethods[i],
-                isSelected: controller.selectedPaymentIndex.value == i,
-                onTap: () => controller.selectPaymentMethod(i),
-              ),
-            ),
-          ),
-          if (i != controller.paymentMethods.length - 1) const SizedBox(width: 10),
-        ],
-      ],
-    );
-  }
-}
-
-class _PaymentMethodChip extends StatelessWidget {
-  const _PaymentMethodChip({
-    required this.method,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final PaymentMethodModel method;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF141417),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isSelected ? Colors.white : _fieldBorder),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(method.icon, color: Colors.white, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              method.label,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Saved Card ──────────────────────────────────────────────────────────────
-
-class _SavedCard extends StatelessWidget {
-  const _SavedCard({required this.cardNumber});
-
-  final String cardNumber;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _fieldBorder),
-      ),
-      child: Row(
-        children: [
-          const Text(
-            'VISA',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              fontStyle: FontStyle.italic,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              cardNumber,
-              style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ),
-          const Icon(Icons.edit_outlined, color: _dimText, size: 18),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Summary Line ────────────────────────────────────────────────────────────
 
 class _SummaryLine extends StatelessWidget {
-  const _SummaryLine({required this.label, required this.value, this.isTotal = false});
+  const _SummaryLine({
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+  });
 
   final String label;
   final String value;
@@ -459,61 +375,6 @@ class _SummaryLine extends StatelessWidget {
   }
 }
 
-// ─── Promo Code Row ───────────────────────────────────────────────────────────
-
-class _PromoCodeRow extends StatelessWidget {
-  const _PromoCodeRow({required this.controller});
-
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: 'Enter promo code',
-              hintStyle: const TextStyle(color: _dimText, fontSize: 13),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(26),
-                borderSide: const BorderSide(color: _fieldBorder),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(26),
-                borderSide: const BorderSide(color: _teal),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(26),
-                borderSide: const BorderSide(color: _fieldBorder),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        GestureDetector(
-          onTap: () {},
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C22),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: const Text(
-              'Add',
-              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ─── Order Summary Card ───────────────────────────────────────────────────────
 
 class _OrderSummaryCard extends StatelessWidget {
@@ -524,45 +385,80 @@ class _OrderSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: _cardBg,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Order Summary',
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 16),
-          for (final item in controller.orderItems) ...[
-            _OrderItemRow(item: item),
-            const SizedBox(height: 14),
-          ],
-          const Divider(color: _fieldBorder, height: 1),
-          const SizedBox(height: 14),
-          _SummaryLine(label: 'Sub-total', value: '${controller.currency}${controller.subTotal}'),
-          const SizedBox(height: 8),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('VAT (%)', style: TextStyle(color: _dimText, fontSize: 13, fontWeight: FontWeight.w500)),
-              Text(
-                'Free',
-                style: TextStyle(color: Color(0xFF56E768), fontSize: 14, fontWeight: FontWeight.w700),
+      child: Obx(() {
+        final quote = controller.quote.value;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Order Summary',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
               ),
+            ),
+            const SizedBox(height: 16),
+            if (controller.isQuoting.value)
+              const ShopLoading()
+            else if (quote == null)
+              Center(
+                child: ShopMessage(
+                  icon: Icons.error_outline_rounded,
+                  message: controller.quoteError.value,
+                  onRetry: controller.loadQuote,
+                ),
+              )
+            else ...[
+              for (final item in quote.items) ...[
+                _OrderItemRow(item: item),
+                const SizedBox(height: 14),
+              ],
+              const Divider(color: _fieldBorder, height: 1),
+              const SizedBox(height: 14),
+              _SummaryLine(
+                label: 'Sub-total',
+                value: quote.subtotalDisplay ?? missingDisplay,
+              ),
+              const SizedBox(height: 8),
+              _SummaryLine(
+                label: 'VAT',
+                value: quote.vatDisplay ?? missingDisplay,
+              ),
+              const SizedBox(height: 8),
+              _SummaryLine(
+                label: 'Shipping Fee',
+                value: quote.shippingFeeDisplay ?? missingDisplay,
+              ),
+              const SizedBox(height: 14),
+              const Divider(color: _fieldBorder, height: 1),
+              const SizedBox(height: 14),
+              _SummaryLine(
+                label: 'Total',
+                value: quote.totalDisplay ?? missingDisplay,
+                isTotal: true,
+              ),
+              if (quote.coinsAwarded > 0) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'You will earn ${quote.coinsAwarded} coins once paid',
+                  style: const TextStyle(
+                    color: Color(0xFFF5A623),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
-          ),
-          const SizedBox(height: 8),
-          _SummaryLine(label: 'Shipping Fee', value: '${controller.currency}${controller.shippingFee}'),
-          const SizedBox(height: 14),
-          const Divider(color: _fieldBorder, height: 1),
-          const SizedBox(height: 14),
-          _SummaryLine(label: 'Total', value: '${controller.currency}${controller.total}', isTotal: true),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -570,26 +466,24 @@ class _OrderSummaryCard extends StatelessWidget {
 class _OrderItemRow extends StatelessWidget {
   const _OrderItemRow({required this.item});
 
-  final CheckoutOrderItemModel item;
+  final QuoteLine item;
 
   @override
   Widget build(BuildContext context) {
+    final options = [
+      item.size,
+      item.color,
+    ].where((option) => option.isNotEmpty).join(' / ');
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.asset(
-            item.image,
+          child: SizedBox(
             width: 52,
             height: 52,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: 52,
-              height: 52,
-              color: const Color(0xFF1E1E25),
-              child: const Icon(Icons.album_rounded, color: Colors.white24, size: 22),
-            ),
+            child: ShopImage(url: item.image, icon: Icons.album_rounded),
           ),
         ),
         const SizedBox(width: 12),
@@ -598,27 +492,45 @@ class _OrderItemRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.title,
-                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                item.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                item.tag,
-                style: const TextStyle(color: _teal, fontSize: 11, fontWeight: FontWeight.w700),
-              ),
+              if (options.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  options,
+                  style: const TextStyle(
+                    color: _teal,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
               const SizedBox(height: 2),
               Text(
                 'Quantity: ${item.quantity}',
-                style: const TextStyle(color: _dimText, fontSize: 12, fontWeight: FontWeight.w400),
+                style: const TextStyle(
+                  color: _dimText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(width: 8),
         Text(
-          '${item.currency}${item.price}',
+          item.lineTotalDisplay ?? missingDisplay,
           textAlign: TextAlign.right,
-          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -628,31 +540,48 @@ class _OrderItemRow extends StatelessWidget {
 // ─── Confirm Button ───────────────────────────────────────────────────────────
 
 class _ConfirmButton extends StatelessWidget {
-  const _ConfirmButton();
+  const _ConfirmButton({
+    required this.enabled,
+    required this.isBusy,
+    required this.onTap,
+  });
+
+  final bool enabled;
+  final bool isBusy;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.dialog(
-        const CongratulationScreen(),
-        barrierColor: Colors.transparent,
-      ),
-      child: Container(
-        height: 56,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: _confirmGradient,
-        ),
-        alignment: Alignment.center,
-        child: const Text(
-          'Confirm Order',
-          style: TextStyle(
-            color: Color(0xFF0B0B0C),
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2,
+    return Opacity(
+      opacity: enabled ? 1 : 0.4,
+      child: GestureDetector(
+        onTap: enabled && !isBusy ? onTap : null,
+        child: Container(
+          height: 56,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: _confirmGradient,
           ),
+          alignment: Alignment.center,
+          child: isBusy
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: Color(0xFF0B0B0C),
+                  ),
+                )
+              : const Text(
+                  'Confirm Order',
+                  style: TextStyle(
+                    color: Color(0xFF0B0B0C),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
+                ),
         ),
       ),
     );

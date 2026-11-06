@@ -61,15 +61,15 @@ class DownloadsScreen extends StatelessWidget {
               () => LikedSummaryStrip(
                 icon: Icons.download_rounded,
                 accent: accent,
-                count: ctrl.isReady.value ? ctrl.songs.length : null,
+                count: ctrl.isReady.value ? ctrl.visibleSongs.length : null,
                 noun: 'Song',
-                onTap: ctrl.songs.isEmpty
+                onTap: ctrl.visibleSongs.isEmpty
                     ? null
-                    : () => _play(ctrl.songs.first),
+                    : () => _play(ctrl.visibleSongs.first),
               ),
             ),
             Obx(
-              () => ctrl.songs.isEmpty
+              () => ctrl.visibleSongs.isEmpty
                   ? const SizedBox(height: 16)
                   : Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
@@ -101,14 +101,19 @@ class DownloadsScreen extends StatelessWidget {
                   );
                 }
 
-                if (ctrl.songs.isEmpty) {
+                final songs = ctrl.visibleSongs;
+                if (songs.isEmpty) {
                   return SingleChildScrollView(
                     child: LikedEmptyState(
                       message: '',
-                      emptyTitle: 'No downloads yet',
-                      emptyBody:
-                          'Tap DOWNLOAD while a song is playing to keep it '
-                          'on this device and listen without internet.',
+                      emptyTitle: ctrl.isLocked.value
+                          ? 'Connect to keep listening'
+                          : 'No downloads yet',
+                      emptyBody: ctrl.isLocked.value
+                          ? 'Your downloads are safe. Go online and reopen '
+                                'BeatX to use them again.'
+                          : 'Tap DOWNLOAD while a song is playing to keep it '
+                                'on this device and listen without internet.',
                       accent: accent,
                       emptyIcon: Icons.download_for_offline_outlined,
                       onRetry: () {},
@@ -118,10 +123,10 @@ class DownloadsScreen extends StatelessWidget {
 
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                  itemCount: ctrl.songs.length,
+                  itemCount: songs.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, index) => _DownloadRow(
-                    song: ctrl.songs[index],
+                    song: songs[index],
                     position: index + 1,
                   ),
                 );

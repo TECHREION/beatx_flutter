@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:beatx_flutter/core/availability/availability_banners.dart';
 import 'package:beatx_flutter/core/di/external_service_di.dart';
 import 'package:beatx_flutter/core/di/internal_service_di.dart';
 import 'package:beatx_flutter/app/splash_view.dart';
@@ -49,6 +50,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0B0B0C),
       ),
+      builder: (context, child) =>
+          AvailabilityBanners(child: child ?? const SizedBox.shrink()),
       home: const SplashView(),
     );
   }

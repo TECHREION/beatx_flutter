@@ -9,6 +9,7 @@ enum Failure {
   noData,
   timeout,
   forbidden,
+  notFound,
 }
 
 class DataCRUDFailure {
