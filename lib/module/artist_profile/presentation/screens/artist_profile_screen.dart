@@ -4,36 +4,69 @@ import 'package:get/get.dart';
 
 import '../../controller/artist_profile_controller.dart';
 import '../../model/artist_profile_model.dart';
+import '../../../shop/presentation/widgets/get_tickets_screen.dart';
+import 'artist_image.dart';
 import 'artist_product_grid.dart';
-import 'artist_best_screen.dart';
-import 'artist_hits_screen.dart';
 
-class ArtistProfileScreen extends StatelessWidget {
-  const ArtistProfileScreen({super.key});
+/// A public artist page (`GET /artists/:id` plus the artist's songs,
+/// albums, upcoming events, related artists and products).
+class ArtistProfileScreen extends StatefulWidget {
+  const ArtistProfileScreen({super.key, required this.artistId});
+
+  final String artistId;
 
   static const Color _bg = Color(0xFF0B0B0C);
   static const Color _surface = Color(0xFF141417);
   static const Color _teal = Color(0xFF3BDDEB);
   static const Color _dimText = Color(0xFFA7A3AA);
 
+  /// Opens [artistId]'s page.
+  static void open(BuildContext context, String artistId) {
+    if (artistId.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ArtistProfileScreen(artistId: artistId),
+      ),
+    );
+  }
+
+  @override
+  State<ArtistProfileScreen> createState() => _ArtistProfileScreenState();
+}
+
+class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
+  // Owned by this page (not registered globally), so opening a related
+  // artist's page on top keeps each page's own data.
+  late final ArtistProfileController controller = ArtistProfileController(
+    widget.artistId,
+  )..onInit();
+
+  @override
+  void dispose() {
+    controller.onClose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ArtistProfileController());
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
         systemNavigationBarColor: const Color(0xFF202020),
       ),
       child: Scaffold(
-        backgroundColor: _bg,
-        body: Stack(
-          children: [
-            CustomScrollView(
+        backgroundColor: ArtistProfileScreen._bg,
+        body: Obx(() {
+          if (controller.profile.value == null) {
+            return _LoadState(controller: controller);
+          }
+          return RefreshIndicator(
+            color: ArtistProfileScreen._teal,
+            onRefresh: controller.load,
+            child: CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(
-                  child: _HeroSection(controller: controller),
-                ),
+                SliverToBoxAdapter(child: _HeroSection(controller: controller)),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                   sliver: SliverList.list(
@@ -51,14 +84,71 @@ class ArtistProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _MiniPlayer(),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// Loading spinner, or the error with a retry, before the profile arrives.
+class _LoadState extends StatelessWidget {
+  const _LoadState({required this.controller});
+
+  final ArtistProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final loading = controller.isLoading.value;
+    final message = controller.errorMessage.value;
+    return SafeArea(
+      child: Stack(
+        children: [
+          Center(
+            child: loading
+                ? const CircularProgressIndicator(
+                    color: ArtistProfileScreen._teal,
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.person_off_rounded,
+                          color: Colors.white38,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          message.isEmpty
+                              ? 'This artist is not available.'
+                              : message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: ArtistProfileScreen._dimText,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: controller.load,
+                          child: const Text(
+                            'Try again',
+                            style: TextStyle(color: ArtistProfileScreen._teal),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _CircleButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: () => Navigator.of(context).maybePop(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -78,10 +168,9 @@ class _HeroSection extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
+          artistImage(
             controller.artist.heroImage,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+            fallback: Container(
               color: const Color(0xFF1A1A2E),
               child: const Icon(Icons.person, color: Colors.white54, size: 80),
             ),
@@ -218,8 +307,12 @@ class _ActionRow extends StatelessWidget {
     return Row(
       children: [
         _OutlineCircleButton(
-          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
-          onTap: () {},
+          onTap: controller.playTop,
+          child: const Icon(
+            Icons.play_arrow_rounded,
+            color: Colors.white,
+            size: 26,
+          ),
         ),
         const SizedBox(width: 14),
         GestureDetector(
@@ -374,21 +467,32 @@ class _TabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final a = controller.artist;
       if (controller.selectedTab.value == 1) {
-        return ArtistProductGrid(products: controller.artist.products);
+        if (a.products.isEmpty) {
+          return const _EmptySection('No products from this artist yet.');
+        }
+        return ArtistProductGrid(products: a.products);
+      }
+      // Sections with nothing in them are left out.
+      final sections = <Widget>[
+        if (a.songs.isNotEmpty) _HitSongsSection(controller: controller),
+        if (a.songs.isNotEmpty) _BestPlaylistSection(controller: controller),
+        if (a.albums.isNotEmpty) _HotAlbumsSection(controller: controller),
+        if (a.tourDates.isNotEmpty) _TourDatesSection(controller: controller),
+        if (a.similarArtists.isNotEmpty)
+          _PeopleAlsoLikeSection(controller: controller),
+      ];
+      if (sections.isEmpty) {
+        return const _EmptySection('No songs from this artist yet.');
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _HitSongsSection(controller: controller),
-          const SizedBox(height: 32),
-          _BestPlaylistSection(controller: controller),
-          const SizedBox(height: 32),
-          _HotAlbumsSection(controller: controller),
-          const SizedBox(height: 32),
-          _TourDatesSection(controller: controller),
-          const SizedBox(height: 32),
-          _PeopleAlsoLikeSection(controller: controller),
+          for (var i = 0; i < sections.length; i++) ...[
+            if (i > 0) const SizedBox(height: 32),
+            sections[i],
+          ],
         ],
       );
     });
@@ -407,17 +511,10 @@ class _HitSongsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
-          title: 'Hit Songs',
-          action: 'See More',
-          onAction: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ArtistBestScreen()),
-          ),
-        ),
+        const _SectionHeader(title: 'Hit Songs'),
         const SizedBox(height: 16),
         for (final song in controller.artist.songs) ...[
-          _SongTile(song: song),
+          _SongTile(song: song, onTap: () => controller.playSong(song.id)),
           const SizedBox(height: 14),
         ],
       ],
@@ -426,78 +523,87 @@ class _HitSongsSection extends StatelessWidget {
 }
 
 class _SongTile extends StatelessWidget {
-  const _SongTile({required this.song});
+  const _SongTile({required this.song, required this.onTap});
 
   final ArtistSongModel song;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E22),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            song.rank,
-            style: const TextStyle(
-              color: ArtistProfileScreen._dimText,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E22),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              song.rank,
+              style: const TextStyle(
+                color: ArtistProfileScreen._dimText,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.asset(
-            song.cover,
-            width: 48,
-            height: 48,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+          const SizedBox(width: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: artistImage(
+              song.cover,
               width: 48,
               height: 48,
-              color: const Color(0xFF1E1E22),
-              child: const Icon(Icons.music_note_rounded,
-                  color: ArtistProfileScreen._teal, size: 22),
+              fallback: Container(
+                width: 48,
+                height: 48,
+                color: const Color(0xFF1E1E22),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  color: ArtistProfileScreen._teal,
+                  size: 22,
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                song.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  song.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                song.plays,
-                style: const TextStyle(
-                  color: ArtistProfileScreen._dimText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 4),
+                Text(
+                  song.plays,
+                  style: const TextStyle(
+                    color: ArtistProfileScreen._dimText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const Icon(Icons.favorite_border_rounded, color: Colors.white70, size: 22),
-        const SizedBox(width: 14),
-        const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 22),
-      ],
+          const Icon(
+            Icons.play_circle_outline_rounded,
+            color: Colors.white70,
+            size: 26,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -524,110 +630,121 @@ class _BestPlaylistSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              SizedBox(
-                height: 240,
-                width: double.infinity,
-                child: Image.asset(
-                  a.playlistCover,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    color: const Color(0xFF1A1A2E),
-                    child: const Icon(Icons.music_note_rounded,
-                        color: Colors.white30, size: 60),
-                  ),
-                ),
-              ),
-              Container(
-                height: 240,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.1),
-                      Colors.black.withValues(alpha: 0.7),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 16,
-                left: 16,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2), width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 10,
-                        backgroundImage:
-                            AssetImage(a.heroImage),
-                        onBackgroundImageError: (_, _) {},
-                        backgroundColor: ArtistProfileScreen._teal,
+        GestureDetector(
+          onTap: controller.playTop,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                SizedBox(
+                  height: 240,
+                  width: double.infinity,
+                  child: artistImage(
+                    a.playlistCover,
+                    fallback: Container(
+                      color: const Color(0xFF1A1A2E),
+                      child: const Icon(
+                        Icons.music_note_rounded,
+                        color: Colors.white30,
+                        size: 60,
                       ),
-                      const SizedBox(width: 8),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 240,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 10,
+                          backgroundImage: artistImageProvider(a.avatar),
+                          onBackgroundImageError: a.avatar.isEmpty
+                              ? null
+                              : (_, _) {},
+                          backgroundColor: ArtistProfileScreen._teal,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Listen to ${a.name}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        'Listen to ${a.name}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                        'BEST OF',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
                         ),
                       ),
+                      Text(
+                        a.name.split(' ').first,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          height: 1.0,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      if (a.name.trim().contains(' '))
+                        Text(
+                          a.name.split(' ').last,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            height: 1.0,
+                            letterSpacing: -1,
+                          ),
+                        ),
                     ],
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: 16,
-                left: 16,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'BEST OF',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    Text(
-                      a.name.split(' ').first,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w900,
-                        height: 1.0,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    Text(
-                      a.name.split(' ').last,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w900,
-                        height: 1.0,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 1),
@@ -644,8 +761,8 @@ class _BestPlaylistSection extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: AssetImage(a.heroImage),
-                onBackgroundImageError: (_, _) {},
+                backgroundImage: artistImageProvider(a.avatar),
+                onBackgroundImageError: a.avatar.isEmpty ? null : (_, _) {},
                 backgroundColor: ArtistProfileScreen._teal,
               ),
               const SizedBox(width: 12),
@@ -690,14 +807,7 @@ class _HotAlbumsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
-          title: 'Hot Albums',
-          action: 'View All',
-          onAction: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ArtistHitsScreen()),
-          ),
-        ),
+        const _SectionHeader(title: 'Hot Albums'),
         const SizedBox(height: 16),
         SizedBox(
           height: 180,
@@ -730,17 +840,19 @@ class _AlbumCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: Image.asset(
+            child: artistImage(
               album.cover,
               width: 130,
               height: 130,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              fallback: Container(
                 width: 130,
                 height: 130,
                 color: const Color(0xFF1E1E22),
-                child: const Icon(Icons.album_rounded,
-                    color: ArtistProfileScreen._teal, size: 40),
+                child: const Icon(
+                  Icons.album_rounded,
+                  color: ArtistProfileScreen._teal,
+                  size: 40,
+                ),
               ),
             ),
           ),
@@ -756,7 +868,7 @@ class _AlbumCard extends StatelessWidget {
             ),
           ),
           Text(
-            '${album.type} · ${album.year}',
+            album.year.isEmpty ? album.type : '${album.type} · ${album.year}',
             style: const TextStyle(
               color: ArtistProfileScreen._dimText,
               fontSize: 11,
@@ -864,10 +976,16 @@ class _TourDateTile extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: tour.isSoldOut ? null : () {},
+            onTap: tour.isSoldOut || tour.event == null
+                ? null
+                : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => GetTicketScreen(event: tour.event!),
+                    ),
+                  ),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
@@ -940,127 +1058,52 @@ class _SimilarArtistTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 70,
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(shape: BoxShape.circle),
-            child: ClipOval(
-              child: Image.asset(
-                artist.image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  color: const Color(0xFF1E1E22),
-                  child: const Icon(Icons.person,
-                      color: Colors.white54, size: 30),
+    return GestureDetector(
+      onTap: () => ArtistProfileScreen.open(context, artist.id),
+      child: SizedBox(
+        width: 70,
+        child: Column(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              child: ClipOval(
+                child: artistImage(
+                  artist.image,
+                  fallback: Container(
+                    color: const Color(0xFF1E1E22),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.white54,
+                      size: 30,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            artist.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Text(
-            'Artist',
-            style: TextStyle(
-              color: ArtistProfileScreen._dimText,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Mini Player ───────────────────────────────────────────────────────────────
-
-class _MiniPlayer extends StatelessWidget {
-  const _MiniPlayer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              'assets/image/Overlay+Shadow.png',
-              width: 44,
-              height: 44,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                width: 44,
-                height: 44,
-                color: const Color(0xFF2A2A2D),
-                child: const Icon(Icons.music_note_rounded,
-                    color: ArtistProfileScreen._teal, size: 22),
+            const SizedBox(height: 6),
+            Text(
+              artist.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bhalo Thake Mon',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  'Fahim Islam',
-                  style: TextStyle(
-                    color: ArtistProfileScreen._dimText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            const Text(
+              'Artist',
+              style: TextStyle(
+                color: ArtistProfileScreen._dimText,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: ArtistProfileScreen._teal,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.pause_rounded, color: Colors.black, size: 22),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1069,15 +1112,9 @@ class _MiniPlayer extends StatelessWidget {
 // ── Shared ────────────────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.action,
-    required this.onAction,
-  });
+  const _SectionHeader({required this.title});
 
   final String title;
-  final String action;
-  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -1091,19 +1128,29 @@ class _SectionHeader extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
         ),
-        const Spacer(),
-        GestureDetector(
-          onTap: onAction,
-          child: Text(
-            action,
-            style: const TextStyle(
-              color: ArtistProfileScreen._teal,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+      ],
+    );
+  }
+}
+
+class _EmptySection extends StatelessWidget {
+  const _EmptySection(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Center(
+        child: Text(
+          message,
+          style: const TextStyle(
+            color: ArtistProfileScreen._dimText,
+            fontSize: 14,
           ),
         ),
-      ],
+      ),
     );
   }
 }

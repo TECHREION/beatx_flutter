@@ -10,6 +10,10 @@ import Flutter
 /// forking just_audio or swizzling anything. Attaching the mix mid-playback is
 /// verified to work, so arriving slightly after playback starts is fine.
 ///
+/// A local file never logs network access, so a downloaded song would go
+/// unseen. `AVPlayerItemTimeJumped` covers that case: `PlayerController` seeks
+/// once after loading a local file, which posts it with the item as its object.
+///
 /// The observer stays live for the life of the app, so item replacement on
 /// track change re-attaches the tap rather than leaving it on a dead item.
 final class EqualizerPlugin: NSObject, FlutterPlugin {
@@ -35,15 +39,17 @@ final class EqualizerPlugin: NSObject, FlutterPlugin {
   }
 
   private func startObservingPlayerItems() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleNewAccessLogEntry(_:)),
-      name: .AVPlayerItemNewAccessLogEntry,
-      object: nil
-    )
+    for name in [Notification.Name.AVPlayerItemNewAccessLogEntry, .AVPlayerItemTimeJumped] {
+      NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(handlePlayerItemNotification(_:)),
+        name: name,
+        object: nil
+      )
+    }
   }
 
-  @objc private func handleNewAccessLogEntry(_ note: Notification) {
+  @objc private func handlePlayerItemNotification(_ note: Notification) {
     guard let item = note.object as? AVPlayerItem else { return }
 
     // video_player creates its own items; only just_audio's are ours.

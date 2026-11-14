@@ -17,7 +17,9 @@ class LoginController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final isPasswordVisible = false.obs;
-  final keepSignedIn = false.obs;
+  /// Sent as `rememberMe`: a 30-day refresh token rather than 7 days. On by
+  /// default, since the app keeps the user signed in across launches.
+  final keepSignedIn = true.obs;
   final isLoading = false.obs;
 
   final email = ''.obs;
@@ -77,7 +79,7 @@ class LoginController extends GetxController {
   LoginRequestModel get loginModel => LoginRequestModel(
     email: email.value,
     password: password.value,
-    preferredLanguage: preferredLanguage.value,
+    rememberMe: keepSignedIn.value,
   );
 
   Future<void> login({

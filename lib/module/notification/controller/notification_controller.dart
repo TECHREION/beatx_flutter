@@ -89,8 +89,45 @@ class NotificationController extends GetxController {
       _page = 1;
     });
 
+    // The page only knows about its own rows; the server's counter covers
+    // the whole feed.
+    await refreshUnreadCount();
+
     hasLoaded.value = true;
     isLoading.value = false;
+  }
+
+  /// Reads the feed-wide unread counter. A failure keeps the current value.
+  Future<void> refreshUnreadCount() async {
+    final result = await _interface().unreadCount();
+    result.fold((_) {}, (success) {
+      final count = success.data;
+      if (count != null) unreadCount.value = count;
+    });
+  }
+
+  /// Takes a live `notification` socket event: `{notification, unreadCount}`.
+  ///
+  /// The new entry goes on top of the feed and the badge takes the server's
+  /// counter. Anything malformed is ignored; the next fetch catches up.
+  void onPushed(Object? event) {
+    if (event is! Map) return;
+    final raw = event['notification'];
+    if (raw is Map) {
+      final item = AppNotification.fromJson(Map<String, dynamic>.from(raw));
+      if (item.id.isNotEmpty &&
+          !notifications.any((existing) => existing.id == item.id)) {
+        notifications.insert(0, item);
+        _total++;
+      }
+    }
+    final count = event['unreadCount'];
+    if (count is num) {
+      unreadCount.value = count.toInt();
+    } else {
+      unreadCount.value++;
+    }
+    hasLoaded.value = true;
   }
 
   /// Appends the next page. Does nothing when one is already loading or the
@@ -115,7 +152,6 @@ class NotificationController extends GetxController {
       notifications.addAll(
         feed.notifications.where((item) => !known.contains(item.id)),
       );
-      unreadCount.value = feed.unreadCount;
       _total = feed.total;
       _page = next;
     });

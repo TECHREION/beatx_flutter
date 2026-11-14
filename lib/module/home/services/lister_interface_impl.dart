@@ -165,7 +165,10 @@ final class ListenInterfaceImpl extends ListenInterface {
   FutureRequest<Success<List<ListenMusicDetailsModel>>> getLikedSong() async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response = await appPigeon.get(ApiEndpoints.getLikesong);
+        final response = await appPigeon.get(
+          ApiEndpoints.getLikesong,
+          queryParameters: {'page': 1, 'limit': 100},
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)

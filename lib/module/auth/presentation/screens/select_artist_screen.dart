@@ -1,21 +1,35 @@
+import 'dart:async';
+
+import 'package:app_pigeon/app_pigeon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import '../../../onbording/common/app_logo.dart';
+import '../../services/onboarding_service.dart';
 
 class ArtistModel {
+  final String id;
   final String name;
+
+  /// A network avatar URL, an asset path, or empty for a placeholder.
   final String image;
   bool selected;
 
-  ArtistModel({required this.name, required this.image, this.selected = false});
+  ArtistModel({
+    this.id = '',
+    required this.name,
+    required this.image,
+    this.selected = false,
+  });
 }
 
 class GenreModel {
+  final String id;
   final String name;
   bool selected;
 
-  GenreModel({required this.name, this.selected = false});
+  GenreModel({this.id = '', required this.name, this.selected = false});
 }
 
 class SelectArtistScreen extends StatelessWidget {
@@ -27,10 +41,20 @@ class SelectArtistScreen extends StatelessWidget {
   }
 }
 
+/// Listener onboarding: pick artists and genres, or skip.
+///
+/// Shown after a sign-in that reports `onboardingCompleted: false`. Artists
+/// come from `/discovery/recommended-artists` (and `/users/artists?q=` while
+/// searching), genres from `/genre`. Continue saves the picks with
+/// `PATCH /users/me/artists` and `/users/me/genres`; both Continue and Skip
+/// then save `onboardingCompleted: true` so the screen is not shown again.
 class InterestSelectionScreen extends StatefulWidget {
-  const InterestSelectionScreen({super.key, this.onContinue});
+  const InterestSelectionScreen({super.key, this.onContinue, this.service});
 
   final VoidCallback? onContinue;
+
+  /// Replaces the API calls in tests.
+  final OnboardingService? service;
 
   @override
   State<InterestSelectionScreen> createState() =>
@@ -48,32 +72,25 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
     end: Alignment.centerRight,
   );
 
-  final List<ArtistModel> _artists = [
-    ArtistModel(name: 'Ariana Nova', image: 'assets/image/image.png'),
-    ArtistModel(name: 'The Weeknd', image: 'assets/image/Robot.png'),
-    ArtistModel(name: 'Billie Ray', image: 'assets/image/onboarding1.png'),
-    ArtistModel(name: 'Drake Stone', image: 'assets/image/1.png'),
-    ArtistModel(name: 'Taylor Bloom', image: 'assets/image/2.png'),
-    ArtistModel(name: 'Post River', image: 'assets/image/3.png'),
-    ArtistModel(name: 'Sia Moon', image: 'assets/image/4.png'),
-    ArtistModel(name: 'Bruno Vale', image: 'assets/image/5.png'),
-    ArtistModel(name: 'Dua Sky', image: 'assets/image/message.png'),
-  ];
+  late final OnboardingService? _service =
+      widget.service ??
+      (Get.isRegistered<AuthorizedPigeon>()
+          ? OnboardingService(Get.find<AuthorizedPigeon>())
+          : null);
 
-  final List<GenreModel> _genres = [
-    GenreModel(name: 'Pop'),
-    GenreModel(name: 'Hip-Hop'),
-    GenreModel(name: 'Rock'),
-    GenreModel(name: 'R&B'),
-    GenreModel(name: 'Electronic'),
-    GenreModel(name: 'Jazz'),
-    GenreModel(name: 'Afrobeats'),
-    GenreModel(name: 'Country'),
-    GenreModel(name: 'Indie'),
-    GenreModel(name: 'Latin'),
-    GenreModel(name: 'Classical'),
-    GenreModel(name: 'Lo-Fi'),
-  ];
+  /// Suggested artists, plus any picked from search results so a pick
+  /// survives clearing the search.
+  final List<ArtistModel> _artists = [];
+  final List<GenreModel> _genres = [];
+
+  /// Artist rows answering the current search, when one is running.
+  List<ArtistModel>? _searchResults;
+  Timer? _searchDebounce;
+  int _searchSeq = 0;
+
+  bool _loading = true;
+  bool _saving = false;
+  String _loadError = '';
 
   int get _selectedCount {
     final artistCount = _artists.where((artist) => artist.selected).length;
@@ -81,10 +98,12 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
     return artistCount + genreCount;
   }
 
-  bool get _canContinue => _selectedCount >= _minimumSelections;
+  bool get _canContinue => _selectedCount >= _minimumSelections && !_saving;
 
   List<ArtistModel> get _filteredArtists {
     if (_query.isEmpty) return _artists;
+    final remote = _searchResults;
+    if (remote != null) return remote;
     return _artists
         .where((artist) => artist.name.toLowerCase().contains(_query))
         .toList();
@@ -98,14 +117,86 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _load() async {
+    final service = _service;
+    if (service == null) {
+      setState(() => _loading = false);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _loadError = '';
+    });
+
+    final results = await Future.wait([
+      service.recommendedArtists(),
+      service.genres(),
+    ]);
+    if (!mounted) return;
+
+    final artistResult = results[0];
+    final genreResult = results[1];
+    setState(() {
+      artistResult.fold((failure) => _loadError = failure.uiMessage, (ok) {
+        final rows = (ok.data as List<OnboardingArtist>?) ?? const [];
+        _artists
+          ..clear()
+          ..addAll(rows.map(_artistOf));
+      });
+      genreResult.fold((failure) => _loadError = failure.uiMessage, (ok) {
+        final rows = (ok.data as List<OnboardingGenre>?) ?? const [];
+        _genres
+          ..clear()
+          ..addAll(rows.map((g) => GenreModel(id: g.id, name: g.name)));
+      });
+      _loading = false;
+    });
+  }
+
+  ArtistModel _artistOf(OnboardingArtist artist) =>
+      ArtistModel(id: artist.id, name: artist.name, image: artist.avatar ?? '');
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _query = value.trim().toLowerCase();
+      _searchResults = null;
+    });
+    _searchDebounce?.cancel();
+    final service = _service;
+    if (_query.isEmpty || service == null) return;
+
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      final seq = ++_searchSeq;
+      final result = await service.searchArtists(value.trim());
+      if (!mounted || seq != _searchSeq) return;
+      result.fold((_) {}, (ok) {
+        final byId = {for (final a in _artists) a.id: a};
+        setState(() {
+          _searchResults = (ok.data ?? const <OnboardingArtist>[])
+              .map((row) => byId[row.id] ?? _artistOf(row))
+              .toList();
+        });
+      });
+    });
   }
 
   void _toggleArtist(ArtistModel artist) {
     setState(() {
       artist.selected = !artist.selected;
+      // A pick made from search results is kept once the search is cleared.
+      if (artist.selected && !_artists.contains(artist)) _artists.add(artist);
     });
   }
 
@@ -115,15 +206,51 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
     });
   }
 
+  Future<void> _finish({required bool skip}) async {
+    if (_saving) return;
+    final service = _service;
+    if (service == null) {
+      widget.onContinue?.call();
+      return;
+    }
+
+    setState(() => _saving = true);
+    final result = await service.complete(
+      artistIds: skip
+          ? const []
+          : [
+              for (final a in _artists)
+                if (a.selected && a.id.isNotEmpty) a.id,
+            ],
+      genreIds: skip
+          ? const []
+          : [
+              for (final g in _genres)
+                if (g.selected && g.id.isNotEmpty) g.id,
+            ],
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    result.fold((failure) {
+      // A genre removed meanwhile is a 400; reload the list so the next try
+      // only sends current ids.
+      if (failure.uiMessage.toLowerCase().contains('genre')) _load();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.uiMessage)));
+    }, (_) => widget.onContinue?.call());
+  }
+
   void _continue() {
     if (!_canContinue) {
+      if (_saving) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least 3 interests')),
       );
       return;
     }
-
-    widget.onContinue?.call();
+    _finish(skip: false);
   }
 
   @override
@@ -170,11 +297,7 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
                       const SizedBox(height: 20),
                       _SearchField(
                         controller: _searchController,
-                        onChanged: (value) {
-                          setState(() {
-                            _query = value.trim().toLowerCase();
-                          });
-                        },
+                        onChanged: _onSearchChanged,
                       ),
                       const SizedBox(height: 16),
                       const _InterestTabs(),
@@ -182,15 +305,37 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
                   ),
                 ),
                 Expanded(
-                  child: TabBarView(
-                    children: [
-                      _ArtistGrid(
-                        artists: _filteredArtists,
-                        onTap: _toggleArtist,
-                      ),
-                      _GenreGrid(genres: _filteredGenres, onTap: _toggleGenre),
-                    ],
-                  ),
+                  child: _loading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF40DDEB),
+                          ),
+                        )
+                      : _loadError.isNotEmpty &&
+                            _artists.isEmpty &&
+                            _genres.isEmpty
+                      ? Center(
+                          child: TextButton(
+                            onPressed: _load,
+                            child: Text(
+                              '$_loadError\nTap to retry',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Color(0xFFA9A3AC)),
+                            ),
+                          ),
+                        )
+                      : TabBarView(
+                          children: [
+                            _ArtistGrid(
+                              artists: _filteredArtists,
+                              onTap: _toggleArtist,
+                            ),
+                            _GenreGrid(
+                              genres: _filteredGenres,
+                              onTap: _toggleGenre,
+                            ),
+                          ],
+                        ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -212,6 +357,18 @@ class _InterestSelectionScreenState extends State<InterestSelectionScreen> {
                         enabled: _canContinue,
                         gradient: _buttonGradient,
                         onTap: _continue,
+                        busy: _saving,
+                      ),
+                      TextButton(
+                        onPressed: _saving ? null : () => _finish(skip: true),
+                        child: const Text(
+                          'Skip for now',
+                          style: TextStyle(
+                            color: Color(0xFFA9A3AC),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -436,7 +593,10 @@ class ArtistCard extends StatelessWidget {
                   padding: const EdgeInsets.all(2),
                   child: CircleAvatar(
                     backgroundColor: const Color(0xFF1A1A1D),
-                    backgroundImage: AssetImage(image),
+                    backgroundImage: _imageOf(image),
+                    child: image.isEmpty
+                        ? const Icon(Icons.person, color: Colors.white54)
+                        : null,
                   ),
                 ),
                 if (selected)
@@ -479,13 +639,21 @@ class ArtistCard extends StatelessWidget {
   }
 }
 
+ImageProvider? _imageOf(String image) {
+  if (image.isEmpty) return null;
+  if (image.startsWith('http')) return NetworkImage(image);
+  return AssetImage(image);
+}
+
 class _ContinueButton extends StatelessWidget {
   const _ContinueButton({
     required this.enabled,
     required this.gradient,
     required this.onTap,
+    this.busy = false,
   });
 
+  final bool busy;
   final bool enabled;
   final Gradient gradient;
   final VoidCallback onTap;
@@ -510,15 +678,24 @@ class _ContinueButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(30),
             ),
           ),
-          child: const Text(
-            'Continue',
-            style: TextStyle(
-              color: Color(0xFF111113),
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0,
-            ),
-          ),
+          child: busy
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: Color(0xFF111113),
+                  ),
+                )
+              : const Text(
+                  'Continue',
+                  style: TextStyle(
+                    color: Color(0xFF111113),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                  ),
+                ),
         ),
       ),
     );

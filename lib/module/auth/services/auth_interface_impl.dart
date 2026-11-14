@@ -1,9 +1,9 @@
-
 import 'package:beatx_flutter/module/auth/services/auth_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:app_pigeon/app_pigeon.dart';
 import '../../../core/api_handler/success.dart';
 import '../../../core/constants/api_endpoints.dart';
+import '../../../core/helpers/onboarding_gate.dart';
 import '../../../core/helpers/typedefs.dart';
 import '../../../core/network/app_language_options.dart';
 import '../model/create_new_password_model.dart';
@@ -28,27 +28,46 @@ final class AuthInterfaceImpl extends AuthInterface {
           ApiEndpoints.login,
           data: params.toJson(),
         );
-        debugPrint("login response [${response.statusCode}]: ${response.data}");
-        final body = extractBodyData(response);
-        debugPrint(body.toString());
-
-        final accessToken = (body["accessToken"] ?? '').toString();
-        final refreshToken = (body["refreshToken"] ?? '').toString();
-        final role = (body['role'] ?? 'user').toString();
-        await appPigeon.saveNewAuth(
-          saveAuthParams: SaveNewAuthParams(
-            uid: params.email,
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            data: {
-              "email": params.email,
-              "role": role,
-            },
-          ),
+        await _saveSession(response, uid: params.email.trim().toLowerCase());
+        return Success(
+          message: extractSuccessMessage(response) ?? 'Login successful',
         );
-
-        return Success(message: body['message'] ?? 'Login successful');
       },
+    );
+  }
+
+  /// Stores the tokens a sign-in response carries.
+  ///
+  /// Login, email verification and phone verification all answer
+  /// `{accessToken, refreshToken, role, onboardingCompleted?, ...}`. Saving
+  /// them signs the user in: the auth stream emits and the app manager routes
+  /// to onboarding or home.
+  Future<void> _saveSession(Response response, {required String uid}) async {
+    final raw = extractBodyData(response);
+    final body = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : <String, dynamic>{};
+
+    final accessToken = (body['accessToken'] ?? '').toString();
+    final refreshToken = (body['refreshToken'] ?? '').toString();
+    if (accessToken.isEmpty) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        error: 'Missing access token in sign-in response',
+      );
+    }
+
+    // Read before the save: saving emits the signed-in status at once.
+    OnboardingGate.recordSignIn(body);
+
+    await appPigeon.saveNewAuth(
+      saveAuthParams: SaveNewAuthParams(
+        uid: uid,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        data: {'email': uid, 'role': (body['role'] ?? 'user').toString()},
+      ),
     );
   }
 
@@ -123,7 +142,12 @@ final class AuthInterfaceImpl extends AuthInterface {
           ApiEndpoints.verifyEmail,
           data: param.toJson(),
         );
-        return Success(message: extractSuccessMessage(response));
+        // A verified email signs the account in: the response carries the
+        // same tokens as `/auth/login`.
+        await _saveSession(response, uid: param.email.trim().toLowerCase());
+        return Success(
+          message: extractSuccessMessage(response) ?? 'Email verified',
+        );
       },
     );
   }
@@ -165,6 +189,7 @@ final class AuthInterfaceImpl extends AuthInterface {
           options: appLanguageOptions(),
         );
         debugPrint('LOGOUT RESPONSE => ${response.data}');
+        OnboardingGate.clear();
         await appPigeon.logOut();
         return Success(message: extractSuccessMessage(response));
       },

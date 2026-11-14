@@ -28,8 +28,8 @@ class EqualizerController extends GetxController {
   EqualizerController({
     required EqualizerService service,
     EqualizerStore? store,
-  })  : _service = service,
-        _store = store ?? EqualizerStore();
+  }) : _service = service,
+       _store = store ?? EqualizerStore();
 
   static EqualizerController get instance {
     if (!Get.isRegistered<EqualizerController>()) {
@@ -144,27 +144,30 @@ class EqualizerController extends GetxController {
     _availabilityTimer?.cancel();
     _availabilityTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final service = _service;
-      if (service is IosEqualizerService) {
-        unavailableReason.value = service.unavailableReason;
-      }
-      if (!_service.isReady) return;
+      final ready = service.isReady;
 
-      timer.cancel();
-      _availabilityTimer = null;
-      isReady.value = true;
-      unavailableReason.value = EqualizerUnavailableReason.none;
-      unawaited(_restoreSettings());
+      if (service is IosEqualizerService) {
+        // Keeps watching: readiness follows the track on iOS, so the sliders
+        // must not stay up for a stream they cannot affect.
+        unavailableReason.value = service.unavailableReason;
+      } else if (ready) {
+        timer.cancel();
+        _availabilityTimer = null;
+      }
+
+      if (ready == isReady.value) return;
+      isReady.value = ready;
+      if (ready) unawaited(_restoreSettings());
     });
   }
 
   /// Reapplies the stored configuration.
   ///
-  /// Stored gains are display gains — ten bands at a fixed range, the same on
-  /// every device — so unlike the device-shaped gains this used to store, they
-  /// carry over from one handset to another. A vector that still does not fit
-  /// (written by an older build, or corrupted) falls back to re-deriving the
-  /// stored preset, and only a custom curve with no preset to fall back on
-  /// goes flat.
+  /// A named preset is always re-derived from its current curve, so retuning a
+  /// preset reaches people who already had it selected. Only a custom curve
+  /// uses the stored gains, which are display gains: ten bands at a fixed
+  /// range, carrying over from one handset to another. One that does not fit
+  /// (written by an older build, or corrupted) goes flat.
   Future<void> _restoreSettings() async {
     if (_restored) return;
     _restored = true;
@@ -181,21 +184,17 @@ class EqualizerController extends GetxController {
     if (stored == null) return;
 
     var gains = stored.gains;
-    final fits = gains.length == kDisplayFrequenciesHz.length &&
-        gains.every((gain) => gain >= kDisplayMinDb && gain <= kDisplayMaxDb);
-
-    if (!fits) {
-      if (stored.preset.hasCurve) {
-        gains = stored.preset.gainsFor(kDisplayFrequenciesHz);
-      } else {
-        if (kDebugMode) {
-          debugPrint(
-            '[Equalizer] stored gains are not a display curve and the preset '
-            'is custom; falling back to flat.',
-          );
-        }
-        gains = List<double>.filled(kDisplayFrequenciesHz.length, 0);
+    if (stored.preset.hasCurve) {
+      gains = stored.preset.gainsFor(kDisplayFrequenciesHz);
+    } else if (gains.length != kDisplayFrequenciesHz.length ||
+        gains.any((gain) => gain < kDisplayMinDb || gain > kDisplayMaxDb)) {
+      if (kDebugMode) {
+        debugPrint(
+          '[Equalizer] stored gains are not a display curve and the preset '
+          'is custom; falling back to flat.',
+        );
       }
+      gains = List<double>.filled(kDisplayFrequenciesHz.length, 0);
     }
 
     await _applyDisplayCurve(gains);
@@ -298,12 +297,17 @@ class EqualizerController extends GetxController {
     await _writeCurveToDevice(_displayGains);
   }
 
-  /// Switches the active preset.
+  /// Switches the active preset, turning the equalizer on if a preset that
+  /// changes the sound is picked while it is off: choosing one and hearing
+  /// nothing is the one outcome nobody means.
   Future<void> selectPreset(EqualizerPreset preset) async {
     if (!isReady.value || !preset.hasCurve) return;
 
     await _applyDisplayCurve(preset.gainsFor(kDisplayFrequenciesHz));
     currentPreset.value = preset;
+    if (!enabled.value && preset != EqualizerPreset.normal) {
+      await setEnabled(true);
+    }
     _schedulePersist();
   }
 

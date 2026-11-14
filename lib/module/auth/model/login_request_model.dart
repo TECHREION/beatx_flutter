@@ -1,18 +1,24 @@
+/// The body of `POST /auth/login`.
+///
+/// The route's body is strict — anything beyond `email`, `password` and
+/// `rememberMe` may be refused with a 400 — so nothing else goes out.
 class LoginRequestModel {
   final String email;
   final String password;
-  final String preferredLanguage;
+
+  /// Asks for a 30-day refresh token instead of the default 7 days.
+  final bool rememberMe;
 
   LoginRequestModel({
     required this.email,
     required this.password,
-    this.preferredLanguage = 'en',
+    this.rememberMe = false,
   });
 
   Map<String, dynamic> toJson() => {
-    'email': email,
+    'email': email.trim().toLowerCase(),
     'password': password,
-    'preferredLanguage': preferredLanguage,
+    if (rememberMe) 'rememberMe': true,
   };
 
   Map<String, dynamic> toMap() => toJson();

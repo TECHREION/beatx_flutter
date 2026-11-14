@@ -34,9 +34,7 @@ class PlayerController extends GetxController {
 
   late final AudioPlayer _player = AudioPlayer(
     audioPipeline: AudioPipeline(
-      androidAudioEffects: [
-        if (_supportsAndroidEffects) androidEqualizer,
-      ],
+      androidAudioEffects: [if (_supportsAndroidEffects) androidEqualizer],
     ),
   );
   final _storage = const FlutterSecureStorage();
@@ -162,6 +160,13 @@ class PlayerController extends GetxController {
     // playback *finishes*, not when it starts. Awaiting it would leave every
     // caller hanging for the length of the track.
     unawaited(_player.play());
+
+    // The iOS equalizer finds the player item through a notification, and for
+    // a local file only a seek posts one. Seeking to where playback already is
+    // changes nothing audible.
+    if (isLocalFile && !kIsWeb && Platform.isIOS) {
+      unawaited(_player.seek(startAt));
+    }
   }
 
   /// Whether [source] names a file on the device rather than a url or a

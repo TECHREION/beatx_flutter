@@ -3,7 +3,10 @@
 import 'package:flutter/foundation.dart';
 
 base class ApiEndpoints {
+  /// Socket.IO origin; the server is mounted under [socketPath], and live
+  /// notifications use the `/notifications` namespace.
   static const String socketUrl = _TestServer.socketUrl;
+  static const String socketPath = _TestServer.socketPath;
   static const String baseUrl = _TestServer.baseUrl;
 
   /// ### post
@@ -27,6 +30,31 @@ base class ApiEndpoints {
 
   /// `GET` reads the settings, `PATCH` writes them back.
   static String userSettings = _User.settings;
+
+  /// ### patch — `{artistIds}` / `{genreIds}` (onboarding picks)
+  static String favoriteArtists = _User.favoriteArtists;
+  static String favoriteGenres = _User.favoriteGenres;
+
+  /// ### get — `?q=` artist name search (signed in)
+  static String searchArtists = _User.artists;
+
+  /// ### post — toggles; `{following, followerCount}`
+  static String followUser({required String userId}) =>
+      _User._followUser(userId);
+
+  //---------------------- Artist -----------------------------
+  /// ### get
+  static String artistProfile({required String artistId}) =>
+      _Artist._artistProfile(artistId);
+  static String relatedArtists({required String artistId}) =>
+      _Artist._relatedArtists(artistId);
+
+  /// ### get — artist cards to suggest, `limit` ≤ 30
+  static const String recommendedArtists = _Discovery.recommendedArtists;
+
+  //---------------------- Album -----------------------------
+  /// ### get — `?ownerId=` filters by artist
+  static const String albums = _Album.albums;
 
   //=======================genre/artist========================
   static const String genre = _Genre.getallgenre;
@@ -57,6 +85,9 @@ base class ApiEndpoints {
 
   //---------------------- home/listen -----------------------------
   static const String listenHome = _Listen.listenHome;
+
+  /// ### get — `?ownerId=&sort=plays` lists one artist's songs
+  static const String songs = _Listen.listen;
   static String listenDetails({required String listenId}) =>
       _Listen._listenDetails(listenId);
   static String listenStreamUrl({required String listenId}) =>
@@ -133,6 +164,9 @@ base class ApiEndpoints {
   static String markNotificationRead({required String notificationId}) =>
       _Notification._markRead(notificationId);
   static const String markAllNotificationsRead = _Notification.markAllRead;
+
+  /// ### get
+  static const String notificationsUnreadCount = _Notification.unreadCount;
 }
 
 
@@ -145,7 +179,8 @@ base class ApiEndpoints {
 // }
 
 class _TestServer {
-  static const String socketUrl = 'https://fahimstack.tech/';
+  static const String socketUrl = 'https://fahimstack.tech';
+  static const String socketPath = '/beatx-api/socket.io';
   static const String baseUrl = 'https://fahimstack.tech/beatx-api/api/v1';
 }
 
@@ -171,11 +206,36 @@ class _User {
   static String updateProfile = '$_userRoute/profile';
   static String changePassword = '$_userRoute/change-password';
   static String settings = '$_userRoute/settings';
+  static String favoriteArtists = '$_userRoute/me/artists';
+  static String favoriteGenres = '$_userRoute/me/genres';
+  static String artists = '$_userRoute/artists';
+  static String _followUser(String userId) => '$_userRoute/$userId/follow';
 }
+
+//------------------------------ Artist -----------------------------
+class _Artist {
+  static const String _artistRoute = '${ApiEndpoints.baseUrl}/artists';
+  static String _artistProfile(String artistId) => '$_artistRoute/$artistId';
+  static String _relatedArtists(String artistId) =>
+      '$_artistRoute/$artistId/related';
+}
+
+//------------------------------ Album -----------------------------
+class _Album {
+  static const String albums = '${ApiEndpoints.baseUrl}/albums';
+}
+
+//------------------------------ Discovery -----------------------------
+class _Discovery {
+  static const String _discoveryRoute = '${ApiEndpoints.baseUrl}/discovery';
+  static const String recommendedArtists =
+      '$_discoveryRoute/recommended-artists';
+}
+
 // /=======================genre/artist========================
 class _Genre {
   static const String _genreRoute = '${ApiEndpoints.baseUrl}/genre';
-  static const String getallgenre = '$_genreRoute/';
+  static const String getallgenre = _genreRoute;
   static const String genreSearch = '$_genreRoute/search';
 }
 
@@ -318,6 +378,7 @@ class _Notification {
   static String _markRead(String notificationId) =>
       '$notificationRoute/$notificationId/read';
   static const String markAllRead = '$notificationRoute/read-all';
+  static const String unreadCount = '$notificationRoute/unread-count';
 }
 
 class _Checklist {}

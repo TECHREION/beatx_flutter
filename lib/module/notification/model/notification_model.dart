@@ -46,6 +46,9 @@ class AppNotification {
     this.imageUrl,
     this.isRead = false,
     this.createdAt,
+    this.targetType = '',
+    this.targetId = '',
+    this.metadata = const {},
   });
 
   final String id;
@@ -60,6 +63,14 @@ class AppNotification {
   /// fabricated one.
   final DateTime? createdAt;
 
+  /// What the notification opens — e.g. `song`, `order`, `ticket`,
+  /// `live_session` — and its id. Empty when it opens nothing.
+  final String targetType;
+  final String targetId;
+
+  /// Extra routing details the backend attaches (order number, parent ids…).
+  final Map<String, dynamic> metadata;
+
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     final id = json['id'] ?? json['_id'];
     final read = json['isRead'] ?? json['read'] ?? json['seen'];
@@ -71,13 +82,28 @@ class AppNotification {
       title: (json['title'] ?? json['heading'] ?? '').toString(),
       message: (json['message'] ?? json['body'] ?? json['description'] ?? '')
           .toString(),
-      type: NotificationType.fromId(json['type']?.toString()),
+      // The API names the kind `category` (tickets, music, social, rewards,
+      // system); `type` is kept as a fallback.
+      type: NotificationType.fromId(
+        (json['category'] ?? json['type'])?.toString(),
+      ),
       imageUrl: _asUrl(json['image'] ?? json['imageUrl'] ?? json['thumbnail']),
       isRead: read is bool ? read : read?.toString() == 'true',
       createdAt: _asDate(
         json['createdAt'] ?? json['created_at'] ?? json['date'],
       ),
+      targetType: (json['targetType'] ?? '').toString(),
+      targetId: _asId(json['targetId']),
+      metadata: json['metadata'] is Map
+          ? Map<String, dynamic>.from(json['metadata'] as Map)
+          : const {},
     );
+  }
+
+  /// `targetId` may arrive as a plain id or a populated `{_id}` object.
+  static String _asId(Object? value) {
+    if (value is Map) return (value['_id'] ?? value['id'] ?? '').toString();
+    return value?.toString() ?? '';
   }
 
   AppNotification copyWith({bool? isRead}) => AppNotification(
@@ -88,6 +114,9 @@ class AppNotification {
     imageUrl: imageUrl,
     isRead: isRead ?? this.isRead,
     createdAt: createdAt,
+    targetType: targetType,
+    targetId: targetId,
+    metadata: metadata,
   );
 
   /// How long ago this arrived, as the row prints it.

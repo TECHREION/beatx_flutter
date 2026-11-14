@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../shop/presentation/screens/shop_detail_screen.dart';
 import '../../model/artist_profile_model.dart';
+import 'artist_image.dart';
 
 class ArtistProductGrid extends StatelessWidget {
   const ArtistProductGrid({super.key, required this.products});
@@ -34,6 +36,20 @@ class _ProductCard extends StatelessWidget {
   static const _teal = Color(0xFF3BDDEB);
   @override
   Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: product.id.isEmpty
+          ? null
+          : () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ShopDetailScreen(productId: product.id),
+              ),
+            ),
+      child: _card(),
+    );
+  }
+
+  Widget _card() {
     return Container(
       decoration: BoxDecoration(
         color: _cardBg,
@@ -102,10 +118,9 @@ class _ProductImage extends StatelessWidget {
       children: [
         AspectRatio(
           aspectRatio: 1,
-          child: Image.asset(
+          child: artistImage(
             product.image,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+            fallback: Container(
               color: const Color(0xFF1E1E22),
               child: const Icon(
                 Icons.image_rounded,
@@ -115,11 +130,12 @@ class _ProductImage extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(
-          top: 10,
-          right: 10,
-          child: _CoinBadge(coinPrice: product.coinPrice),
-        ),
+        if (product.coinPrice > 0)
+          Positioned(
+            top: 10,
+            right: 10,
+            child: _CoinBadge(coinPrice: product.coinPrice),
+          ),
       ],
     );
   }

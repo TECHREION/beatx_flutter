@@ -96,7 +96,7 @@ void main() {
       expect(controller.currentPreset.value, EqualizerPreset.bassBooster);
       // The user sees the authored ten-band curve...
       expect(controller.bands, hasLength(kDisplayFrequenciesHz.length));
-      expect(controller.bands.first.gainDb, closeTo(7, 1e-9));
+      expect(controller.bands.first.gainDb, closeTo(10, 1e-9));
       // ...while the five-band device gets it resampled.
       expect(service.getBandGains(), hasLength(5));
       expect(service.getBandGains().first, greaterThan(3));
@@ -190,6 +190,26 @@ void main() {
     });
   });
 
+  group('picking a preset while the equalizer is off', () {
+    test('turns it on, so the choice is heard', () async {
+      await boot();
+      expect(controller.enabled.value, isFalse);
+
+      await controller.selectPreset(EqualizerPreset.pop);
+
+      expect(controller.enabled.value, isTrue);
+      expect(service.isEnabled, isTrue);
+    });
+
+    test('Normal leaves it off, since it changes nothing', () async {
+      await boot();
+
+      await controller.selectPreset(EqualizerPreset.normal);
+
+      expect(controller.enabled.value, isFalse);
+    });
+  });
+
   group('restoration', () {
     test('restores gains, preset and enabled state', () async {
       const curve = <double>[1, 2, 3, 4, 5, 4, 3, 2, 1, 0];
@@ -257,7 +277,7 @@ void main() {
         withStore: FakeEqualizerStore(
           EqualizerSettings(
             enabled: true,
-            preset: EqualizerPreset.rock,
+            preset: EqualizerPreset.custom,
             gains: List<double>.filled(kDisplayFrequenciesHz.length, 10),
           ),
         ),
@@ -269,6 +289,24 @@ void main() {
       for (final gain in service.getBandGains()) {
         expect(gain, inInclusiveRange(-4, 4));
       }
+    });
+
+    test('a named preset comes back with its current curve', () async {
+      // Saved before Pop was retuned: right shape, out-of-date values.
+      await boot(
+        withStore: FakeEqualizerStore(
+          EqualizerSettings(
+            enabled: true,
+            preset: EqualizerPreset.pop,
+            gains: List<double>.filled(kDisplayFrequenciesHz.length, 1),
+          ),
+        ),
+      );
+
+      expect(
+        controller.bands.map((b) => b.gainDb),
+        EqualizerPreset.pop.referenceCurve,
+      );
     });
 
     test('survives an unreadable store', () async {

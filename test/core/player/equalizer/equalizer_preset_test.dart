@@ -13,14 +13,25 @@ void main() {
       }
     });
 
-    test('no preset exceeds +/-8 dB', () {
+    test('stays audible on a five-band device', () {
+      // The band layout of the OPPO CPH2725 this was tuned against.
+      const device = <double>[60, 230, 910, 3600, 14000];
+      final pop = EqualizerPreset.pop.gainsFor(device);
+      expect(pop.reduce((a, b) => a > b ? a : b), greaterThanOrEqualTo(5.5));
+
+      // Bass has to reach what a phone speaker can actually reproduce.
+      final bass = EqualizerPreset.bassBooster.gainsFor(device);
+      expect(bass[1], greaterThanOrEqualTo(6));
+    });
+
+    test('no preset exceeds +/-10 dB', () {
       // Headroom matters: these sit on top of already-mastered audio, and a
       // hotter curve buys clipping rather than a better sound.
       for (final preset in EqualizerPreset.selectable) {
         for (final gain in preset.referenceCurve!) {
           expect(
             gain.abs(),
-            lessThanOrEqualTo(8.0),
+            lessThanOrEqualTo(10.0),
             reason: '${preset.displayName} has an excessive gain of $gain dB',
           );
         }
@@ -103,7 +114,7 @@ void main() {
       for (final preset in EqualizerPreset.selectable) {
         for (var hz = 20.0; hz < 20000; hz *= 1.3) {
           final gain = preset.gainsFor([hz]).single;
-          expect(gain.abs(), lessThanOrEqualTo(8.0));
+          expect(gain.abs(), lessThanOrEqualTo(10.0));
           expect(gain.isFinite, isTrue);
         }
       }

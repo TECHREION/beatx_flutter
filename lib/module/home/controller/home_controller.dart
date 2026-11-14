@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:dartz/dartz.dart' show Left;
 import 'package:get/get.dart';
@@ -5,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../core/api_handler/failure.dart';
 import '../../../core/notifiers/snackbar_notifier.dart';
 import '../../../core/player/player_controller.dart';
+import '../../auth/services/onboarding_service.dart';
 import '../model/listen_model.dart';
 import '../presentation/screens/audio_play_screen.dart';
 import '../services/lister_interface_impl.dart';
@@ -21,10 +24,29 @@ class HomeController extends GetxController {
   final isOffline = false.obs;
   final listenData = ListenMusicModel().obs;
 
+  /// "Artists to Watch": `GET /discovery/recommended-artists`, i.e. artists
+  /// with a public profile the listener does not follow yet.
+  final artists = <OnboardingArtist>[].obs;
+  final isLoadingArtists = true.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchListenData();
+  }
+
+  Future<void> fetchArtists() async {
+    if (!Get.isRegistered<AuthorizedPigeon>()) {
+      isLoadingArtists.value = false;
+      return;
+    }
+    isLoadingArtists.value = true;
+    final result = await OnboardingService(
+      Get.find<AuthorizedPigeon>(),
+    ).recommendedArtists();
+    // A failure keeps whatever was shown before.
+    result.fold((_) {}, (success) => artists.assignAll(success.data ?? []));
+    isLoadingArtists.value = false;
   }
 
   ListenInterface _listenInterface() {
@@ -41,6 +63,9 @@ class HomeController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     isOffline.value = false;
+
+    // Independent of the home feed, so it loads alongside it.
+    unawaited(fetchArtists());
 
     final result = await _listenInterface().getListen();
 

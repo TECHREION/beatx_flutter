@@ -15,6 +15,8 @@ import 'package:beatx_flutter/module/home/presentation/screens/recently_played_s
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../auth/services/onboarding_service.dart';
+
 import '../../../app_ground_controller.dart';
 import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
@@ -150,9 +152,7 @@ class HomeScreen extends StatelessWidget {
                               return _NewReleaseSection(items: items);
                             }),
                             const SizedBox(height: 28),
-                            const _SectionTitle(title: 'Artists to Watch'),
-                            const SizedBox(height: 14),
-                            const _ArtistWatchList(),
+                            const _ArtistWatchSection(),
                             Obx(() {
                               final hasActiveTrack =
                                   Get.find<PlayerController>()
@@ -1026,40 +1026,55 @@ class _ReleaseTile extends StatelessWidget {
   }
 }
 
-class _ArtistWatchList extends StatelessWidget {
-  const _ArtistWatchList();
+/// "Artists to Watch", from the backend. Hidden when there is nobody to
+/// suggest (e.g. the listener already follows every public artist).
+class _ArtistWatchSection extends StatelessWidget {
+  const _ArtistWatchSection();
 
   @override
   Widget build(BuildContext context) {
-    const artists = [
-      _ArtistData(
-        name: 'Fahim Islam',
-        asset: 'assets/image/Overlay+Shadow.png',
-      ),
-      _ArtistData(
-        name: 'Kazi Shuvo',
-        asset: 'assets/image/Overlay+Shadow (1).png',
-      ),
-      _ArtistData(
-        name: 'Tashrif Khan',
-        asset: 'assets/image/Overlay+Shadow (2).png',
-      ),
-      _ArtistData(name: 'Nabila', asset: 'assets/image/Album Art (1).png'),
-    ];
+    final controller = Get.find<HomeController>();
+    return Obx(() {
+      final artists = controller.artists.toList();
+      final loading = controller.isLoadingArtists.value;
+      if (artists.isEmpty && !loading) return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(title: 'Artists to Watch'),
+          const SizedBox(height: 14),
+          _ArtistWatchList(artists: artists, loading: loading),
+        ],
+      );
+    });
+  }
+}
+
+class _ArtistWatchList extends StatelessWidget {
+  const _ArtistWatchList({required this.artists, required this.loading});
+
+  final List<OnboardingArtist> artists;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    // Placeholder circles while the first load is in flight.
+    final showPlaceholders = artists.isEmpty && loading;
+    final count = showPlaceholders ? 4 : artists.length;
 
     return SizedBox(
       height: 116,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: artists.length,
+        itemCount: count,
         separatorBuilder: (_, index) => const SizedBox(width: 26),
         itemBuilder: (context, index) {
-          final artist = artists[index];
+          final artist = showPlaceholders ? null : artists[index];
+          final avatar = artist?.avatar;
           return GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ArtistProfileScreen()),
-            ),
+            onTap: artist == null
+                ? null
+                : () => ArtistProfileScreen.open(context, artist.id),
             child: SizedBox(
               width: 86,
               child: Column(
@@ -1070,19 +1085,35 @@ class _ArtistWatchList extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFFFFC400),
+                        color: artist == null
+                            ? const Color(0xFF2D2D30)
+                            : const Color(0xFFFFC400),
                         width: 2,
                       ),
                     ),
                     padding: const EdgeInsets.all(2),
                     child: CircleAvatar(
                       backgroundColor: const Color(0xFF1A1A1D),
-                      backgroundImage: AssetImage(artist.asset),
+                      backgroundImage: avatar == null
+                          ? null
+                          : NetworkImage(avatar),
+                      child: artist != null && avatar == null
+                          ? Text(
+                              artist.name.isEmpty
+                                  ? '?'
+                                  : artist.name[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 9),
                   Text(
-                    artist.name,
+                    artist?.name ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -1177,11 +1208,4 @@ class _ReleaseData {
   final String audioAsset;
   final String? coverUrl;
   final String? listenId;
-}
-
-class _ArtistData {
-  const _ArtistData({required this.name, required this.asset});
-
-  final String name;
-  final String asset;
 }

@@ -40,6 +40,10 @@ final class _FakeNotifications extends NotificationInterface {
   }) async => Right(Success(data: const NotificationFeed()));
 
   @override
+  FutureRequest<Success<int>> unreadCount() async =>
+      Right(Success(data: 0));
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

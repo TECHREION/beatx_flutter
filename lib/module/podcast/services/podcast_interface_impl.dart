@@ -118,17 +118,20 @@ final class PodcastInterfaceImpl extends PodcastInterface {
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.podcastEpisodes(podcastId: id),
+          // `limit` is capped at 100 by the API.
+          queryParameters: {'page': 1, 'limit': 100},
         );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
 
-        final data = body['data'] is List
-            ? (body['data'] as List)
-                  .map((e) => EpisodeModel.fromJson(e))
-                  .toList()
-            : <EpisodeModel>[];
+        // The route pages its answer: `{ data: { data: [...], total, ... } }`.
+        // pagedEntries also accepts a bare list.
+        final data = pagedEntries(body['data'])
+            .whereType<Map>()
+            .map((e) => EpisodeModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
@@ -230,7 +233,10 @@ final class PodcastInterfaceImpl extends PodcastInterface {
   FutureRequest<Success<List<Podcast>>> getLikedPodcast() async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response = await appPigeon.get(ApiEndpoints.getLikepodcast);
+        final response = await appPigeon.get(
+          ApiEndpoints.getLikepodcast,
+          queryParameters: {'page': 1, 'limit': 100},
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)

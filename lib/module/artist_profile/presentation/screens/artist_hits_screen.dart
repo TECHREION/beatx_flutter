@@ -70,11 +70,11 @@ class ArtistHitsScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 0.8,
-                      ),
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 24,
+                            childAspectRatio: 0.8,
+                          ),
                       itemCount: _albums.length,
                       itemBuilder: (_, index) =>
                           _AlbumCard(item: _albums[index]),

@@ -16,4 +16,8 @@ abstract base class NotificationInterface extends BaseRepository {
 
   /// Marks the whole feed read.
   FutureRequest<Success<NoData>> markAllRead();
+
+  /// Unread notifications across the whole feed (`GET
+  /// /notifications/unread-count`). The list itself carries no counter.
+  FutureRequest<Success<int>> unreadCount();
 }

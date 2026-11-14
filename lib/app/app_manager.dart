@@ -53,6 +53,10 @@ import 'package:get/get.dart';
 import 'package:get/get_rx/src/rx_workers/utils/debouncer.dart';
 import '../core/constants/api_endpoints.dart';
 import '../core/helpers/auth_role.dart';
+import '../core/helpers/onboarding_gate.dart';
+import '../core/network/notification_socket.dart';
+import '../module/auth/presentation/screens/select_artist_screen.dart';
+import '../module/notification/controller/notification_controller.dart';
 import '../module/app_ground.dart';
 import '../module/auth/controller/login_controller.dart';
 import '../module/onbording/onboarding1.dart';
@@ -105,9 +109,8 @@ class AppManager extends GetxController {
     return true;
   }
 
-  StreamSubscription<dynamic>? _socketConnectSub;
-  StreamSubscription<dynamic>? _socketDisconnectSub;
-  StreamSubscription<dynamic>? _socketErrorSub;
+  /// Live notifications; connected while signed in.
+  NotificationSocket? _notificationSocket;
 
   /// Initializes the stream to listen to auth status
   AppManager() {
@@ -131,6 +134,8 @@ class AppManager extends GetxController {
   void _decideRoute(AuthStatus? authStatus) async {
     if (authStatus is UnAuthenticated) {
       _authStatus = authStatus;
+      _disconnectSocket();
+      OnboardingGate.clear();
       if (Get.isRegistered<LoginController>()) {
         Get.delete<LoginController>(force: true);
       }
@@ -168,9 +173,21 @@ class AppManager extends GetxController {
       // opening the app.
       unawaited(DownloadController.instance.syncWithServer());
 
+      // Taken before the splash gate: a fresh sign-in reports whether the
+      // listener still has to pick artists/genres.
+      final needsOnboarding = OnboardingGate.takePending();
+
       await _splashGate;
       if (_launchScreenAlreadyRouted()) return;
-      Get.offAll(() => AppGround());
+      if (needsOnboarding) {
+        Get.offAll(
+          () => InterestSelectionScreen(
+            onContinue: () => Get.offAll(() => AppGround()),
+          ),
+        );
+      } else {
+        Get.offAll(() => AppGround());
+      }
 
       // navigatorKey.currentState?.pushNamedAndRemoveUntil(
       //   RouteNames.home,
@@ -205,58 +222,37 @@ class AppManager extends GetxController {
 
   // initiate controllers on auth change[Authenticated]
   Future<void> _initializeControllers() async {
-    if ((currentAuthStatus as Authenticated).auth.userId.isNotEmpty) {
-      final userId = (currentAuthStatus as Authenticated).auth.userId;
-
-      await Get.find<AppPigeon>()
-          .socketInit(
-            SocketConnetParamX(
-              token: null,
-              socketUrl: ApiEndpoints.socketUrl,
-              joinId: userId,
-            ),
-          )
-          .then((_) async {
-            final appPigeon = Get.find<AppPigeon>();
-            appPigeon.emit("joinChatRoom", userId);
-            // Keep notification sockets ready as soon as auth socket is live.
-            appPigeon.emit("joinNotificationRoom", userId);
-            appPigeon.emit("joinNotification", userId);
-            _bindSocketStatus();
-            // Get.find<NotificationController>();
-            // if (Get.isRegistered<AppGlobalControllers>()) {
-            //   await Get.delete<AppGlobalControllers>();
-            // }
-
-            // Get.put<AppGlobalControllers>(
-            //   AppGlobalControllers(),
-            // );
-          });
-    }
+    _connectSocket();
   }
 
-  void _bindSocketStatus() {
-    _socketConnectSub?.cancel();
-    _socketDisconnectSub?.cancel();
-    _socketErrorSub?.cancel();
+  /// Opens the live notification socket (`/notifications` namespace,
+  /// `auth: {token}`). New notifications go straight into the shared feed.
+  void _connectSocket() {
+    final pigeon = Get.find<AuthorizedPigeon>();
+    final socket = _notificationSocket ??= NotificationSocket(
+      origin: ApiEndpoints.socketUrl,
+      path: ApiEndpoints.socketPath,
+      accessToken: () async =>
+          (await pigeon.getCurrentAuthRecord())?.toJson()['access_token']
+              as String?,
+    );
+    socket.connect(
+      onNotification: (payload) =>
+          NotificationController.instance.onPushed(payload),
+      onConnectionChanged: (connected) => socketConnected.value = connected,
+      // Anything sent while the connection was down is only in the history.
+      onReconnected: () => NotificationController.instance.fetch(),
+    );
+  }
 
-    final appPigeon = Get.find<AppPigeon>();
-    _socketConnectSub = appPigeon.listen("connect").listen((_) {
-      socketConnected.value = true;
-    });
-    _socketDisconnectSub = appPigeon.listen("disconnect").listen((_) {
-      socketConnected.value = false;
-    });
-    _socketErrorSub = appPigeon.listen("connect_error").listen((_) {
-      socketConnected.value = false;
-    });
+  void _disconnectSocket() {
+    _notificationSocket?.disconnect();
+    socketConnected.value = false;
   }
 
   @override
   void onClose() {
-    _socketConnectSub?.cancel();
-    _socketDisconnectSub?.cancel();
-    _socketErrorSub?.cancel();
+    _disconnectSocket();
     super.onClose();
   }
 }

@@ -34,92 +34,85 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final topPad = MediaQuery.of(context).padding.top;
-
-    return AppBackgroundImage(
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        backgroundColor: Colors.transparent,
-        appBar: _ShopDetailAppBar(),
-        body: Stack(
-          children: [
-            // Purple radial glow overlay at top (fades to transparent so bg image shows below)
-            Container(
-              height: 260,
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment(0.0, -0.6),
-                  radius: 1.0,
-                  colors: [Color(0xFF3B2570), Colors.transparent],
-                ),
-              ),
-            ),
-            Obx(() {
-              if (controller.isLoading.value) {
-                return const Center(child: ShopLoading());
-              }
-              final product = controller.product.value;
-              if (product == null) {
-                return Center(
-                  child: ShopMessage(
-                    icon: Icons.cloud_off_rounded,
-                    message: controller.errorMessage.value.isEmpty
-                        ? 'This product is not available.'
-                        : controller.errorMessage.value,
-                    onRetry: controller.load,
-                  ),
-                );
-              }
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: topPad + kToolbarHeight + 8),
-                    Center(
-                      child: _ProductHeroImage(
-                        // A new colour starts its own pictures from the first.
-                        key: ValueKey(controller.selectedColor.value?.name),
-                        images: product.imagesFor(
-                          controller.selectedColor.value,
-                        ),
+    // Same layout as the listener screens: one background behind a fixed
+    // header and the scrolling content, so the two never look different.
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0B0C),
+      bottomNavigationBar: _BottomActionBar(controller: controller),
+      body: AppBackgroundImage(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const _ShopDetailAppBar(),
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: ShopLoading());
+                  }
+                  final product = controller.product.value;
+                  if (product == null) {
+                    return Center(
+                      child: ShopMessage(
+                        icon: Icons.cloud_off_rounded,
+                        message: controller.errorMessage.value.isEmpty
+                            ? 'This product is not available.'
+                            : controller.errorMessage.value,
+                        onRetry: controller.load,
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _TitleRow(product: product),
-                          const SizedBox(height: 10),
-                          _RatingRow(summary: controller.rating.value),
-                          const SizedBox(height: 12),
-                          Text(
-                            product.description,
-                            style: const TextStyle(
-                              color: Color(0xFFA7A3AA),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              height: 1.6,
+                    );
+                  }
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        Center(
+                          child: _ProductHeroImage(
+                            // A new colour starts its own pictures from the first.
+                            key: ValueKey(controller.selectedColor.value?.name),
+                            images: product.imagesFor(
+                              controller.selectedColor.value,
                             ),
                           ),
-                          const SizedBox(height: 18),
-                          _PriceRow(product: product),
-                          const SizedBox(height: 20),
-                          _OptionsCard(
-                            controller: controller,
-                            product: product,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _TitleRow(product: product),
+                              const SizedBox(height: 10),
+                              _RatingRow(summary: controller.rating.value),
+                              const SizedBox(height: 12),
+                              Text(
+                                product.description,
+                                style: const TextStyle(
+                                  color: Color(0xFFA7A3AA),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.6,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              _PriceRow(product: product),
+                              const SizedBox(height: 20),
+                              _OptionsCard(
+                                controller: controller,
+                                product: product,
+                              ),
+                              const SizedBox(height: 32),
+                            ],
                           ),
-                          const SizedBox(height: 32),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }),
-          ],
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
-        bottomNavigationBar: _BottomActionBar(controller: controller),
       ),
     );
   }
@@ -128,13 +121,20 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
 // ─── App Bar ──────────────────────────────────────────────────────────────────
 
 class _ShopDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _ShopDetailAppBar();
+
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      // Inside the SafeArea, so it must not add the status-bar inset again.
+      primary: false,
+      // Transparent over the page background. The body is laid out below the
+      // bar (not behind it), so scrolled content never shows through.
       backgroundColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       titleSpacing: 4,

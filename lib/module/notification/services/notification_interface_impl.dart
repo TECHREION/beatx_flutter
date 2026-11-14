@@ -66,6 +66,20 @@ final class NotificationInterfaceImpl extends NotificationInterface {
   }
 
   @override
+  FutureRequest<Success<int>> unreadCount() async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.notificationsUnreadCount,
+        );
+        final data = response.data is Map ? response.data['data'] : null;
+        final count = data is Map ? data['count'] : null;
+        return Success(data: count is num ? count.toInt() : 0);
+      },
+    );
+  }
+
+  @override
   FutureRequest<Success<NoData>> markAllRead() async {
     return await asyncTryCatch(
       tryFunc: () async {

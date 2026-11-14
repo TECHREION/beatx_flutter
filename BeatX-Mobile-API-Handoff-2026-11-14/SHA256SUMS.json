@@ -1,0 +1,14 @@
+{
+  "API_CHANGES_FOR_APPS.md": "ec43d94e819e671a02d92e79185611aaa6050af086d75aad9f97e97ea9a4c0f5",
+  "MOBILE_APP_HANDOFF.md": "0bf817b6f7c603e225dec95e455a26a1b28d82f64793502bc6d55e513a8a87b0",
+  "README_FIRST.md": "018de30c25027f056fb361765edc51b7ff67c1ca0ea45f3d17013fc455524206",
+  "openapi/BeatX.openapi.json": "03c6d9235a89a4131c0ba9f68fbfae6cdc089bd399f53c96d8320305f7c37a1c",
+  "postman/BeatX-Mobile.postman_collection.json": "b63dc73ed9b0e323e3121f8cb783aeb9ac58c553593ac0d0bde7eef69489a2d4",
+  "postman/BeatX-RoleBased.postman_collection.json": "50900fe855737a1a2bc66a17050663bb1f6584a064cdfa074897d94860e81702",
+  "postman/BeatX-SafeSmoke.postman_collection.json": "722142956260c21484e2788ab8e09e5018b745fe45d5cc3dc94c7db68912e871",
+  "postman/BeatX-Test.postman_environment.json": "9dd956a7930574218ad4ba40326ebde750e0579ece10d794d2120f0f8f76dcd7",
+  "postman/README.md": "918d8ebfa9d82bcc77e3489586da151fe919ae0cee784689cc9c86c0a95c33a2",
+  "verification/CONTRACT_VERIFICATION.json": "d03f9bef267fe6676360e9ef4a50bb226f0ec5065db60f1d4ff68baabac5f94d",
+  "verification/LIVE_SMOKE_VERIFICATION.json": "8e568bef723a545363d6e8c4a350a3b8dac55996ceb2a43f397670293a2b5b2e",
+  "verification/RELEASE_STATUS.md": "511d19039e99b4532160ecec380baaf50df4d7eaf922599413eeab5ed80fa978"
+}

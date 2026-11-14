@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart' show Get, Inst;
+
+import '../availability/app_availability_controller.dart';
 
 import '../services/debug/debug_service.dart';
 import 'exceptions.dart';
@@ -76,12 +80,19 @@ base class BaseRepository {
           final statusCode = e.response?.statusCode;
           final responseData = e.response?.data;
           debugPrint('DioException [$statusCode]: $responseData');
+          // Maintenance: keep the session, and let the availability banner
+          // learn about it now rather than at its next poll.
+          if (statusCode == 503 &&
+              Get.isRegistered<AppAvailabilityController>()) {
+            unawaited(AppAvailabilityController.instance.check());
+          }
           final message = responseData is Map
               ? (responseData['message'] ?? 'Some error occured.').toString()
               : 'Some error occured.';
           return Left(
             DataCRUDFailure(
               failure: switch (statusCode) {
+                401 => Failure.authFailure,
                 403 => Failure.forbidden,
                 404 => Failure.notFound,
                 _ => Failure.unknownFailure,
@@ -139,9 +150,11 @@ base class BaseRepository {
   }) {
     debugger?.dekhao(response);
     try {
-      return (response.data["success"] as bool) == true
-          ? response.data["message"] as String
-          : null;
+      // The envelope flags success as `status` (`{status, message, data}`).
+      final body = response.data;
+      if (body is! Map || body['status'] != true) return null;
+      final message = body['message']?.toString() ?? '';
+      return message.isEmpty ? null : message;
     } catch (e) {
       debugger?.dekhao("Error from parsing success message: $e");
       return null;

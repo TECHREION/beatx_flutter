@@ -63,16 +63,17 @@ class EqualizerScreen extends StatelessWidget {
                             message:
                                 'The equalizer processes the audio as it plays, '
                                 "and this track's streaming format does not "
-                                'expose an audio track it can attach to.',
+                                'expose an audio track it can attach to. '
+                                'Downloaded songs work with the equalizer.',
                           ),
                         _ => const _MessageState(
-                            icon: Icons.play_circle_outline,
-                            title: 'Start playing something',
-                            message:
-                                'The equalizer attaches to the audio being '
-                                'played, so it becomes available once a track '
-                                'is running.',
-                          ),
+                          icon: Icons.play_circle_outline,
+                          title: 'Start playing something',
+                          message:
+                              'The equalizer attaches to the audio being '
+                              'played, so it becomes available once a track '
+                              'is running.',
+                        ),
                       };
                     }
                     return _EqualizerBody(controller: controller);
@@ -114,11 +115,7 @@ class _TopBar extends StatelessWidget {
               ),
             ),
           ),
-          _CircleButton(
-            icon: Icons.check,
-            onTap: Get.back,
-            tooltip: 'Done',
-          ),
+          _CircleButton(icon: Icons.check, onTap: Get.back, tooltip: 'Done'),
         ],
       ),
     );
@@ -255,8 +252,9 @@ class _CurveEditorState extends State<_CurveEditor> {
                 return GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onPanDown: enabled
-                      ? (details) => _dragIndex =
-                          geometry.nearestIndex(details.localPosition.dx)
+                      ? (details) => _dragIndex = geometry.nearestIndex(
+                          details.localPosition.dx,
+                        )
                       : null,
                   onPanUpdate: enabled
                       ? (details) => _onDrag(geometry, details.localPosition)
@@ -268,8 +266,9 @@ class _CurveEditorState extends State<_CurveEditor> {
                   // is the wrong answer.
                   onTapDown: enabled
                       ? (details) {
-                          _dragIndex =
-                              geometry.nearestIndex(details.localPosition.dx);
+                          _dragIndex = geometry.nearestIndex(
+                            details.localPosition.dx,
+                          );
                           _onDrag(geometry, details.localPosition);
                         }
                       : null,
@@ -458,7 +457,12 @@ class _AxisLabels extends StatelessWidget {
       if (bands.isEmpty) return const SizedBox.shrink();
 
       return Padding(
-        padding: EdgeInsets.fromLTRB(context.pageInset, 6, context.pageInset, 0),
+        padding: EdgeInsets.fromLTRB(
+          context.pageInset,
+          6,
+          context.pageInset,
+          0,
+        ),
         child: Row(
           children: [
             for (final band in bands)
@@ -499,8 +503,12 @@ class _ControlRow extends StatelessWidget {
       final enabled = controller.enabled.value;
 
       return Padding(
-        padding:
-            EdgeInsets.fromLTRB(context.pageInset, 10, context.pageInset, 10),
+        padding: EdgeInsets.fromLTRB(
+          context.pageInset,
+          10,
+          context.pageInset,
+          10,
+        ),
         child: Row(
           children: [
             _TogglePill(
@@ -575,7 +583,6 @@ class _PresetList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final current = controller.currentPreset.value;
-      final enabled = controller.enabled.value;
 
       // Custom is shown only once the user has actually made the gains their
       // own; it is a state, not something to pick.
@@ -592,7 +599,8 @@ class _PresetList extends StatelessWidget {
           return _PresetRow(
             label: preset.displayName,
             selected: preset == current,
-            onTap: enabled && preset.hasCurve
+            // Stays tappable while off: picking a preset turns the equalizer on.
+            onTap: preset.hasCurve
                 ? () => controller.selectPreset(preset)
                 : null,
           );
@@ -618,7 +626,9 @@ class _PresetRow extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: context.pageInset, vertical: 2),
       child: Material(
-        color: selected ? _kNodeAccent.withValues(alpha: 0.06) : Colors.transparent,
+        color: selected
+            ? _kNodeAccent.withValues(alpha: 0.06)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -642,8 +652,7 @@ class _PresetRow extends StatelessWidget {
                           ? Colors.white38
                           : Colors.white,
                       fontSize: 15,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                 ),
@@ -669,8 +678,12 @@ class _ErrorBanner extends StatelessWidget {
       final message = controller.errorMessage.value;
       if (message == null) return const SizedBox.shrink();
       return Padding(
-        padding:
-            EdgeInsets.fromLTRB(context.pageInset, 0, context.pageInset, 10),
+        padding: EdgeInsets.fromLTRB(
+          context.pageInset,
+          0,
+          context.pageInset,
+          10,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -5,7 +5,6 @@ import 'package:beatx_flutter/module/auth/presentation/screens/email_verify_scre
 import 'package:beatx_flutter/module/auth/presentation/screens/signup_screen.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/social_auth_buttons.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
-import 'package:beatx_flutter/module/app_ground.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -199,15 +198,9 @@ class _LoginCard extends StatelessWidget {
                             builder: (_) => EmailVerificationScreen(
                               email: controller.email.value,
                               mode: OtpMode.emailVerification,
-                              onVerified: () {
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => AppGround(),
-                                  ),
-                                  (route) => false,
-                                );
-                              },
+                              // Verifying saves the session it returns; the
+                              // app manager then routes to onboarding or home.
+                              onVerified: () {},
                             ),
                           ),
                         );

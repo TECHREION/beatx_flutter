@@ -187,9 +187,9 @@ class _SignupCard extends StatelessWidget {
                     builder: (_) => EmailVerificationScreen(
                       email: controller.email.value,
                       mode: OtpMode.emailVerification,
-                      onVerified: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                      },
+                      // Verifying saves the session it returns; the app
+                      // manager then routes to onboarding or home.
+                      onVerified: () {},
                     ),
                   ),
                 );

@@ -1,0 +1,482 @@
+{
+  "info": {
+    "_postman_id": "b3f6fee5-4907-458a-90b4-2d2a7d3bae7f",
+    "name": "BeatX Safe Public Smoke - no writes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "BeatX handoff 2026-11-14. Generated from current controller/DTO metadata. API_CHANGES_FOR_APPS.md is the migration guide. Whole BDT paisa, gateway payments (dummy only), no Stripe. Import the accompanying environment; enter your own test credentials/tokens and IDs. Do not bulk-run this full collection: writes, deletions, OTP sends and play-counting GETs are intentional actions. Run BeatX-SafeSmoke for safe public/guard checks. Saved responses are illustrative schemas, not live captures. Generic/dynamic response objects are intentionally open; use the guide for their semantics."
+  },
+  "item": [
+    {
+      "name": "GET /auth/providers",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "x-platform",
+            "value": "{{platform}}",
+            "description": "Set android or ios for play/order analytics."
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/providers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "providers"
+          ]
+        },
+        "description": "Social sign-in providers this server can complete on the website\n\nA provider is listed only when its credentials and OAUTH_WEB_REDIRECT_URL are set, so clients hide buttons that would end on a provider error page.\n\nAccess: public (no access token).\nSource: src/modules/auth/auth.controller.ts#oauthProviders.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+      },
+      "response": [
+        {
+          "name": "200 - Illustrative schema example",
+          "originalRequest": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "x-platform",
+                "value": "{{platform}}",
+                "description": "Set android or ios for play/order analytics."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "providers"
+              ]
+            },
+            "description": "Social sign-in providers this server can complete on the website\n\nA provider is listed only when its credentials and OAUTH_WEB_REDIRECT_URL are set, so clients hide buttons that would end on a provider error page.\n\nAccess: public (no access token).\nSource: src/modules/auth/auth.controller.ts#oauthProviders.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+          },
+          "status": "Success",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"providers\": [\n      \"google\"\n    ]\n  },\n  \"timestamp\": \"2026-11-14T00:00:00.000Z\",\n  \"path\": \"/api/v1/auth/providers\",\n  \"metadata\": {\n    \"duration\": \"12ms\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /genre",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "x-platform",
+            "value": "{{platform}}",
+            "description": "Set android or ios for play/order analytics."
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/genre?page=1&limit=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "genre"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "disabled": false,
+              "description": ""
+            },
+            {
+              "key": "limit",
+              "value": "20",
+              "disabled": false,
+              "description": ""
+            },
+            {
+              "key": "sort",
+              "value": "name",
+              "disabled": true,
+              "description": "Allowed: name, new, popular"
+            }
+          ]
+        },
+        "description": "List genres (paginated). sort=name (default) | new | popular (adds monthlyListeners)\n\n\n\nAccess: public (no access token).\nSource: src/modules/genre/genre.controller.ts#findAll.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+      },
+      "response": [
+        {
+          "name": "200 - Illustrative schema example",
+          "originalRequest": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "x-platform",
+                "value": "{{platform}}",
+                "description": "Set android or ios for play/order analytics."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/genre?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genre"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false,
+                  "description": ""
+                },
+                {
+                  "key": "sort",
+                  "value": "name",
+                  "disabled": true,
+                  "description": "Allowed: name, new, popular"
+                }
+              ]
+            },
+            "description": "List genres (paginated). sort=name (default) | new | popular (adds monthlyListeners)\n\n\n\nAccess: public (no access token).\nSource: src/modules/genre/genre.controller.ts#findAll.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+          },
+          "status": "Success",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"Success\",\n  \"data\": [],\n  \"timestamp\": \"2026-11-14T00:00:00.000Z\",\n  \"path\": \"/api/v1/genre\",\n  \"metadata\": {\n    \"duration\": \"12ms\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /search/suggestions",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "x-platform",
+            "value": "{{platform}}",
+            "description": "Set android or ios for play/order analytics."
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/search/suggestions?q=zzzzhandoffprobe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "search",
+            "suggestions"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "zzzzhandoffprobe",
+              "disabled": false,
+              "description": ""
+            },
+            {
+              "key": "limit",
+              "value": "8",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Suggestions while typing: quick matches with artwork and completions\n\nWord-start matches across songs, artists, albums, videos, podcasts, audiobooks and genres, best first, then a typo-tolerant fallback. `completions` are names that start with the query.\n\nAccess: public (no access token).\nSource: src/modules/search/search.controller.ts#suggestions.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+      },
+      "response": [
+        {
+          "name": "200 - Illustrative schema example",
+          "originalRequest": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "x-platform",
+                "value": "{{platform}}",
+                "description": "Set android or ios for play/order analytics."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/search/suggestions?q=zzzzhandoffprobe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search",
+                "suggestions"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "zzzzhandoffprobe",
+                  "disabled": false,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "8",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Suggestions while typing: quick matches with artwork and completions\n\nWord-start matches across songs, artists, albums, videos, podcasts, audiobooks and genres, best first, then a typo-tolerant fallback. `completions` are names that start with the query.\n\nAccess: public (no access token).\nSource: src/modules/search/search.controller.ts#suggestions.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+          },
+          "status": "Success",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"query\": \"\",\n    \"items\": [],\n    \"completions\": [],\n    \"fuzzy\": false\n  },\n  \"timestamp\": \"2026-11-14T00:00:00.000Z\",\n  \"path\": \"/api/v1/search/suggestions\",\n  \"metadata\": {\n    \"duration\": \"12ms\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /search/trending",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "x-platform",
+            "value": "{{platform}}",
+            "description": "Set android or ios for play/order analytics."
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/search/trending",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "search",
+            "trending"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Popular things to search for right now\n\nBuilt from this week's most played songs, their artists and featured genres; never from other people's searches.\n\nAccess: public (no access token).\nSource: src/modules/search/search.controller.ts#trending.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+      },
+      "response": [
+        {
+          "name": "200 - Illustrative schema example",
+          "originalRequest": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "x-platform",
+                "value": "{{platform}}",
+                "description": "Set android or ios for play/order analytics."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/search/trending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search",
+                "trending"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Popular things to search for right now\n\nBuilt from this week's most played songs, their artists and featured genres; never from other people's searches.\n\nAccess: public (no access token).\nSource: src/modules/search/search.controller.ts#trending.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+          },
+          "status": "Success",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"items\": []\n  },\n  \"timestamp\": \"2026-11-14T00:00:00.000Z\",\n  \"path\": \"/api/v1/search/trending\",\n  \"metadata\": {\n    \"duration\": \"12ms\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /settings/public",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "x-platform",
+            "value": "{{platform}}",
+            "description": "Set android or ios for play/order analytics."
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/settings/public",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings",
+            "public"
+          ]
+        },
+        "description": "Public platform status: maintenanceMode, allowNewRegistrations and announcement\n\n\n\nAccess: public (no access token).\nSource: src/modules/settings/settings.controller.ts#getPublic.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+      },
+      "response": []
+    },
+    {
+      "name": "GET /payments/config",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "x-platform",
+            "value": "{{platform}}",
+            "description": "Set android or ios for play/order analytics."
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/payments/config",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments",
+            "config"
+          ]
+        },
+        "description": "Which payment gateway checkout uses, and the currency (amounts are paisa)\n\n\n\nAccess: public (no access token).\nSource: src/shared/payment/payment.controller.ts#getConfig.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+      },
+      "response": [
+        {
+          "name": "200 - Illustrative schema example",
+          "originalRequest": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "x-platform",
+                "value": "{{platform}}",
+                "description": "Set android or ios for play/order analytics."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "config"
+              ]
+            },
+            "description": "Which payment gateway checkout uses, and the currency (amounts are paisa)\n\n\n\nAccess: public (no access token).\nSource: src/shared/payment/payment.controller.ts#getConfig.\nSaved examples are illustrative contract examples, not captured live records. Read API_CHANGES_FOR_APPS.md for migration rules and response additions."
+          },
+          "status": "Success",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"provider\": \"dummy\",\n    \"currency\": \"BDT\",\n    \"holdMinutes\": 15\n  },\n  \"timestamp\": \"2026-11-14T00:00:00.000Z\",\n  \"path\": \"/api/v1/payments/config\",\n  \"metadata\": {\n    \"duration\": \"12ms\"\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const contentType = pm.response.headers.get(\"Content-Type\") || \"\";",
+          "if (contentType.includes(\"json\")) {",
+          "  const body = pm.response.json();",
+          "  pm.test(\"API uses the success/error envelope\", () => { pm.expect(body).to.have.property(\"status\"); pm.expect(body.status).to.be.a(\"boolean\"); pm.expect(body).to.have.property(\"data\"); });",
+          "  if (pm.response.code < 300 && body?.data?.accessToken) {",
+          "    const role = body.data.role || pm.environment.get(\"activeRole\") || pm.collectionVariables.get(\"activeRole\") || \"user\";",
+          "    pm.environment.set(role + \"AccessToken\", body.data.accessToken);",
+          "    if (body.data.refreshToken) pm.environment.set(role + \"RefreshToken\", body.data.refreshToken);",
+          "    pm.environment.set(\"activeRole\", role);",
+          "  }",
+          "}",
+          "pm.test(\"Public endpoint succeeds\", () => pm.expect(pm.response.code).to.equal(200));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://fahimstack.tech/beatx-api/api/v1"
+    },
+    {
+      "key": "platform",
+      "value": "android"
+    }
+  ]
+}

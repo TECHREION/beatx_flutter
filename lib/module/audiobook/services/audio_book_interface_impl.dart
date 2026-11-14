@@ -95,7 +95,10 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks() async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response = await appPigeon.get(ApiEndpoints.getLikedAudiobooks);
+        final response = await appPigeon.get(
+          ApiEndpoints.getLikedAudiobooks,
+          queryParameters: {'page': 1, 'limit': 100},
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)

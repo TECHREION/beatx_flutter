@@ -95,10 +95,8 @@ class ArtistBestScreen extends StatelessWidget {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       itemCount: _songs.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (_, index) =>
-                          _SongTile(song: _songs[index]),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (_, index) => _SongTile(song: _songs[index]),
                     ),
                   ),
                 ],
@@ -230,11 +228,7 @@ class _SongTile extends StatelessWidget {
             size: 22,
           ),
           const SizedBox(width: 14),
-          const Icon(
-            Icons.more_vert_rounded,
-            color: Colors.white70,
-            size: 22,
-          ),
+          const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 22),
         ],
       ),
     );
