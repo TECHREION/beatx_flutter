@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Beatx Flutter</string>
+	<string>BeatX</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>beatx_flutter</string>
+	<string>BeatX</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -30,15 +30,6 @@
 	<string>BeatX uses the camera so you can take a profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>BeatX uses your photo library so you can choose a profile photo.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<!-- Backend is served over plain HTTP on a bare IP (http://13.206.25.95:3000).
-		     iOS App Transport Security blocks cleartext by default. A bare IP literal
-		     cannot use NSExceptionDomains, so arbitrary loads are required for the API
-		     to work on iOS. Replace this with an HTTPS domain before public release. -->
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 	<!-- Podcasts and audiobooks must keep playing once the screen locks or the
 	     user leaves the app. Without this iOS suspends audio on backgrounding. -->
 	<key>UIBackgroundModes</key>

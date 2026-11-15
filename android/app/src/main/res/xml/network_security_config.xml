@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Cleartext is denied by default and opened only for the API host, so a
-  compromised network cannot downgrade any other traffic.
-
-  This whole file should be deleted once the backend is served over HTTPS on a
-  real domain — see also NSAppTransportSecurity in ios/Runner/Info.plist.
+  Production: HTTPS only. The API (ApiEndpoints.baseUrl), the socket and the
+  signed media URLs are all served over TLS, so plain HTTP is refused
+  everywhere. Debug builds still reach the Flutter tool through the debug
+  manifest; that traffic does not go through this config.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <!-- Must match ApiEndpoints.baseUrl in lib/core/constants/api_endpoints.dart. -->
-        <domain includeSubdomains="false">13.200.168.40</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
 </network-security-config>
