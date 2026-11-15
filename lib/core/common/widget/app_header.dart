@@ -25,6 +25,7 @@ class AppHeader extends StatelessWidget {
     this.onNotificationTap,
     this.notificationBadge,
     this.onBack,
+    this.showActions = true,
   });
 
   final bool showLogo;
@@ -39,6 +40,10 @@ class AppHeader extends StatelessWidget {
 
   /// Shows a back button in place of the profile avatar.
   final VoidCallback? onBack;
+
+  /// False drops the search and notification buttons, for a page that is
+  /// about one thing (an artist's profile…).
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -76,15 +81,17 @@ class AppHeader extends StatelessWidget {
               ),
             ),
           const Spacer(),
-          _ActionButton(
-            icon: Icons.search_rounded,
-            onTap: onSearchTap ?? () => Get.to(() => ExploreScreen()),
-          ),
-          const SizedBox(width: 12),
-          _NotificationButton(
-            badge: notificationBadge,
-            onTap: onNotificationTap,
-          ),
+          if (showActions) ...[
+            _ActionButton(
+              icon: Icons.search_rounded,
+              onTap: onSearchTap ?? () => Get.to(() => ExploreScreen()),
+            ),
+            const SizedBox(width: 12),
+            _NotificationButton(
+              badge: notificationBadge,
+              onTap: onNotificationTap,
+            ),
+          ],
         ],
       ),
     );

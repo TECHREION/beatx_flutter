@@ -8,8 +8,12 @@ import '../model/purchase_model.dart';
 
 abstract base class ShopInterface extends BaseRepository {
   FutureRequest<Success<List<String>>> getCategories();
+
+  /// Active products, newest first. A [query] is sent as `q` — the
+  /// backend's text search over title and description, best match first.
   FutureRequest<Success<PagedResult<ShopProduct>>> getProducts({
     String category = '',
+    String query = '',
     required int page,
     required int limit,
   });

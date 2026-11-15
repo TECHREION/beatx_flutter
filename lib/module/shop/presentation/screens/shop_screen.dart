@@ -11,6 +11,7 @@ import '../../model/shop_model.dart';
 import '../widgets/cart_screen.dart';
 import '../widgets/event_tickets_screen.dart';
 import '../widgets/shop_common.dart';
+import 'product_search_screen.dart';
 import 'shop_detail_screen.dart';
 import '../../../../core/theme/responsive.dart';
 
@@ -27,7 +28,14 @@ class ShopScreen extends StatelessWidget {
           bottom: false,
           child: Column(
             children: [
-              const AppHeader(title: 'Shop'),
+              AppHeader(
+                title: 'Shop',
+                onSearchTap: () => Get.to(
+                  () => const ProductSearchScreen(),
+                  transition: Transition.rightToLeft,
+                  preventDuplicates: true,
+                ),
+              ),
               Expanded(
                 child: ContentWidth.wide(
                   padded: false,

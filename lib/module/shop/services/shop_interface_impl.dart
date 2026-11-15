@@ -50,14 +50,17 @@ final class ShopInterfaceImpl extends ShopInterface {
   @override
   FutureRequest<Success<PagedResult<ShopProduct>>> getProducts({
     String category = '',
+    String query = '',
     required int page,
     required int limit,
   }) => asyncTryCatch(
     tryFunc: () async {
+      final q = query.trim();
       final response = await appPigeon.get(
         ApiEndpoints.products,
         queryParameters: {
           if (category.isNotEmpty) 'category': category,
+          if (q.isNotEmpty) 'q': q,
           'page': page,
           'limit': limit,
         },

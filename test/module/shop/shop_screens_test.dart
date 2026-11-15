@@ -5,6 +5,7 @@ import 'package:beatx_flutter/module/notification/services/notification_interfac
 import 'package:beatx_flutter/module/profile/model/profile_model.dart';
 import 'package:beatx_flutter/module/profile/services/profile_interface.dart';
 import 'package:beatx_flutter/module/shop/controller/cart_controller.dart';
+import 'package:beatx_flutter/module/shop/presentation/screens/product_search_screen.dart';
 import 'package:beatx_flutter/module/shop/presentation/screens/shop_detail_screen.dart';
 import 'package:beatx_flutter/module/shop/presentation/screens/shop_screen.dart';
 import 'package:beatx_flutter/module/shop/presentation/widgets/cart_screen.dart';
@@ -40,8 +41,7 @@ final class _FakeNotifications extends NotificationInterface {
   }) async => Right(Success(data: const NotificationFeed()));
 
   @override
-  FutureRequest<Success<int>> unreadCount() async =>
-      Right(Success(data: 0));
+  FutureRequest<Success<int>> unreadCount() async => Right(Success(data: 0));
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -65,6 +65,36 @@ void main() {
     Get.put(CartController());
   });
   tearDown(Get.reset);
+
+  testWidgets('product search sends q and finds by artist when it misses', (
+    tester,
+  ) async {
+    await _pump(tester, const ProductSearchScreen());
+    final shop = Get.find<ShopInterface>() as FakeShop;
+
+    // Opens on the whole catalogue, with the category chips.
+    expect(find.text('Tour T-Shirt'), findsOneWidget);
+    expect(find.text('Digital Art'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'shirt');
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump();
+    expect(shop.productQueriesAsked, contains('shirt'));
+    expect(find.text('Tour T-Shirt'), findsOneWidget);
+
+    // The backend has no artist-name search: the empty answer falls back to
+    // the catalogue, narrowed here.
+    await tester.enterText(find.byType(TextField), 'demo art');
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump();
+    expect(shop.productQueriesAsked, contains('demo art'));
+    expect(find.text('Tour T-Shirt'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'vinyl record');
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump();
+    expect(find.text('Tour T-Shirt'), findsNothing);
+  });
 
   testWidgets('product detail shows server data and selects a size', (
     tester,

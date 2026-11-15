@@ -74,6 +74,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                         ? 'Artist'
                         : controller.artist.name,
                     onBack: () => Navigator.of(context).maybePop(),
+                    showActions: false,
                   ),
                 ),
                 Expanded(

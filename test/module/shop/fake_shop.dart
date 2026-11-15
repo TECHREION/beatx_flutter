@@ -83,6 +83,7 @@ final class FakeShop extends ShopInterface {
   final ticketKeys = <String>[];
   final ticketQuotes = <String>[];
   final productCategoriesAsked = <String>[];
+  final productQueriesAsked = <String>[];
   ShopOrder orderState = const ShopOrder(
     id: 'o1',
     status: PurchaseStatus.paid,
@@ -102,10 +103,25 @@ final class FakeShop extends ShopInterface {
   @override
   FutureRequest<Success<PagedResult<ShopProduct>>> getProducts({
     String category = '',
+    String query = '',
     required int page,
     required int limit,
   }) async {
     productCategoriesAsked.add(category);
+    productQueriesAsked.add(query);
+    if (query.isNotEmpty &&
+        !tShirt.title.toLowerCase().contains(query.toLowerCase())) {
+      return Right(
+        Success(
+          data: PagedResult(
+            items: const [],
+            total: 0,
+            page: page,
+            limit: limit,
+          ),
+        ),
+      );
+    }
     return Right(
       Success(
         data: PagedResult(items: [tShirt], total: 1, page: page, limit: limit),
