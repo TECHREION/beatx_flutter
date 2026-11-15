@@ -162,62 +162,73 @@ class ProfileScreen extends StatelessWidget {
                     child: ContentWidth.narrow(
                       padded: false,
                       child: ListView(
-                      children: [
-                        _settingTile(
-                          icon: Icons.person_outline,
-                          title: "Edit Profile",
-                          onTap: () =>
-                              _openScreen(context, const EditProfileScreen()),
-                        ),
+                        children: [
+                          _settingTile(
+                            icon: Icons.person_outline,
+                            title: "Edit Profile",
+                            onTap: () =>
+                                _openScreen(context, const EditProfileScreen()),
+                          ),
 
-                        _settingTile(
-                          icon: Icons.workspace_premium_outlined,
-                          title: "Subscription",
-                          trailingText: "Clarity Free",
-                          trailingColor: const Color(0xFFD28DFF),
-                          onTap: () =>
-                              _openScreen(context, SubscriptionScreen()),
-                        ),
+                          _settingTile(
+                            icon: Icons.workspace_premium_outlined,
+                            title: "Subscription",
+                            trailingText: "Clarity Free",
+                            trailingColor: const Color(0xFFD28DFF),
+                            onTap: () =>
+                                _openScreen(context, SubscriptionScreen()),
+                          ),
 
-                        _settingTile(
-                          icon: Icons.credit_card_outlined,
-                          title: "Payment Methods",
-                          onTap: () {
-                            Navigator.push(
+                          _settingTile(
+                            icon: Icons.credit_card_outlined,
+                            title: "Payment Methods",
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PaymentMethodsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+
+                          _settingTile(
+                            icon: Icons.settings_outlined,
+                            title: "General Settings",
+                            onTap: () => _openScreen(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => const PaymentMethodsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _settingTile(
-                          icon: Icons.settings_outlined,
-                          title: "General Settings",
-                          onTap: () => _openScreen(
-                            context,
-                            const GeneralSettingsScreen(),
+                              const GeneralSettingsScreen(),
+                            ),
                           ),
-                        ),
 
-                        _settingTile(
-                          icon: Icons.lock_outline,
-                          title: "Change Password",
-                          onTap: () => _openScreen(
-                            context,
-                            const ChangePasswordScreen(),
+                          // Phone and social accounts have no password.
+                          Obx(
+                            () =>
+                                ProfileController
+                                        .instance
+                                        .profile
+                                        .value
+                                        ?.hasPassword ==
+                                    false
+                                ? const SizedBox.shrink()
+                                : _settingTile(
+                                    icon: Icons.lock_outline,
+                                    title: "Change Password",
+                                    onTap: () => _openScreen(
+                                      context,
+                                      const ChangePasswordScreen(),
+                                    ),
+                                  ),
                           ),
-                        ),
 
-                        _settingTile(
-                          icon: Icons.logout,
-                          title: "Sign Out",
-                          titleColor: Colors.red,
-                          iconColor: Colors.red,
-                          onTap: () => _showLogoutDialog(context),
-                        ),
-                      ],
+                          _settingTile(
+                            icon: Icons.logout,
+                            title: "Sign Out",
+                            titleColor: Colors.red,
+                            iconColor: Colors.red,
+                            onTap: () => _showLogoutDialog(context),
+                          ),
+                        ],
                       ),
                     ),
                   ),

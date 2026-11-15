@@ -4,6 +4,7 @@ import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/profile/model/profile_model.dart';
 
 import '../model/change_password_model.dart';
+import '../model/legal_page_model.dart';
 import '../model/update_profile_model.dart';
 
 abstract base class ProfileInterface extends BaseRepository {
@@ -27,4 +28,13 @@ abstract base class ProfileInterface extends BaseRepository {
   FutureRequest<Success<ProfileSettings>> updateSettings(
     ProfileSettings settings,
   );
+
+  /// `DELETE /users/me`. Password accounts send [password] (403 when it is
+  /// wrong); phone and social accounts have none and send
+  /// `{confirm: "DELETE"}` instead.
+  FutureRequest<Success<NoData>> deleteAccount({String? password});
+
+  /// One published legal page (`terms`, `privacy`, `refund`,
+  /// `community-guidelines`, `cookies`). 404 until it is published.
+  FutureRequest<Success<LegalPage>> legalPage(String slug);
 }

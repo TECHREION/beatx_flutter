@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../widgets/delete_account_dialog.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -88,6 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Delete Account',
                           titleColor: Colors.red,
                           arrowColor: Colors.red,
+                          onTap: () => DeleteAccountDialog.show(context),
                         ),
                       ],
                     ),
@@ -133,8 +136,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String title, {
     Color titleColor = Colors.white,
     Color arrowColor = Colors.white,
+    VoidCallback? onTap,
   }) {
     return ListTile(
+      onTap: onTap,
       title: Text(title, style: TextStyle(color: titleColor)),
       trailing: Icon(Icons.chevron_right, color: arrowColor),
     );

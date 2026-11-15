@@ -151,9 +151,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   void _showSavedMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Payment method updated')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Payment method updated')));
     _saveButtonStatus.setEnabled();
   }
 

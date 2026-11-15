@@ -50,9 +50,9 @@ class _LogoutDialogState extends State<LogoutDialog> {
     result.fold(
       (failure) {
         _logoutButtonStatus.setError();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(failure.uiMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.uiMessage)));
       },
       (_) {
         // AppManager listens to authStream and navigates to LoginScreen

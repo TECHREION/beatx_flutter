@@ -85,8 +85,10 @@ class SettingsController extends GetxController {
     SnackbarNotifier? notifier,
   }) => _apply(allowEmailNotification: value, notifier: notifier);
 
-  Future<void> setTrackSearchHistory(bool value, {SnackbarNotifier? notifier}) =>
-      _apply(trackSearchHistory: value, notifier: notifier);
+  Future<void> setTrackSearchHistory(
+    bool value, {
+    SnackbarNotifier? notifier,
+  }) => _apply(trackSearchHistory: value, notifier: notifier);
 
   Future<void> setSendUsageData(bool value, {SnackbarNotifier? notifier}) =>
       _apply(sendUsageData: value, notifier: notifier);
@@ -184,7 +186,8 @@ class SettingsController extends GetxController {
       (success) {
         // Adopted only once the queue is clear — taking the answer while a
         // change is still waiting would overwrite a switch already flipped.
-        if (success.data != null && _queued == 0) settings.value = success.data!;
+        if (success.data != null && _queued == 0)
+          settings.value = success.data!;
       },
     );
 

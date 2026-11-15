@@ -34,7 +34,7 @@ class UserUpdateProfile {
   factory UserUpdateProfile.fromProfile(UserProfileModel user) {
     return UserUpdateProfile(
       fullName: user.name,
-      email: user.email,
+      email: user.displayEmail,
       imageUrl: user.avatar,
     );
   }

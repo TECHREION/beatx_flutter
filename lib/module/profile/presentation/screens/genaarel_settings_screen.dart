@@ -1,7 +1,7 @@
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/equalizer_screen.dart';
 import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
-import 'package:beatx_flutter/module/profile/presentation/screens/music_history_screen.dart';
+import '../../../home/presentation/screens/recently_played_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/privacy_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/settings_screen.dart';
@@ -188,7 +188,8 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const MusicHistoryScreen(),
+                                // Listening history: `GET /songs/recently-played`.
+                                builder: (_) => const RecentlyPlayedScreen(),
                               ),
                             );
                           },
@@ -359,10 +360,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   }
 
   void _showLogoutDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (_) => const LogoutDialog(),
-    );
+    showDialog<void>(context: context, builder: (_) => const LogoutDialog());
   }
 
   Widget _settingRow({required String title, required String value}) {

@@ -11,17 +11,36 @@ class ArtistProductGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.72,
-      ),
-      itemCount: products.length,
-      itemBuilder: (context, index) => _ProductCard(product: products[index]),
+    const spacing = 12.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The image is square (as wide as the card); below it go a title of
+        // up to two lines, the category and the price. A fixed aspect ratio
+        // could not fit that text at every width and text size, so the
+        // card's height is the image plus the text's real height.
+        final cardWidth = (constraints.maxWidth - spacing) / 2;
+        final scaler = MediaQuery.textScalerOf(context);
+        final textHeight =
+            scaler.scale(13 * 1.3) * 2 + // title, two lines
+            scaler.scale(11 * 1.4) + // category
+            scaler.scale(15 * 1.4) + // price
+            4 + 8 + // gaps between them
+            10 + 12 + // padding above and below
+            2; // rounding slack
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: 16,
+            mainAxisExtent: cardWidth + textHeight,
+          ),
+          itemCount: products.length,
+          itemBuilder: (context, index) =>
+              _ProductCard(product: products[index]),
+        );
+      },
     );
   }
 }
@@ -86,16 +105,21 @@ class _ProductCard extends StatelessWidget {
                     color: _dimText,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
+                    // Fixed so the grid's card height matches the app theme.
+                    height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '${product.currency}${product.price}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: _teal,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0,
+                    height: 1.4,
                   ),
                 ),
               ],

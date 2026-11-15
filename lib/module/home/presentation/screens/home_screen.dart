@@ -5,7 +5,6 @@ import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_
 import 'package:beatx_flutter/module/home/controller/download_controller.dart';
 import 'package:beatx_flutter/module/home/controller/home_controller.dart';
 import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart';
-import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/daily_discover_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/downloads_screen.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/liked_songs_screen.dart';
@@ -69,8 +68,14 @@ class HomeScreen extends StatelessWidget {
                               final item = controller.trending.isNotEmpty
                                   ? controller.trending.first
                                   : null;
-                              final title = item?.title ?? 'Tumi Acho Bole';
-                              final artist = item?.artist ?? 'Imran Mahmudul';
+                              // Nothing trending yet (or still loading):
+                              // a quiet card with nothing to play.
+                              final title =
+                                  item?.title ??
+                                  (controller.isLoading.value
+                                      ? 'Loading…'
+                                      : 'Nothing trending yet');
+                              final artist = item?.artist ?? '';
 
                               return _TrendingCard(
                                 title: title,
@@ -79,19 +84,7 @@ class HomeScreen extends StatelessWidget {
                                 onPlay: () {
                                   if (item != null) {
                                     controller.playSong(item.id);
-                                    return;
                                   }
-                                  Get.find<PlayerController>().play(
-                                    title: title,
-                                    artist: artist,
-                                    imageAsset: 'assets/image/a4.png',
-                                    audioAsset: 'audio/music1.m4a',
-                                  );
-                                  Get.to(
-                                    () => const PlayerScreen(),
-                                    transition: Transition.downToUp,
-                                    preventDuplicates: true,
-                                  );
                                 },
                               );
                             }),
@@ -141,9 +134,6 @@ class HomeScreen extends StatelessWidget {
                                       releases[i].durationMs,
                                     ),
                                     asset: 'assets/image/Container.png',
-                                    audioAsset:
-                                        _placeholderAudioAssets[i %
-                                            _placeholderAudioAssets.length],
                                     coverUrl: releases[i].coverUrl,
                                     listenId: releases[i].id,
                                   ),
@@ -743,15 +733,6 @@ class _PagerLine extends StatelessWidget {
   }
 }
 
-/// Local demo audio bundled with the app — the `songs/home` API has no
-/// audio stream url yet, so playback still cycles through these assets.
-const _placeholderAudioAssets = [
-  'audio/music1.m4a',
-  'audio/music2.mp3',
-  'audio/music3.m4a',
-  'audio/music4.mp3',
-];
-
 String _formatDurationMs(int durationMs) {
   if (durationMs <= 0) return 'NEW';
   final totalSeconds = durationMs ~/ 1000;
@@ -934,20 +915,8 @@ class _ReleaseTile extends StatelessWidget {
       // not.
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        if (item.listenId != null) {
-          Get.find<HomeController>().playSong(item.listenId!);
-          return;
-        }
-        Get.find<PlayerController>().play(
-          title: item.title,
-          artist: item.artist,
-          imageAsset: item.asset,
-          audioAsset: item.audioAsset,
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PlayerScreen()),
-        );
+        final id = item.listenId;
+        if (id != null) Get.find<HomeController>().playSong(id);
       },
       child: Row(
         children: [
@@ -1195,7 +1164,6 @@ class _ReleaseData {
     required this.artist,
     required this.meta,
     required this.asset,
-    required this.audioAsset,
     this.coverUrl,
     this.listenId,
   });
@@ -1205,7 +1173,6 @@ class _ReleaseData {
   final String artist;
   final String meta;
   final String asset;
-  final String audioAsset;
   final String? coverUrl;
   final String? listenId;
 }

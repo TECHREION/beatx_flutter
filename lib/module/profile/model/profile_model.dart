@@ -92,6 +92,18 @@ class UserProfileModel {
     '__v': version,
   };
 
+  /// Phone sign-ups get an internal placeholder address that must not be
+  /// shown.
+  static const _phonePlaceholderDomain = '@phone.beatx.invalid';
+
+  /// The email to show, or empty for a phone account's placeholder.
+  String get displayEmail =>
+      email.toLowerCase().endsWith(_phonePlaceholderDomain) ? '' : email;
+
+  /// Phone and social (Google/Facebook/Apple) accounts have no password:
+  /// they cannot change one, and delete with `{confirm: "DELETE"}`.
+  bool get hasPassword => provider.isEmpty || provider == 'local';
+
   /// The letter standing in for a missing avatar.
   String get initial =>
       name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();

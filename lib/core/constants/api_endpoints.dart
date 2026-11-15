@@ -42,6 +42,10 @@ base class ApiEndpoints {
   static String followUser({required String userId}) =>
       _User._followUser(userId);
 
+  //---------------------- Legal -----------------------------
+  /// ### get — `terms`, `privacy`, `refund`, `community-guidelines`, `cookies`
+  static String legalPage({required String slug}) => _Legal._legalPage(slug);
+
   //---------------------- Artist -----------------------------
   /// ### get
   static String artistProfile({required String artistId}) =>
@@ -218,6 +222,12 @@ class _Artist {
   static String _artistProfile(String artistId) => '$_artistRoute/$artistId';
   static String _relatedArtists(String artistId) =>
       '$_artistRoute/$artistId/related';
+}
+
+//------------------------------ Legal -----------------------------
+class _Legal {
+  static const String _legalRoute = '${ApiEndpoints.baseUrl}/legal';
+  static String _legalPage(String slug) => '$_legalRoute/$slug';
 }
 
 //------------------------------ Album -----------------------------

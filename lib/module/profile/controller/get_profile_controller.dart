@@ -28,7 +28,13 @@ class ProfileController extends GetxController {
   final hasLoaded = false.obs;
 
   String get name => profile.value?.name ?? '';
-  String get email => profile.value?.email ?? '';
+
+  /// Empty for phone accounts, whose stored address is an internal
+  /// placeholder.
+  String get email => profile.value?.displayEmail ?? '';
+
+  /// False for phone and social accounts, which have no password.
+  bool get hasPassword => profile.value?.hasPassword ?? true;
   String? get avatar => profile.value?.avatar;
   String get initial => profile.value?.initial ?? '?';
 

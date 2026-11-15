@@ -7,6 +7,7 @@ import 'package:beatx_flutter/module/profile/model/change_password_model.dart';
 import 'package:beatx_flutter/module/profile/model/profile_model.dart';
 import 'package:beatx_flutter/module/profile/services/profile_interface.dart';
 
+import '../model/legal_page_model.dart';
 import '../model/update_profile_model.dart';
 
 final class ProfileInterfaceImpl extends ProfileInterface {
@@ -129,13 +130,43 @@ final class ProfileInterfaceImpl extends ProfileInterface {
     );
   }
 
+  @override
+  FutureRequest<Success<NoData>> deleteAccount({String? password}) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.delete(
+          ApiEndpoints.getuserbyId,
+          data: password == null
+              ? {'confirm': 'DELETE'}
+              : {'password': password},
+        );
+        return Success<NoData>(
+          message: _messageOf(response.data, 'Account deleted'),
+          data: NoData(),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<LegalPage>> legalPage(String slug) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.legalPage(slug: slug),
+        );
+        return Success<LegalPage>(
+          data: LegalPage.fromJson(_dataOf(response.data)),
+        );
+      },
+    );
+  }
+
   Map<String, dynamic> _dataOf(dynamic body) {
     if (body is! Map) return <String, dynamic>{};
 
     final data = body['data'];
-    return data is Map
-        ? Map<String, dynamic>.from(data)
-        : <String, dynamic>{};
+    return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
   }
 
   String _messageOf(dynamic body, String fallback) {
