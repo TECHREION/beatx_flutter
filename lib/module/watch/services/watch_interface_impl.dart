@@ -119,6 +119,33 @@ final class VideoInterfaceImpl extends VideoInterface {
   }
 
   @override
+  FutureRequest<Success<List<VideoModel>>> getLikedVideos() async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.getLikedVideos,
+          queryParameters: {'page': 1, 'limit': 100},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        // `{videos, total, page, limit}`; the list carries no channel.
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: pagedEntries(body['data'])
+              .whereType<Map>()
+              .map(
+                (item) => VideoModel.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  @override
   FutureRequest<Success<LikeUnlikeModel>> likeUnlike(String id) async {
     return await asyncTryCatch(
       tryFunc: () async {

@@ -127,6 +127,9 @@ Widget _buildContent(BuildContext context, AudiobookController controller) {
           ),
           const SizedBox(height: 24),
         ],
+        // Like the Podcasts screen: the way into the liked list comes first.
+        const _LikedAudiobooksButton(),
+        const SizedBox(height: 18),
         if (queuedBook != null) ...[
           GestureDetector(
             onTap: () => _openDetails(context, queuedBook),
@@ -189,8 +192,6 @@ Widget _buildContent(BuildContext context, AudiobookController controller) {
             ),
             const SizedBox(height: 12),
           ],
-        const SizedBox(height: 18),
-        const _LikedAudiobooksButton(),
         const SizedBox(height: 8),
         const PromoBanner(),
         const SizedBox(height: 82),
@@ -206,7 +207,7 @@ void _openDetails(BuildContext context, Audiobook book) {
   );
 }
 
-/// Way into the user's liked audiobooks, sat under the bestsellers.
+/// Way into the user's liked audiobooks, above the next book in progress.
 class _LikedAudiobooksButton extends StatelessWidget {
   const _LikedAudiobooksButton();
 

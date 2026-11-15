@@ -15,6 +15,9 @@ abstract base class VideoInterface extends BaseRepository {
   FutureRequest<Success<List<VideoModel>>> relatedVideos(String id);
   FutureRequest<Success<LikeUnlikeModel>> likeUnlike(String id);
 
+  /// The videos the signed-in user has liked, most recent first.
+  FutureRequest<Success<List<VideoModel>>> getLikedVideos();
+
   /// Videos matching [query] and/or [genreId]. Both are empty when unset, and
   /// an unset filter is left off the request rather than sent blank.
   FutureRequest<Success<PagedResult<VideoModel>>> searchVideo({

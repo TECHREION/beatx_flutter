@@ -27,6 +27,7 @@ class AppHeader extends StatelessWidget {
     this.onBack,
     this.showActions = true,
     this.titleTrailing,
+    this.searchHint,
   });
 
   final bool showLogo;
@@ -50,6 +51,36 @@ class AppHeader extends StatelessWidget {
   /// (an artist's verified badge…).
   final Widget? titleTrailing;
 
+  /// Set → the search button becomes a search field filling the space
+  /// between the title and the bell, showing this hint ("Search videos").
+  /// Tapping it opens the screen's search, like the button did.
+  final String? searchHint;
+
+  bool get _searchField => showActions && searchHint != null && !showLogo;
+
+  VoidCallback get _openSearch =>
+      onSearchTap ?? () => Get.to(() => ExploreScreen());
+
+  Widget _title() => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Flexible(
+        child: Text(
+          title ?? '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Color(0xFF40DDEB),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ),
+      if (titleTrailing != null) ...[const SizedBox(width: 6), titleTrailing!],
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -59,51 +90,54 @@ class AppHeader extends StatelessWidget {
         AppSizes.screenHorizontalPadding,
         0,
       ),
-      child: Row(
-        children: [
-          if (onBack != null)
-            _ActionButton(
-              icon: Icons.arrow_back_ios_new_rounded,
-              onTap: onBack!,
-            )
-          else
-            const _ProfileAvatar(),
+      child: LayoutBuilder(
+        builder: (context, constraints) => _row(constraints.maxWidth),
+      ),
+    );
+  }
+
+  /// Avatar, two gaps, the field's gap and the bell, beside a search field.
+  static const _fixedBesideField = 42.0 + 12 + 12 + 10 + 42;
+
+  /// The narrowest the search field gets; a long title is cut short first.
+  static const _minField = 100.0;
+
+  Widget _row(double width) {
+    final titleMax = (width - _fixedBesideField - _minField).clamp(48.0, 130.0);
+    return Row(
+      children: [
+        if (onBack != null)
+          _ActionButton(icon: Icons.arrow_back_ios_new_rounded, onTap: onBack!)
+        else
+          const _ProfileAvatar(),
+        const SizedBox(width: 12),
+        if (showLogo)
+          const AppLogo(height: 42, width: 128)
+        else if (_searchField)
+          // Its own width, capped, so the field gets the rest of the row.
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: titleMax),
+            child: _title(),
+          )
+        else
+          // All the free width, so the buttons sit at the right edge and a
+          // long name is cut short only when it meets them.
+          Expanded(child: _title()),
+        if (_searchField) ...[
           const SizedBox(width: 12),
-          if (showLogo)
-            const AppLogo(height: 42, width: 128)
-          else
-            Flexible(
-              // Most of the free width, so a long name keeps more of itself.
-              flex: 4,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      title ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF40DDEB),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ),
-                  if (titleTrailing != null) ...[
-                    const SizedBox(width: 6),
-                    titleTrailing!,
-                  ],
-                ],
-              ),
-            ),
-          const Spacer(),
+          // Takes the rest of the row.
+          Expanded(
+            child: _SearchField(hint: searchHint!, onTap: _openSearch),
+          ),
+          const SizedBox(width: 10),
+          _NotificationButton(
+            badge: notificationBadge,
+            onTap: onNotificationTap,
+          ),
+        ] else ...[
+          if (showLogo) const Spacer() else const SizedBox(width: 12),
           if (showActions) ...[
-            _ActionButton(
-              icon: Icons.search_rounded,
-              onTap: onSearchTap ?? () => Get.to(() => ExploreScreen()),
-            ),
+            _ActionButton(icon: Icons.search_rounded, onTap: _openSearch),
             const SizedBox(width: 12),
             _NotificationButton(
               badge: notificationBadge,
@@ -111,6 +145,62 @@ class AppHeader extends StatelessWidget {
             ),
           ],
         ],
+      ],
+    );
+  }
+}
+
+// ─── Search Field ─────────────────────────────────────────────────────────────
+
+/// Looks like a search box; tapping it opens the screen's search page, which
+/// has the real input, filters and results.
+class _SearchField extends StatelessWidget {
+  const _SearchField({required this.hint, required this.onTap});
+
+  final String hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: hint,
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.12),
+        shape: StadiumBorder(
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 42,
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                const Icon(
+                  Icons.search_rounded,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    hint,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

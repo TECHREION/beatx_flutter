@@ -1,6 +1,7 @@
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
+import 'liked_videos_controller.dart';
 import '../model/get_stream_url_model.dart';
 import '../model/video_details_model.dart';
 import '../model/video_progress_model.dart';
@@ -122,6 +123,10 @@ class MusicPlayerController extends GetxController {
     result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
       isLiked.value = success.data?.liked ?? isLiked.value;
       likeCount.value = success.data?.likeCount ?? likeCount.value;
+      // Keeps the Watch screen's Liked Videos list and count current.
+      if (Get.isRegistered<LikedVideosController>()) {
+        LikedVideosController.instance.fetch();
+      }
     });
   }
 

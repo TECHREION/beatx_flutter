@@ -543,15 +543,15 @@ class _MixGrid extends StatelessWidget {
             );
           }),
         ),
-        _sized(
-          context,
-          const _MixTile(
-            icon: Icons.add_rounded,
-            title: 'New Mix',
-            subtitle: 'Create',
-            iconColor: Color(0xFFAFAFAF),
-          ),
-        ),
+        // _sized(
+        //   context,
+        //   const _MixTile(
+        //     icon: Icons.add_rounded,
+        //     title: 'New Mix',
+        //     subtitle: 'Create',
+        //     iconColor: Color(0xFFAFAFAF),
+        //   ),
+        // ),
       ],
     );
   }

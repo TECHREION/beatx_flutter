@@ -5,8 +5,10 @@ import '../../../../../core/common/widget/app_header.dart';
 import '../../../../core/common/background_image.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/responsive.dart';
+import '../../controller/liked_videos_controller.dart';
 import '../../controller/watch_controller.dart';
 import '../../model/watch_model.dart';
+import 'liked_videos_screen.dart';
 import 'video_screen.dart';
 import 'video_search_screen.dart';
 
@@ -78,6 +80,8 @@ class WatchScreen extends StatelessWidget {
                               if (controller.featuredVideo != null)
                                 _HeroVideo(video: controller.featuredVideo!),
                               const SizedBox(height: 24),
+                              const _LikedVideosButton(),
+                              const SizedBox(height: 26),
                               const _TrendingHeader(),
                               const SizedBox(height: 8),
                               // One 16:9 thumbnail per row is right on a
@@ -370,6 +374,103 @@ class _VideoTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Way into the user's liked videos, under the featured video — the same
+/// button the Podcasts and Audiobook tabs have for their likes.
+class _LikedVideosButton extends StatelessWidget {
+  const _LikedVideosButton();
+
+  static const _accent = LikedVideosScreen.accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = LikedVideosController.instance;
+
+    return GestureDetector(
+      onTap: () => Get.to(
+        () => const LikedVideosScreen(),
+        transition: Transition.rightToLeft,
+        preventDuplicates: true,
+      ),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF16161A),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _accent.withValues(alpha: 0.22)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _accent.withValues(alpha: 0.15),
+              ),
+              child: const Icon(
+                Icons.favorite_rounded,
+                color: _accent,
+                size: 21,
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Liked Videos',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Everything you have hearted',
+                    style: TextStyle(
+                      color: Color(0xFFAAA5AD),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Obx(() {
+              // Held back until the fetch lands, so it never reads "0" when
+              // it only means the count is not in yet.
+              if (!controller.hasLoaded.value) return const SizedBox.shrink();
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  '${controller.videos.length}',
+                  style: const TextStyle(
+                    color: _accent,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
+                ),
+              );
+            }),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white38,
+              size: 24,
+            ),
+          ],
+        ),
       ),
     );
   }
