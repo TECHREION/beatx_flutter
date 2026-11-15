@@ -3,6 +3,10 @@ import 'dart:ui';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
 import 'package:beatx_flutter/module/home/controller/download_controller.dart';
+import 'package:beatx_flutter/module/watch/controller/video_download_controller.dart';
+import 'package:beatx_flutter/module/home/controller/offline_content_controller.dart';
+import 'package:beatx_flutter/module/podcast/controller/episode_download_controller.dart';
+import 'package:beatx_flutter/module/audiobook/controller/audiobook_download_controller.dart';
 import 'package:beatx_flutter/module/home/controller/home_controller.dart';
 import 'package:beatx_flutter/module/home/controller/liked_songs_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/daily_discover_screen.dart';
@@ -515,15 +519,21 @@ class _MixGrid extends StatelessWidget {
           Obx(() {
             // Local only, so the tile and the screen behind it work offline.
             final downloads = DownloadController.instance;
-            final count = downloads.visibleSongs.length;
+            // Everything saved, songs to audiobooks; the tile is too small
+            // to break it down.
+            int count(OfflineContentController other) =>
+                other.isReady.value ? other.visibleItems.length : 0;
+            final total =
+                downloads.visibleSongs.length +
+                count(VideoDownloadController.instance) +
+                count(EpisodeDownloadController.instance) +
+                count(AudiobookDownloadController.instance);
             return _MixTile(
               icon: Icons.download_for_offline_rounded,
               title: 'Downloads',
-              subtitle: !downloads.isReady.value || count == 0
+              subtitle: !downloads.isReady.value || total == 0
                   ? 'Listen offline'
-                  : count == 1
-                  ? '1 track'
-                  : '$count tracks',
+                  : '$total saved',
               iconColor: const Color(0xFF9BFF4D),
               onTap: () => Get.to(
                 () => const DownloadsScreen(),

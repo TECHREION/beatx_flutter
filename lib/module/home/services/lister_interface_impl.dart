@@ -25,13 +25,14 @@ final class ListenInterfaceImpl extends ListenInterface {
     required String songId,
     required String deviceId,
     required String deviceName,
+    String contentType = 'song',
   }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.post(
           ApiEndpoints.downloads,
           data: {
-            'contentType': 'song',
+            'contentType': contentType,
             'contentId': songId,
             'deviceId': deviceId,
             'deviceName': deviceName,

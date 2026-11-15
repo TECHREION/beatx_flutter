@@ -28,6 +28,19 @@ class DownloadedSong {
   final String genre;
   final DateTime downloadedAt;
 
+  /// The item this file belongs to when one download holds several files:
+  /// the audiobook a chapter is part of. Empty when the file is the item.
+  final String groupId;
+
+  /// That item's title, e.g. the audiobook's.
+  final String groupTitle;
+
+  /// The file's place in its item (chapter number), or 0.
+  final int trackNumber;
+
+  /// The item this file is saved under: [groupId], or its own [id].
+  String get itemId => groupId.isEmpty ? id : groupId;
+
   const DownloadedSong({
     required this.id,
     this.downloadId = '',
@@ -40,6 +53,9 @@ class DownloadedSong {
     this.durationMs = 0,
     this.genre = '',
     required this.downloadedAt,
+    this.groupId = '',
+    this.groupTitle = '',
+    this.trackNumber = 0,
   });
 
   factory DownloadedSong.fromJson(Map<String, dynamic> json) {
@@ -57,6 +73,9 @@ class DownloadedSong {
       downloadedAt:
           DateTime.tryParse(json['downloadedAt']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      groupId: json['groupId']?.toString() ?? '',
+      groupTitle: json['groupTitle']?.toString() ?? '',
+      trackNumber: (json['trackNumber'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -72,6 +91,9 @@ class DownloadedSong {
     durationMs: durationMs,
     genre: genre,
     downloadedAt: downloadedAt,
+    groupId: groupId,
+    groupTitle: groupTitle,
+    trackNumber: trackNumber,
   );
 
   Map<String, dynamic> toJson() {
@@ -87,6 +109,9 @@ class DownloadedSong {
       'durationMs': durationMs,
       'genre': genre,
       'downloadedAt': downloadedAt.toIso8601String(),
+      if (groupId.isNotEmpty) 'groupId': groupId,
+      if (groupTitle.isNotEmpty) 'groupTitle': groupTitle,
+      if (trackNumber != 0) 'trackNumber': trackNumber,
     };
   }
 }

@@ -41,8 +41,16 @@ class SongDownloadException implements Exception {
 ///   covers/<songId>.<ext>
 /// ```
 class SongDownloadService {
-  SongDownloadService({Dio? dio, Future<Directory> Function()? baseDirectory})
-    : _dio =
+  /// [folder] names the directory under [baseDirectory]; [video] saves
+  /// video files rather than audio (the same flow, other file types).
+  SongDownloadService({
+    Dio? dio,
+    Future<Directory> Function()? baseDirectory,
+    String folder = 'downloads',
+    bool video = false,
+  }) : _folder = folder,
+       _video = video,
+       _dio =
           dio ??
           Dio(
             BaseOptions(
@@ -58,7 +66,8 @@ class SongDownloadService {
   final Dio _dio;
   final Future<Directory> Function() _baseDirectory;
 
-  static const _folder = 'downloads';
+  final String _folder;
+  final bool _video;
   static const _coversFolder = 'covers';
   static const _indexFile = 'index.json';
   static const _deviceFile = 'device.json';
@@ -77,6 +86,16 @@ class SongDownloadService {
     'mp4',
   };
   static const _imageExtensions = {'jpg', 'jpeg', 'png', 'webp', 'gif'};
+
+  static const _videoExtensions = {'mp4', 'm4v', 'mov', 'webm', 'mkv'};
+
+  static const _videoContentTypes = {
+    'video/mp4': 'mp4',
+    'video/x-m4v': 'm4v',
+    'video/quicktime': 'mov',
+    'video/webm': 'webm',
+    'video/x-matroska': 'mkv',
+  };
 
   static const _audioContentTypes = {
     'audio/mpeg': 'mp3',
@@ -252,8 +271,10 @@ class SongDownloadService {
   }) async {
     final uri = Uri.tryParse(url);
     if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) {
-      throw const SongDownloadException(
-        'This song has no valid audio link to download.',
+      throw SongDownloadException(
+        _video
+            ? 'This video has no valid link to download.'
+            : 'This song has no valid audio link to download.',
       );
     }
 
@@ -292,11 +313,18 @@ class SongDownloadService {
         );
       }
 
-      final extension = audioExtension(
-        url: url,
-        contentType: response.headers.value(Headers.contentTypeHeader),
-        fallback: fallbackExtension,
-      );
+      final contentType = response.headers.value(Headers.contentTypeHeader);
+      final extension = _video
+          ? videoExtension(
+              url: url,
+              contentType: contentType,
+              fallback: fallbackExtension,
+            )
+          : audioExtension(
+              url: url,
+              contentType: contentType,
+              fallback: fallbackExtension,
+            );
       final fileName = '$songId.$extension';
 
       // A copy saved earlier under another extension would otherwise be left
@@ -402,6 +430,30 @@ class SongDownloadService {
     return 'mp3';
   }
 
+  /// Like [audioExtension], for a video: the url's extension, then the
+  /// content type, then [fallback], then mp4.
+  static String videoExtension({
+    required String url,
+    String? contentType,
+    String? fallback,
+  }) {
+    final fromPath = _extensionFromPath(
+      Uri.tryParse(url)?.path ?? '',
+      _videoExtensions,
+    );
+    if (fromPath != null) return fromPath;
+
+    final type = contentType?.split(';').first.trim().toLowerCase();
+    final fromType = _videoContentTypes[type];
+    if (fromType != null) return fromType;
+
+    final normalized = fallback?.trim().toLowerCase();
+    if (normalized != null && _videoExtensions.contains(normalized)) {
+      return normalized;
+    }
+    return 'mp4';
+  }
+
   static String? _extensionFromPath(String path, Set<String> allowed) {
     final name = path.split('/').last;
     final dot = name.lastIndexOf('.');
@@ -436,7 +488,7 @@ class SongDownloadService {
         }
         if (status == 404) {
           return const SongDownloadException(
-            "This song's audio could not be found.",
+            'The file could not be found on the server.',
           );
         }
         if (status >= 500) {

@@ -63,6 +63,9 @@ import '../module/auth/controller/login_controller.dart';
 import '../module/onbording/onboarding1.dart';
 import '../module/audiobook/controller/liked_audiobooks_controller.dart';
 import '../module/home/controller/download_controller.dart';
+import '../module/watch/controller/video_download_controller.dart';
+import '../module/podcast/controller/episode_download_controller.dart';
+import '../module/audiobook/controller/audiobook_download_controller.dart';
 import '../module/home/controller/liked_songs_controller.dart';
 import '../module/podcast/controller/liked_podcasts_controller.dart';
 import '../module/profile/controller/get_profile_controller.dart';
@@ -177,7 +180,15 @@ class AppManager extends GetxController {
 
       // Not awaited: offline this fails quietly, and it must not hold up
       // opening the app.
-      unawaited(DownloadController.instance.syncWithServer());
+      // The saved videos, episodes and audiobooks are read first so their
+      // ids join the check-in.
+      unawaited(
+        Future.wait([
+          VideoDownloadController.instance.ready(),
+          EpisodeDownloadController.instance.ready(),
+          AudiobookDownloadController.instance.ready(),
+        ]).then((_) => DownloadController.instance.syncWithServer()),
+      );
 
       // Taken before the splash gate: a fresh sign-in reports whether the
       // listener still has to pick artists/genres.

@@ -4,7 +4,10 @@ import 'package:get/get.dart';
 
 import '../../../../core/notifiers/snackbar_notifier.dart';
 import '../../../audiobook/presentation/widget/book_cover.dart';
+import '../../../home/controller/download_controller.dart';
+import '../../../home/presentation/widgets/offline_download_button.dart';
 import '../../controller/episode_details_controller.dart';
+import '../../controller/episode_download_controller.dart';
 import '../../model/episodes_model.dart' as episodes_model;
 import '../../model/podcast_home_model.dart';
 
@@ -99,6 +102,24 @@ class EpisodeDetailsScreen extends StatelessWidget {
                       isCompleted: controller.isCompleted,
                       isLoading: controller.isStreamLoading,
                       onPlay: () => _play(context, controller),
+                      download: OfflineDownloadButton(
+                        controller: EpisodeDownloadController.instance,
+                        itemId: episode.id,
+                        title: episode.title,
+                        iconSize: 22,
+                        accent: const Color(0xFF40DDEB),
+                        frame: _OutlineIconButton.frame,
+                        request: DownloadRequest(
+                          songId: episode.id,
+                          title: episode.title,
+                          artist: episode.podcastId.title,
+                          coverUrl:
+                              episode.coverUrl ??
+                              episode.podcastId.coverUrl ??
+                              '',
+                          durationMs: controller.durationMs,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 26),
@@ -424,12 +445,14 @@ class _PlayActionRow extends StatelessWidget {
     required this.isCompleted,
     required this.isLoading,
     required this.onPlay,
+    required this.download,
   });
 
   final Duration resumePosition;
   final bool isCompleted;
   final bool isLoading;
   final VoidCallback onPlay;
+  final Widget download;
 
   String get _label {
     if (isCompleted) return 'Play Again';
@@ -476,7 +499,7 @@ class _PlayActionRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        _OutlineIconButton(icon: Icons.download_rounded, onTap: () {}),
+        download,
         const SizedBox(width: 10),
         _OutlineIconButton(icon: Icons.share_rounded, onTap: () {}),
       ],
@@ -490,8 +513,15 @@ class _OutlineIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context) {
+  /// The same circle around the download button's icon.
+  static Widget frame(
+    BuildContext context, {
+    required Widget icon,
+    required String semantics,
+    VoidCallback? onTap,
+  }) => Semantics(button: true, label: semantics, child: _circle(icon, onTap));
+
+  static Widget _circle(Widget child, VoidCallback? onTap) {
     return Material(
       color: Colors.transparent,
       shape: const CircleBorder(side: BorderSide(color: Colors.white24)),
@@ -499,14 +529,14 @@ class _OutlineIconButton extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: SizedBox(
-          width: 54,
-          height: 54,
-          child: Icon(icon, color: Colors.white, size: 22),
-        ),
+        child: SizedBox(width: 54, height: 54, child: Center(child: child)),
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) =>
+      _circle(Icon(icon, color: Colors.white, size: 22), onTap);
 }
 
 // ─── About section ────────────────────────────────────────────────────────

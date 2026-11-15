@@ -1,5 +1,6 @@
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
 import 'package:beatx_flutter/module/watch/model/get_stream_url_model.dart';
@@ -10,6 +11,8 @@ import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/theme/responsive.dart';
+import '../../controller/video_download_controller.dart';
+import '../widgets/video_download_button.dart';
 
 String _formatDuration(int durationMs) {
   final totalSeconds = (durationMs / 1000).round();
@@ -43,13 +46,29 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   void initState() {
     super.initState();
     controller.loadVideo(widget.videoId);
+    unawaited(_startPlayback(widget.videoId));
     _streamUrlWorker = ever<VideoStreamUrlModel?>(controller.streamUrlData, (
       streamUrlData,
     ) {
       if (streamUrlData != null && streamUrlData.streamUrl.isNotEmpty) {
-        _initializePlayer(streamUrlData.streamUrl);
+        unawaited(_startPlayback(controller.currentVideoId ?? ''));
       }
     });
+  }
+
+  /// Plays [videoId] from its downloaded file when there is one — which is
+  /// also what lets it play with no connection — else from the stream url
+  /// once that has arrived.
+  Future<void> _startPlayback(String videoId) async {
+    if (videoId.isEmpty) return;
+    final local = await VideoDownloadController.instance.playablePath(videoId);
+    if (!mounted || controller.currentVideoId != videoId) return;
+    if (local != null) {
+      _initializePlayer(local);
+      return;
+    }
+    final url = controller.streamUrlData.value?.streamUrl ?? '';
+    if (url.isNotEmpty) _initializePlayer(url);
   }
 
   /// Switches the player to [videoId] without leaving the screen.
@@ -73,7 +92,9 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
       );
     }
     setState(() {});
-    await controller.loadVideo(videoId);
+    final loading = controller.loadVideo(videoId);
+    unawaited(_startPlayback(videoId));
+    await loading;
   }
 
   Future<void> _teardownPlayer() async {
@@ -137,9 +158,12 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     scheduleMicrotask(() => _playVideo(next.id));
   }
 
-  void _initializePlayer(String streamUrl) {
+  /// [source] is a stream url, or the absolute path of a downloaded file.
+  void _initializePlayer(String source) {
     if (_videoController != null) return;
-    final video = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
+    final video = source.startsWith('/')
+        ? VideoPlayerController.file(File(source))
+        : VideoPlayerController.networkUrl(Uri.parse(source));
     _videoController = video;
     video
       ..addListener(_onVideoTick)
@@ -297,9 +321,9 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                                 icon: Icons.share,
                                 title: 'SHARE',
                               ),
-                              const ActionCard(
-                                icon: Icons.download,
-                                title: 'GET',
+                              VideoDownloadButton(
+                                videoId: controller.currentVideoId ?? '',
+                                details: controller.details.value,
                               ),
                               const ActionCard(
                                 icon: Icons.playlist_add,

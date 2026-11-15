@@ -87,6 +87,32 @@ class DownloadController extends GetxController {
       isLocked.value ? const [] : songs.toList();
 
   final _states = <String, SongDownloadState>{};
+
+  /// Other downloads kept on this device under the same id (videos,
+  /// episodes, audiobooks): their download ids go into the same check-in,
+  /// and the ones the server says to remove are handed back to them.
+  final _others =
+      <
+        Object,
+        ({
+          List<String> Function() ids,
+          Future<void> Function(Set<String> removed) onRemoved,
+        })
+      >{};
+
+  /// Joins [owner]'s downloads to the check-in. Registering again replaces.
+  void addOtherDownloads(
+    Object owner, {
+    required List<String> Function() ids,
+    required Future<void> Function(Set<String> removed) onRemoved,
+  }) => _others[owner] = (ids: ids, onRemoved: onRemoved);
+
+  /// This install's id, shared by every kind of download so the account
+  /// counts it as one device.
+  Future<String> deviceId() => _service.deviceId();
+
+  /// How this install is named on the website's device list.
+  static String get deviceName => _deviceName;
   Future<void>? _loading;
   Future<void>? _syncing;
 
@@ -150,6 +176,7 @@ class DownloadController extends GetxController {
         downloadIds: [
           for (final song in songs)
             if (song.downloadId.isNotEmpty) song.downloadId,
+          for (final other in _others.values) ...other.ids(),
         ],
       );
       final sync = result.fold((_) => null, (success) => success.data);
@@ -159,6 +186,11 @@ class DownloadController extends GetxController {
         for (final song in songs.toList()) {
           if (removed.contains(song.downloadId)) {
             await _forget(song, tellServer: false);
+          }
+        }
+        if (removed.isNotEmpty) {
+          for (final other in _others.values.toList()) {
+            await other.onRemoved(removed);
           }
         }
         await _service.saveValidUntil(sync.validUntil);

@@ -1,12 +1,16 @@
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
+import 'package:dartz/dartz.dart' hide State;
 import 'package:get/get.dart';
+
+import '../../../core/helpers/typedefs.dart';
 
 import '../model/episodes_details.dart';
 import '../model/episodes_model.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
+import 'episode_download_controller.dart';
 import 'podcast_like_controller.dart';
 import 'save_progress_controller.dart';
 
@@ -163,10 +167,19 @@ class EpisodeDetailsController extends GetxController {
     loadingEpisodeId.value = episodeId;
     errorMessage.value = '';
 
-    final result = await _podcastInterface().getStreamUrl(episodeId);
+    // A downloaded episode plays from the device, with or without internet.
+    final saved = await EpisodeDownloadController.instance.playablePath(
+      episodeId,
+    );
+    final Request<String> result = saved != null
+        ? Right(saved)
+        : (await _podcastInterface().getStreamUrl(
+            episodeId,
+          )).map((success) => success.data?.streamUrl ?? '');
 
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
-      final streamUrl = success.data?.streamUrl ?? '';
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (
+      streamUrl,
+    ) {
       if (streamUrl.isEmpty) {
         errorMessage.value = 'Stream URL is unavailable right now.';
         return;

@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/notifiers/snackbar_notifier.dart';
+import '../../../home/controller/download_controller.dart';
+import '../../../home/presentation/widgets/offline_download_button.dart';
 import '../../controller/audio_book_details_controller.dart';
+import '../../controller/audiobook_download_controller.dart';
 import '../../model/audio_book_details_model.dart' as details_model;
 import '../../model/audiobook_model.dart';
 import '../widget/book_cover.dart';
@@ -304,7 +307,11 @@ class _ActionPanel extends StatelessWidget {
                               ),
                             )
                           : const Icon(Icons.play_arrow_rounded, size: 28),
-                      label: Text(progress > 0 ? 'Resume' : 'Listen Now'),
+                      label: Text(
+                        progress > 0 ? 'Resume' : 'Listen Now',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF40DDEB),
                         foregroundColor: const Color(0xFF111315),
@@ -324,9 +331,25 @@ class _ActionPanel extends StatelessWidget {
                   }),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
+              OfflineDownloadButton(
+                controller: AudiobookDownloadController.instance,
+                itemId: book.id,
+                title: book.title,
+                iconSize: 22,
+                accent: const Color(0xFF40DDEB),
+                frame: _downloadFrame,
+                request: DownloadRequest(
+                  songId: book.id,
+                  title: book.title,
+                  artist: book.author,
+                  coverUrl: book.coverUrl,
+                  genre: book.genreName,
+                ),
+              ),
+              const SizedBox(width: 12),
               SizedBox(
-                width: 92,
+                width: 54,
                 height: 54,
                 child: Obx(() {
                   final liked = controller.isLiked.value;
@@ -341,9 +364,8 @@ class _ActionPanel extends StatelessWidget {
                       side: BorderSide(
                         color: liked ? const Color(0xFFFF4D6D) : Colors.white38,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
+                      padding: EdgeInsets.zero,
+                      shape: const CircleBorder(),
                     ),
                     child: busy
                         ? const SizedBox(
@@ -368,6 +390,29 @@ class _ActionPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The download button's outline circle, matching the like button beside it.
+Widget _downloadFrame(
+  BuildContext context, {
+  required Widget icon,
+  required String semantics,
+  VoidCallback? onTap,
+}) {
+  return Semantics(
+    button: true,
+    label: semantics,
+    child: Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(side: BorderSide(color: Colors.white38)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(width: 54, height: 54, child: Center(child: icon)),
+      ),
+    ),
+  );
 }
 
 class _RatingsBlock extends StatelessWidget {
@@ -605,6 +650,22 @@ class _ChapterRow extends StatelessWidget {
             ),
           ),
         ),
+        // Saved with the book, so it plays without internet.
+        Obx(() {
+          final saved = AudiobookDownloadController.instance.visibleFiles.any(
+            (file) => file.id == chapter.id,
+          );
+          if (!saved) return const SizedBox.shrink();
+          return const Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Icon(
+              Icons.download_done_rounded,
+              color: OfflineDownloadButton.done,
+              size: 18,
+              semanticLabel: 'Downloaded',
+            ),
+          );
+        }),
         const SizedBox(width: 12),
         Obx(() {
           final isLoading = controller.isStreamLoading.value;

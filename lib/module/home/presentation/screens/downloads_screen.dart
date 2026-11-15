@@ -10,10 +10,13 @@ import '../../controller/home_controller.dart';
 import '../../model/downloaded_song_model.dart';
 import '../widgets/download_actions.dart';
 import 'liked_songs_screen.dart';
+import '../../../audiobook/presentation/widget/downloaded_audiobook_list.dart';
+import '../../../podcast/presentation/widget/downloaded_episode_list.dart';
+import '../../../watch/presentation/widgets/downloaded_video_list.dart';
 
-/// Songs saved on this device. Reads only local storage, so it works with no
-/// connection at all.
-class DownloadsScreen extends StatelessWidget {
+/// Songs, videos, podcast episodes and audiobooks saved on this device. Reads only local storage, so it
+/// works with no connection at all.
+class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
 
   static const accent = LikedSongsScreen.accent;
@@ -46,6 +49,18 @@ class DownloadsScreen extends StatelessWidget {
   }
 
   @override
+  State<DownloadsScreen> createState() => _DownloadsScreenState();
+}
+
+class _DownloadsScreenState extends State<DownloadsScreen> {
+  static const accent = DownloadsScreen.accent;
+  static const _play = DownloadsScreen._play;
+  static const formatBytes = DownloadsScreen.formatBytes;
+
+  /// 0 songs, 1 videos, 2 podcasts, 3 audiobooks.
+  int _tab = 0;
+
+  @override
   Widget build(BuildContext context) {
     final ctrl = DownloadController.instance;
 
@@ -56,84 +71,184 @@ class DownloadsScreen extends StatelessWidget {
           children: [
             const LikedHeader(
               title: 'Downloads',
-              subtitle: 'Songs saved for listening offline',
+              subtitle: 'Saved on this device for offline',
               icon: Icons.download_done_rounded,
               iconColor: accent,
             ),
             const SizedBox(height: 18),
-            Obx(
-              () => LikedSummaryStrip(
-                icon: Icons.download_rounded,
-                accent: accent,
-                count: ctrl.isReady.value ? ctrl.visibleSongs.length : null,
-                noun: 'Song',
-                onTap: ctrl.visibleSongs.isEmpty
-                    ? null
-                    : () => _play(ctrl.visibleSongs.first),
-              ),
+            _DownloadsTabs(
+              selected: _tab,
+              accent: accent,
+              onSelected: (tab) => setState(() => _tab = tab),
             ),
-            Obx(
-              () => ctrl.visibleSongs.isEmpty
-                  ? const SizedBox(height: 16)
-                  : Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.sd_storage_outlined,
-                            color: LikedPalette.muted,
-                            size: 15,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${formatBytes(ctrl.totalBytes)} on this device',
-                            style: const TextStyle(
+            const SizedBox(height: 14),
+            if (_tab == 1)
+              const Expanded(
+                child: DownloadedVideoList(
+                  accent: accent,
+                  formatBytes: DownloadsScreen.formatBytes,
+                ),
+              )
+            else if (_tab == 2)
+              const Expanded(
+                child: DownloadedEpisodeList(
+                  accent: accent,
+                  formatBytes: DownloadsScreen.formatBytes,
+                ),
+              )
+            else if (_tab == 3)
+              const Expanded(
+                child: DownloadedAudiobookList(
+                  accent: accent,
+                  formatBytes: DownloadsScreen.formatBytes,
+                ),
+              )
+            else ...[
+              Obx(
+                () => LikedSummaryStrip(
+                  icon: Icons.download_rounded,
+                  accent: accent,
+                  count: ctrl.isReady.value ? ctrl.visibleSongs.length : null,
+                  noun: 'Song',
+                  onTap: ctrl.visibleSongs.isEmpty
+                      ? null
+                      : () => _play(ctrl.visibleSongs.first),
+                ),
+              ),
+              Obx(
+                () => ctrl.visibleSongs.isEmpty
+                    ? const SizedBox(height: 16)
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.sd_storage_outlined,
                               color: LikedPalette.muted,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              size: 15,
                             ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${formatBytes(ctrl.totalBytes)} on this device',
+                              style: const TextStyle(
+                                color: LikedPalette.muted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+              Expanded(
+                child: Obx(() {
+                  if (!ctrl.isReady.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: accent),
+                    );
+                  }
+
+                  final songs = ctrl.visibleSongs;
+                  if (songs.isEmpty) {
+                    return SingleChildScrollView(
+                      child: LikedEmptyState(
+                        message: '',
+                        emptyTitle: ctrl.isLocked.value
+                            ? 'Connect to keep listening'
+                            : 'No downloads yet',
+                        emptyBody: ctrl.isLocked.value
+                            ? 'Your downloads are safe. Go online and reopen '
+                                  'BeatX to use them again.'
+                            : 'Tap DOWNLOAD while a song is playing to keep it '
+                                  'on this device and listen without internet.',
+                        accent: accent,
+                        emptyIcon: Icons.download_for_offline_outlined,
+                        onRetry: () {},
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    itemCount: songs.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (_, index) =>
+                        _DownloadRow(song: songs[index], position: index + 1),
+                  );
+                }),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Songs | Videos | Podcasts | Audiobooks.
+class _DownloadsTabs extends StatelessWidget {
+  const _DownloadsTabs({
+    required this.selected,
+    required this.accent,
+    required this.onSelected,
+  });
+
+  final int selected;
+  final Color accent;
+  final ValueChanged<int> onSelected;
+
+  static const _labels = ['Songs', 'Videos', 'Podcasts', 'Audiobooks'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: LikedPalette.card,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            for (var i = 0; i < _labels.length; i++)
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  selected: selected == i,
+                  child: GestureDetector(
+                    onTap: () => onSelected(i),
+                    behavior: HitTestBehavior.opaque,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected == i
+                            ? accent.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      // Four labels share a narrow phone's width.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _labels[i],
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: selected == i ? accent : LikedPalette.muted,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
                           ),
-                        ],
+                        ),
                       ),
                     ),
-            ),
-            Expanded(
-              child: Obx(() {
-                if (!ctrl.isReady.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: accent),
-                  );
-                }
-
-                final songs = ctrl.visibleSongs;
-                if (songs.isEmpty) {
-                  return SingleChildScrollView(
-                    child: LikedEmptyState(
-                      message: '',
-                      emptyTitle: ctrl.isLocked.value
-                          ? 'Connect to keep listening'
-                          : 'No downloads yet',
-                      emptyBody: ctrl.isLocked.value
-                          ? 'Your downloads are safe. Go online and reopen '
-                                'BeatX to use them again.'
-                          : 'Tap DOWNLOAD while a song is playing to keep it '
-                                'on this device and listen without internet.',
-                      accent: accent,
-                      emptyIcon: Icons.download_for_offline_outlined,
-                      onRetry: () {},
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                  itemCount: songs.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) =>
-                      _DownloadRow(song: songs[index], position: index + 1),
-                );
-              }),
-            ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

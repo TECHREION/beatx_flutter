@@ -1,11 +1,15 @@
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
+import 'package:dartz/dartz.dart' hide State;
 import 'package:get/get.dart';
+
+import '../../../core/helpers/typedefs.dart';
 
 import '../model/audio_book_details_model.dart';
 import '../services/audio_book_interface.dart';
 import '../services/audio_book_interface_impl.dart';
+import 'audiobook_download_controller.dart';
 import 'audiobook_like_controller.dart';
 import 'liked_audiobooks_controller.dart';
 
@@ -133,13 +137,20 @@ class AudioBookDetailsController extends GetxController {
     isStreamLoading.value = true;
     errorMessage.value = '';
 
-    final result = await _audioBookInterface().audiobookStreamUrl(
-      audiobookId,
+    // A downloaded chapter plays from the device, with or without internet.
+    final saved = await AudiobookDownloadController.instance.playablePath(
       chapterId,
     );
+    final Request<String> result = saved != null
+        ? Right(saved)
+        : (await _audioBookInterface().audiobookStreamUrl(
+            audiobookId,
+            chapterId,
+          )).map((success) => success.data?.streamUrl ?? '');
 
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
-      final streamUrl = success.data?.streamUrl ?? '';
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (
+      streamUrl,
+    ) {
       if (streamUrl.isEmpty) {
         errorMessage.value = 'Stream URL is unavailable right now.';
         return;

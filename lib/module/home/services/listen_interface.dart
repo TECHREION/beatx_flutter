@@ -22,10 +22,14 @@ abstract base class ListenInterface extends BaseRepository {
 
   /// Registers [songId] as downloaded on this device and returns a fresh link
   /// to its file. Calling it again for the same song and device refreshes it.
+  ///
+  /// [contentType] is `song` or `video` (`POST /downloads` takes both); for a
+  /// video, [songId] is the video's id.
   FutureRequest<Success<SongDownloadGrant>> createSongDownload({
     required String songId,
     required String deviceId,
     required String deviceName,
+    String contentType = 'song',
   });
   FutureRequest<Success<void>> reportDownloadStatus(
     String downloadId, {

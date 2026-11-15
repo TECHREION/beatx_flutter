@@ -35,6 +35,7 @@ final class _FakeListen extends ListenInterface {
     required String songId,
     required String deviceId,
     required String deviceName,
+    String contentType = 'song',
   }) async {
     downloadRequests++;
     if (offline) return _noInternet();
