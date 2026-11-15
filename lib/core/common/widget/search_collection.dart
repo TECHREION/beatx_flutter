@@ -190,8 +190,7 @@ class SearchGenreBar extends StatelessWidget {
 
     return Obx(
       () => _bar([
-        for (final genre in genres.genres)
-          (id: genre.id, label: genre.name),
+        for (final genre in genres.genres) (id: genre.id, label: genre.name),
       ]),
     );
   }
@@ -547,31 +546,31 @@ class SearchResultsList extends StatelessWidget {
       child: ContentWidth(
         padded: false,
         child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: itemCount + 1,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          if (index == itemCount) {
-            return isLoadingMore
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Center(
-                      child: SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: accent,
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: itemCount + 1,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            if (index == itemCount) {
+              return isLoadingMore
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Center(
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: accent,
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : const SizedBox(height: 12);
-          }
+                    )
+                  : const SizedBox(height: 12);
+            }
 
-          return itemBuilder(context, index);
-        },
+            return itemBuilder(context, index);
+          },
         ),
       ),
     );

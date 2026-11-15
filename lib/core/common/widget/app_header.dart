@@ -26,6 +26,7 @@ class AppHeader extends StatelessWidget {
     this.notificationBadge,
     this.onBack,
     this.showActions = true,
+    this.titleTrailing,
   });
 
   final bool showLogo;
@@ -44,6 +45,10 @@ class AppHeader extends StatelessWidget {
   /// False drops the search and notification buttons, for a page that is
   /// about one thing (an artist's profile…).
   final bool showActions;
+
+  /// Shown right after [title], kept beside it when the title is cut short
+  /// (an artist's verified badge…).
+  final Widget? titleTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -68,16 +73,29 @@ class AppHeader extends StatelessWidget {
             const AppLogo(height: 42, width: 128)
           else
             Flexible(
-              child: Text(
-                title ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xFF40DDEB),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                ),
+              // Most of the free width, so a long name keeps more of itself.
+              flex: 4,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      title ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF40DDEB),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ),
+                  if (titleTrailing != null) ...[
+                    const SizedBox(width: 6),
+                    titleTrailing!,
+                  ],
+                ],
               ),
             ),
           const Spacer(),

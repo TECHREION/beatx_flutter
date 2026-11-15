@@ -37,20 +37,24 @@ class _FloatingPlayerState extends State<FloatingPlayer>
     // playCount increments on every play() call — fires even when the same
     // song is replayed after dismissal (avoids the equality-check race condition
     // that broke the audioAsset-based ever() listener).
-    _workers.add(ever(_ctrl.playCount, (_) {
-      if (!mounted) return;
-      setState(() {
-        _show = true;
-        _dragX = 0;
-        _dismissing = false;
-      });
-    }));
+    _workers.add(
+      ever(_ctrl.playCount, (_) {
+        if (!mounted) return;
+        setState(() {
+          _show = true;
+          _dragX = 0;
+          _dismissing = false;
+        });
+      }),
+    );
 
     // Hide only when the controller is fully stopped (title cleared).
-    _workers.add(ever(_ctrl.title, (String t) {
-      if (!mounted) return;
-      if (t.isEmpty && _show && !_dismissing) setState(() => _show = false);
-    }));
+    _workers.add(
+      ever(_ctrl.title, (String t) {
+        if (!mounted) return;
+        if (t.isEmpty && _show && !_dismissing) setState(() => _show = false);
+      }),
+    );
   }
 
   @override
@@ -72,8 +76,7 @@ class _FloatingPlayerState extends State<FloatingPlayer>
 
     final velocity = d.velocity.pixelsPerSecond.dx;
     final screenW = MediaQuery.of(context).size.width;
-    final shouldDismiss =
-        _dragX.abs() > screenW * 0.3 || velocity.abs() > 700;
+    final shouldDismiss = _dragX.abs() > screenW * 0.3 || velocity.abs() > 700;
 
     if (shouldDismiss) {
       setState(() => _dismissing = true);
@@ -83,8 +86,10 @@ class _FloatingPlayerState extends State<FloatingPlayer>
 
       _animCtrl.reset();
       void listener() {
-        if (mounted) setState(() => _dragX = startX + (endX - startX) * _animCtrl.value);
+        if (mounted)
+          setState(() => _dragX = startX + (endX - startX) * _animCtrl.value);
       }
+
       _animCtrl.addListener(listener);
       await _animCtrl.animateTo(1, curve: Curves.easeOut);
       _animCtrl.removeListener(listener);
@@ -103,6 +108,7 @@ class _FloatingPlayerState extends State<FloatingPlayer>
       void listener() {
         if (mounted) setState(() => _dragX = startX * (1 - _animCtrl.value));
       }
+
       _animCtrl.addListener(listener);
       await _animCtrl.animateTo(1, curve: Curves.easeOut);
       _animCtrl.removeListener(listener);
@@ -127,8 +133,8 @@ class _FloatingPlayerState extends State<FloatingPlayer>
   Widget _buildPill() {
     final progress = _ctrl.duration.value.inMilliseconds > 0
         ? (_ctrl.position.value.inMilliseconds /
-                _ctrl.duration.value.inMilliseconds)
-            .clamp(0.0, 1.0)
+                  _ctrl.duration.value.inMilliseconds)
+              .clamp(0.0, 1.0)
         : 0.0;
 
     return Padding(
@@ -150,8 +156,10 @@ class _FloatingPlayerState extends State<FloatingPlayer>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       // Left side — tap to open PlayerScreen
@@ -195,8 +203,9 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.55),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.55,
+                                        ),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                         letterSpacing: 0,
@@ -217,9 +226,14 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                             onPressed: () {},
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
-                                minWidth: 32, minHeight: 32),
-                            icon: const Icon(Icons.skip_previous_rounded,
-                                color: Colors.white, size: 24),
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            icon: const Icon(
+                              Icons.skip_previous_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                           IconButton(
                             onPressed: () => _ctrl.isPlaying.value
@@ -227,7 +241,9 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                                 : _ctrl.resume(),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
-                                minWidth: 36, minHeight: 36),
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
                             icon: Icon(
                               _ctrl.isPlaying.value
                                   ? Icons.pause_rounded
@@ -240,9 +256,14 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                             onPressed: () {},
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
-                                minWidth: 32, minHeight: 32),
-                            icon: const Icon(Icons.skip_next_rounded,
-                                color: Colors.white, size: 24),
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            icon: const Icon(
+                              Icons.skip_next_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                         ],
                       ),
@@ -252,13 +273,13 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                 // Progress strip
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(50)),
+                    bottom: Radius.circular(50),
+                  ),
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 3,
                     backgroundColor: Colors.white.withValues(alpha: 0.12),
-                    valueColor:
-                        const AlwaysStoppedAnimation(Color(0xFF64FF8F)),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFF64FF8F)),
                   ),
                 ),
               ],
@@ -297,12 +318,11 @@ class _FloatingPlayerState extends State<FloatingPlayer>
   }
 
   Widget _artworkFallback() => Container(
-        color: const Color(0xFF2A2A2D),
-        child: const Icon(
-          Icons.music_note_rounded,
-          color: Colors.white54,
-          size: 20,
-        ),
-      );
-
+    color: const Color(0xFF2A2A2D),
+    child: const Icon(
+      Icons.music_note_rounded,
+      color: Colors.white54,
+      size: 20,
+    ),
+  );
 }

@@ -21,7 +21,8 @@ class EmailVerificationScreen extends StatefulWidget {
   final OtpMode mode;
 
   @override
-  State<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  State<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
@@ -50,8 +51,14 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
     final snackbar = SnackbarNotifier(context: context);
     _controller = widget.mode == OtpMode.emailVerification
-        ? VerifyEmailOtpController(email: widget.email, snackbarNotifier: snackbar)
-        : VerifyForgetPasswordOtpController(email: widget.email, snackbarNotifier: snackbar);
+        ? VerifyEmailOtpController(
+            email: widget.email,
+            snackbarNotifier: snackbar,
+          )
+        : VerifyForgetPasswordOtpController(
+            email: widget.email,
+            snackbarNotifier: snackbar,
+          );
     _controllerReady = true;
   }
 

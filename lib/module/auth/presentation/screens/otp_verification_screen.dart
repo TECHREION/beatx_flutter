@@ -51,8 +51,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     final snackbar = SnackbarNotifier(context: context);
     _controller = widget.mode == OtpMode.emailVerification
-        ? VerifyEmailOtpController(email: widget.email, snackbarNotifier: snackbar)
-        : VerifyForgetPasswordOtpController(email: widget.email, snackbarNotifier: snackbar);
+        ? VerifyEmailOtpController(
+            email: widget.email,
+            snackbarNotifier: snackbar,
+          )
+        : VerifyForgetPasswordOtpController(
+            email: widget.email,
+            snackbarNotifier: snackbar,
+          );
     _controllerReady = true;
   }
 

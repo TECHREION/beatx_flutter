@@ -150,8 +150,10 @@ class _LoginCard extends StatelessWidget {
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFCFCBD1),
                     minimumSize: Size.zero,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: const Text(
@@ -224,46 +226,52 @@ class _LoginCard extends StatelessWidget {
             const SizedBox(height: 19),
             // New accounts can be closed server-side; signing in is unaffected.
             Obx(
-              () => !AppAvailabilityController
+              () =>
+                  !AppAvailabilityController
                       .instance
                       .settings
                       .value
                       .allowNewRegistrations
                   ? const SizedBox.shrink()
                   : TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFCFCBD1),
-                    minimumSize: Size.zero,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text.rich(
-                    TextSpan(
-                      text: 'New to BeatX? ',
-                      style: const TextStyle(
-                        color: Color(0xFFCFCBD1),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Register Now',
-                          style: TextStyle(
-                            color: Color(0xFFD27BFF),
-                            fontWeight: FontWeight.w800,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SignupScreen(),
                           ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFCFCBD1),
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                      ],
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'New to BeatX? ',
+                          style: const TextStyle(
+                            color: Color(0xFFCFCBD1),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Register Now',
+                              style: TextStyle(
+                                color: Color(0xFFD27BFF),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
             ),
           ],
         ),

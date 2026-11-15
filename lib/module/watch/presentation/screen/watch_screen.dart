@@ -40,7 +40,8 @@ class WatchScreen extends StatelessWidget {
               ),
               Expanded(
                 child: Obx(() {
-                  if (controller.isLoading.value && controller.home.value == null) {
+                  if (controller.isLoading.value &&
+                      controller.home.value == null) {
                     return const Center(
                       child: CircularProgressIndicator(color: Colors.white),
                     );
@@ -64,46 +65,46 @@ class WatchScreen extends StatelessWidget {
                     padded: false,
                     child: CustomScrollView(
                       slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSizes.screenHorizontalPadding,
-                          16,
-                          AppSizes.screenHorizontalPadding,
-                          26,
-                        ),
-                        sliver: SliverList.list(
-                          children: [
-                            const SizedBox(height: 12),
-                            if (controller.featuredVideo != null)
-                              _HeroVideo(video: controller.featuredVideo!),
-                            const SizedBox(height: 24),
-                            const _TrendingHeader(),
-                            const SizedBox(height: 8),
-                            // One 16:9 thumbnail per row is right on a
-                            // phone. On a tablet it becomes a poster the
-                            // height of the screen, so the row takes as many
-                            // as the width affords instead.
-                            ResponsiveGrid(
-                              minItemWidth: 320,
-                              maxColumns: 3,
-                              spacing: 18,
-                              runSpacing: 18,
-                              children: [
-                                for (final video in controller.trendingVideos)
-                                  _VideoTile(
-                                    video: video,
-                                    onTap: () => Get.to(
-                                      () => MusicPlayerScreen(
-                                        videoId: video.id,
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSizes.screenHorizontalPadding,
+                            16,
+                            AppSizes.screenHorizontalPadding,
+                            26,
+                          ),
+                          sliver: SliverList.list(
+                            children: [
+                              const SizedBox(height: 12),
+                              if (controller.featuredVideo != null)
+                                _HeroVideo(video: controller.featuredVideo!),
+                              const SizedBox(height: 24),
+                              const _TrendingHeader(),
+                              const SizedBox(height: 8),
+                              // One 16:9 thumbnail per row is right on a
+                              // phone. On a tablet it becomes a poster the
+                              // height of the screen, so the row takes as many
+                              // as the width affords instead.
+                              ResponsiveGrid(
+                                minItemWidth: 320,
+                                maxColumns: 3,
+                                spacing: 18,
+                                runSpacing: 18,
+                                children: [
+                                  for (final video in controller.trendingVideos)
+                                    _VideoTile(
+                                      video: video,
+                                      onTap: () => Get.to(
+                                        () => MusicPlayerScreen(
+                                          videoId: video.id,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 74),
-                          ],
+                                ],
+                              ),
+                              const SizedBox(height: 74),
+                            ],
+                          ),
                         ),
-                      ),
                       ],
                     ),
                   );
@@ -187,9 +188,8 @@ class _HeroVideo extends StatelessWidget {
             SizedBox(
               height: 43,
               child: FilledButton.icon(
-                onPressed: () => Get.to(
-                  () => MusicPlayerScreen(videoId: video.id),
-                ),
+                onPressed: () =>
+                    Get.to(() => MusicPlayerScreen(videoId: video.id)),
                 icon: const Icon(Icons.play_arrow_rounded, size: 23),
                 label: const Text('WATCH NOW'),
                 style: FilledButton.styleFrom(

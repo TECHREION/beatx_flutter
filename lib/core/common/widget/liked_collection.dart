@@ -486,11 +486,7 @@ abstract final class LikedActionsSheet {
                   Navigator.pop(sheetContext);
                   action.onTap();
                 },
-                leading: Icon(
-                  action.icon,
-                  color: LikedPalette.muted,
-                  size: 21,
-                ),
+                leading: Icon(action.icon, color: LikedPalette.muted, size: 21),
                 title: Text(
                   action.label,
                   style: const TextStyle(

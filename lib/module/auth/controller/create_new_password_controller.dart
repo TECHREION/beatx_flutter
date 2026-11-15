@@ -5,6 +5,7 @@ import '../../../core/helpers/handle_fold.dart';
 import '../../../core/notifiers/button_status_notifier.dart';
 import '../../../core/notifiers/snackbar_notifier.dart';
 import '../model/create_new_password_model.dart';
+
 class ResetPasswordController extends GetxController {
   final String email;
   final String otp;

@@ -3,12 +3,19 @@ import 'package:beatx_flutter/core/constants/api_endpoints.dart';
 import 'package:beatx_flutter/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 class AppLanguageController extends GetxController {
   static const String _storageKey = 'preferred_language';
 
   /// What `PATCH /users/settings` accepts for `language`.
   static const Set<String> _backendLanguages = {
-    'en', 'bn', 'ar', 'es', 'fr', 'de', 'zh',
+    'en',
+    'bn',
+    'ar',
+    'es',
+    'fr',
+    'de',
+    'zh',
   };
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();

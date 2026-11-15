@@ -25,10 +25,7 @@ class PasswordChangedSuccessScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF050607),
                   borderRadius: BorderRadius.circular(38),
-                  border: Border.all(
-                    color: const Color(0xFF77727F),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFF77727F), width: 1),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -43,10 +40,7 @@ class PasswordChangedSuccessScreen extends StatelessWidget {
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
-                              colors: [
-                                Color(0xFF9BFF4D),
-                                Color(0xFF40DDEB),
-                              ],
+                              colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -121,9 +115,7 @@ class PasswordChangedSuccessScreen extends StatelessWidget {
                       height: 26,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation(
-                          Color(0xFF40DDEB),
-                        ),
+                        valueColor: AlwaysStoppedAnimation(Color(0xFF40DDEB)),
                       ),
                     ),
                   ],

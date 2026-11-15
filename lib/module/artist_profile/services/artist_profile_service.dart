@@ -50,7 +50,9 @@ base class ArtistProfileService extends BaseRepository {
               'upcoming': true,
               'limit': 5,
             }),
-            _list(ApiEndpoints.relatedArtists(artistId: artistId), {'limit': 10}),
+            _list(ApiEndpoints.relatedArtists(artistId: artistId), {
+              'limit': 10,
+            }),
             _list(ApiEndpoints.products, {'ownerId': artistId, 'limit': 20}),
           ]);
 

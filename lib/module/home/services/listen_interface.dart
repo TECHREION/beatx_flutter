@@ -13,8 +13,12 @@ import '../model/song_like_model.dart';
 
 abstract base class ListenInterface extends BaseRepository {
   FutureRequest<Success<ListenMusicModel>> getListen();
-  FutureRequest<Success<SongStreamUrlModel>> getListenStreamUrl(String listenId);
-  FutureRequest<Success<ListenMusicDetailsModel>> getListenDetails(String listenId);
+  FutureRequest<Success<SongStreamUrlModel>> getListenStreamUrl(
+    String listenId,
+  );
+  FutureRequest<Success<ListenMusicDetailsModel>> getListenDetails(
+    String listenId,
+  );
 
   /// Registers [songId] as downloaded on this device and returns a fresh link
   /// to its file. Calling it again for the same song and device refreshes it.
@@ -46,6 +50,7 @@ abstract base class ListenInterface extends BaseRepository {
     required int page,
     required int limit,
   });
+
   /// Songs matching [query] and/or [genreId]. Both are empty when unset, and
   /// an unset filter is left off the request rather than sent blank.
   FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> searchSong({
@@ -54,11 +59,13 @@ abstract base class ListenInterface extends BaseRepository {
     required int page,
     required int limit,
   });
+
   /// The day's picks for the signed-in user. Answers with one unpaged list,
   /// capped at [limit].
   FutureRequest<Success<List<ListenMusicDetailsModel>>> dailyDiscover({
     required int limit,
   });
+
   /// Records how far the signed-in user has listened to [songId]. The saved
   /// position comes back as the song details' `userProgress`.
   FutureRequest<Success<SaveProgressModel>> saveProgress(

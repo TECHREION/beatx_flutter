@@ -64,7 +64,8 @@ base class BaseRepository {
           return Left(
             DataCRUDFailure(
               failure: Failure.socketFailure,
-              fullError: 'No internet connection. Check your connection and '
+              fullError:
+                  'No internet connection. Check your connection and '
                   'try again.',
             ),
           );

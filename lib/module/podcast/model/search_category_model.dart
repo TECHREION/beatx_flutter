@@ -17,9 +17,7 @@ class SearchCategoryData {
 
   factory SearchCategoryData.fromJson(Map<String, dynamic> json) {
     return SearchCategoryData(
-      data: pagedEntries(json)
-          .map((e) => CategoryPodcast.fromJson(e))
-          .toList(),
+      data: pagedEntries(json).map((e) => CategoryPodcast.fromJson(e)).toList(),
       total: json['total'] ?? 0,
       page: json['page'] ?? 1,
       limit: json['limit'] ?? 20,

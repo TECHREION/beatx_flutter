@@ -46,14 +46,13 @@ class MiniPlayerHost {
     }
   });
 
-  static void _setAnchor(Route<dynamic> route, double? height) =>
-      _whenIdle(() {
-        if (height == null) {
-          _anchors.remove(route);
-        } else if (_anchors[route] != height) {
-          _anchors[route] = height;
-        }
-      });
+  static void _setAnchor(Route<dynamic> route, double? height) => _whenIdle(() {
+    if (height == null) {
+      _anchors.remove(route);
+    } else if (_anchors[route] != height) {
+      _anchors[route] = height;
+    }
+  });
 }
 
 /// Tracks the route on top of the app's navigator.

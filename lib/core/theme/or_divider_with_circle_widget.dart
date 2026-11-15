@@ -1,7 +1,6 @@
 import 'package:beatx_flutter/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-
 class OrDividerWithCircle extends StatelessWidget {
   final String text;
   // final EdgeInsetsGeometry padding;

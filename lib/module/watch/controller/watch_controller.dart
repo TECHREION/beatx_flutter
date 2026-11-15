@@ -19,9 +19,7 @@ class WatchController extends GetxController {
   VideoInterface _videoInterface() {
     if (!Get.isRegistered<VideoInterface>() &&
         Get.isRegistered<AuthorizedPigeon>()) {
-      Get.put<VideoInterface>(
-        VideoInterfaceImpl(Get.find<AuthorizedPigeon>()),
-      );
+      Get.put<VideoInterface>(VideoInterfaceImpl(Get.find<AuthorizedPigeon>()));
     }
     return Get.find<VideoInterface>();
   }
@@ -40,8 +38,9 @@ class WatchController extends GetxController {
     isLoading.value = false;
   }
 
-  VideoModel? get featuredVideo =>
-      home.value?.featured.isNotEmpty == true ? home.value!.featured.first : null;
+  VideoModel? get featuredVideo => home.value?.featured.isNotEmpty == true
+      ? home.value!.featured.first
+      : null;
 
   List<VideoModel> get trendingVideos => home.value?.recent ?? const [];
 }

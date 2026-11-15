@@ -81,23 +81,20 @@ class LikedPodcastsController extends GetxController {
 
     final result = await _podcastInterface().likePodcast(podcast.id);
 
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        // The endpoint toggles, so a `liked: true` answer means the podcast
-        // was not liked to begin with and is now — leave it on the list.
-        if (success.data?.liked == true) return;
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      // The endpoint toggles, so a `liked: true` answer means the podcast
+      // was not liked to begin with and is now — leave it on the list.
+      if (success.data?.liked == true) return;
 
-        podcasts.removeWhere((item) => item.id == podcast.id);
+      podcasts.removeWhere((item) => item.id == podcast.id);
 
-        // Keep the heart on the player screen honest when the podcast
-        // unliked here is the one playing.
-        final playing = PodcastLikeController.instance;
-        if (playing.podcastId.value == podcast.id) {
-          playing.isLiked.value = false;
-        }
-      },
-    );
+      // Keep the heart on the player screen honest when the podcast
+      // unliked here is the one playing.
+      final playing = PodcastLikeController.instance;
+      if (playing.podcastId.value == podcast.id) {
+        playing.isLiked.value = false;
+      }
+    });
 
     unliking.remove(podcast.id);
   }

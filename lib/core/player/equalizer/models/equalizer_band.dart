@@ -34,10 +34,10 @@ class EqualizerBand {
   }
 
   EqualizerBand copyWith({double? gainDb}) => EqualizerBand(
-        index: index,
-        centerFrequencyHz: centerFrequencyHz,
-        gainDb: gainDb ?? this.gainDb,
-      );
+    index: index,
+    centerFrequencyHz: centerFrequencyHz,
+    gainDb: gainDb ?? this.gainDb,
+  );
 
   @override
   String toString() =>

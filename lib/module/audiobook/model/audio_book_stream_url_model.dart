@@ -29,19 +29,13 @@ class AudioBookStreamUrlModel {
 class ResponseMetadata {
   final String duration;
 
-  ResponseMetadata({
-    required this.duration,
-  });
+  ResponseMetadata({required this.duration});
 
   factory ResponseMetadata.fromJson(Map<String, dynamic> json) {
-    return ResponseMetadata(
-      duration: json['duration'] ?? '',
-    );
+    return ResponseMetadata(duration: json['duration'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }

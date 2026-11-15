@@ -87,7 +87,10 @@ class ArtistProfileController extends GetxController {
     final home = Get.isRegistered<HomeController>()
         ? Get.find<HomeController>()
         : Get.put(HomeController());
-    home.playSong(songId);
+    home.playSong(
+      songId,
+      queue: [for (final song in profile.value?.songs ?? const []) song.id],
+    );
   }
 
   /// Plays the artist's top song.

@@ -22,7 +22,7 @@ import 'models/equalizer_exception.dart';
 /// through the unit, not whether the platform is iOS.
 class IosEqualizerService implements EqualizerService {
   IosEqualizerService({MethodChannel? channel})
-      : _channel = channel ?? const MethodChannel('com.beatx/equalizer');
+    : _channel = channel ?? const MethodChannel('com.beatx/equalizer');
 
   /// How often native state is polled while waiting to become ready. The tap
   /// attaches a moment after playback starts, and there is no push event for
@@ -64,7 +64,8 @@ class IosEqualizerService implements EqualizerService {
   EqualizerUnavailableReason get unavailableReason {
     if (isReady) return EqualizerUnavailableReason.none;
     if (!_hasSeenItem) return EqualizerUnavailableReason.needsPlayback;
-    if (!_itemHasAudioTrack) return EqualizerUnavailableReason.incompatibleStream;
+    if (!_itemHasAudioTrack)
+      return EqualizerUnavailableReason.incompatibleStream;
     return EqualizerUnavailableReason.needsPlayback;
   }
 
@@ -150,7 +151,8 @@ class IosEqualizerService implements EqualizerService {
 
     await _invoke('setAllGains', {'gains': gains});
     _bands = [
-      for (var i = 0; i < _bands.length; i++) _bands[i].copyWith(gainDb: gains[i]),
+      for (var i = 0; i < _bands.length; i++)
+        _bands[i].copyWith(gainDb: gains[i]),
     ];
   }
 

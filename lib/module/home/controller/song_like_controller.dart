@@ -58,11 +58,7 @@ class SongLikeController extends GetxController implements PlayerLikeTarget {
   /// Adopts [songId] as the song now playing. Call right after
   /// [PlayerController.play], which is what starts the session this is tied
   /// to.
-  void load({
-    required String songId,
-    bool isLiked = false,
-    int likeCount = 0,
-  }) {
+  void load({required String songId, bool isLiked = false, int likeCount = 0}) {
     this.songId.value = songId;
     this.isLiked.value = isLiked;
     this.likeCount.value = likeCount;
@@ -116,19 +112,16 @@ class SongLikeController extends GetxController implements PlayerLikeTarget {
 
     final result = await _listenInterface().likesong(id);
 
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        // A backend that only acknowledges the call reports neither field, so
-        // fall back to flipping what is on screen.
-        final liked = success.data?.liked ?? !isLiked.value;
-        final counted =
-            success.data?.likeCount ?? likeCount.value + (liked ? 1 : -1);
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      // A backend that only acknowledges the call reports neither field, so
+      // fall back to flipping what is on screen.
+      final liked = success.data?.liked ?? !isLiked.value;
+      final counted =
+          success.data?.likeCount ?? likeCount.value + (liked ? 1 : -1);
 
-        isLiked.value = liked;
-        likeCount.value = counted < 0 ? 0 : counted;
-      },
-    );
+      isLiked.value = liked;
+      likeCount.value = counted < 0 ? 0 : counted;
+    });
 
     isToggling.value = false;
   }

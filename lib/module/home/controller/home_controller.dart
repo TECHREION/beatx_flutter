@@ -103,9 +103,27 @@ class HomeController extends GetxController {
   /// A song saved for offline listening plays from the device and never asks
   /// for a stream url. Anything else fetches its details and stream url
   /// concurrently and streams.
-  Future<void> playSong(String listenId) async {
+  ///
+  /// [queue] is the list the song was picked from, in order; the player's
+  /// next and previous buttons move through it. Left empty, whatever queue is
+  /// already playing is kept if it holds this song. [openPlayer] is false when
+  /// the player moves on by itself, so the user is not pulled off the screen
+  /// they are on.
+  Future<void> playSong(
+    String listenId, {
+    List<String> queue = const [],
+    bool openPlayer = true,
+  }) async {
     if (isLoadingSong.value) return;
     isLoadingSong.value = true;
+
+    if (queue.isNotEmpty) {
+      Get.find<PlayerController>().setQueue(
+        queue,
+        current: listenId,
+        start: (id) => playSong(id, openPlayer: false),
+      );
+    }
 
     // Lands whatever was reached in the song playing now before the details
     // are read, so replaying it straight away resumes from the latest point.
@@ -213,6 +231,7 @@ class HomeController extends GetxController {
       likeCount: likeCount,
     );
 
+    if (!openPlayer) return;
     Get.to(
       () => const PlayerScreen(),
       transition: Transition.downToUp,

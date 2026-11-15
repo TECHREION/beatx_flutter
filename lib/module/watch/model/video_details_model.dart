@@ -135,23 +135,14 @@ class Genre {
   final String id;
   final String name;
 
-  Genre({
-    required this.id,
-    required this.name,
-  });
+  Genre({required this.id, required this.name});
 
   factory Genre.fromJson(Map<String, dynamic> json) {
-    return Genre(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return Genre(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
@@ -159,42 +150,27 @@ class Owner {
   final String id;
   final String name;
 
-  Owner({
-    required this.id,
-    required this.name,
-  });
+  Owner({required this.id, required this.name});
 
   factory Owner.fromJson(Map<String, dynamic> json) {
-    return Owner(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return Owner(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
 class Metadata {
   final String duration;
 
-  Metadata({
-    required this.duration,
-  });
+  Metadata({required this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'] ?? '',
-    );
+    return Metadata(duration: json['duration'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }

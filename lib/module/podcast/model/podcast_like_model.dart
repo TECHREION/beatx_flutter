@@ -20,9 +20,6 @@ class PodcastLikeModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'liked': liked,
-      'likeCount': likeCount,
-    };
+    return {'liked': liked, 'likeCount': likeCount};
   }
 }

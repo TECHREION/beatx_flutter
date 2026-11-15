@@ -126,7 +126,7 @@ class PlayerScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 16),
                   Expanded(
                     // The art, scrubber and transport are a single column of
                     // controls; spread across a tablet they drift so far apart
@@ -134,13 +134,259 @@ class PlayerScreen extends StatelessWidget {
                     child: ContentWidth(
                       maxWidth: 560,
                       padded: false,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            // Album art card
-                            Obx(
-                              () => Container(
-                                height: 350,
+                      // Everything fits the screen without scrolling: the
+                      // controls keep their size (a little tighter on short
+                      // phones) and the cover takes whatever height is left.
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final s = _PlayerSpacing.forHeight(
+                            constraints.maxHeight,
+                          );
+                          final controls = Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(height: s.gap),
+                              Obx(() {
+                                final progress =
+                                    ctrl.duration.value.inMilliseconds > 0
+                                    ? ctrl.position.value.inMilliseconds /
+                                          ctrl.duration.value.inMilliseconds
+                                    : 0.0;
+                                return LiveWaveform(
+                                  height: s.waveform,
+                                  isPlaying: ctrl.isPlaying.value,
+                                  progress: progress,
+                                );
+                              }),
+                              SizedBox(height: s.gap / 2),
+                              Obx(() {
+                                final durationMs =
+                                    ctrl.duration.value.inMilliseconds;
+                                final progress = durationMs > 0
+                                    ? (ctrl.position.value.inMilliseconds /
+                                              durationMs)
+                                          .clamp(0.0, 1.0)
+                                    : 0.0;
+                                return SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    trackHeight: 8,
+                                    activeTrackColor: const Color(0xFF9BFF4D),
+                                    inactiveTrackColor: Colors.white24,
+                                    thumbColor: Colors.white,
+                                    thumbShape: const RoundSliderThumbShape(
+                                      enabledThumbRadius: 8,
+                                    ),
+                                    overlayShape: const RoundSliderOverlayShape(
+                                      overlayRadius: 16,
+                                    ),
+                                    overlayColor: const Color(
+                                      0xFF9BFF4D,
+                                    ).withValues(alpha: 0.2),
+                                  ),
+                                  child: Slider(
+                                    value: progress,
+                                    min: 0.0,
+                                    max: 1.0,
+                                    onChanged: durationMs > 0
+                                        ? (value) {
+                                            ctrl.position.value = Duration(
+                                              milliseconds: (value * durationMs)
+                                                  .round(),
+                                            );
+                                          }
+                                        : null,
+                                    onChangeEnd: durationMs > 0
+                                        ? (value) {
+                                            ctrl.seek(
+                                              Duration(
+                                                milliseconds:
+                                                    (value * durationMs)
+                                                        .round(),
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                  ),
+                                );
+                              }),
+                              Obx(
+                                () => Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _fmt(ctrl.position.value),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                    Text(
+                                      _fmt(ctrl.duration.value),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: s.gap),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Obx(
+                                    () => _TransportButton(
+                                      icon: Icons.shuffle_rounded,
+                                      size: s.sideIcon,
+                                      tooltip: ctrl.shuffle.value
+                                          ? 'Shuffle on'
+                                          : 'Shuffle off',
+                                      active: ctrl.shuffle.value,
+                                      onTap: ctrl.toggleShuffle,
+                                    ),
+                                  ),
+                                  // Always usable: with nothing before it,
+                                  // it restarts the track.
+                                  _TransportButton(
+                                    icon: Icons.skip_previous,
+                                    size: s.skipIcon,
+                                    tooltip: 'Previous',
+                                    color: Colors.white,
+                                    onTap: ctrl.previous,
+                                  ),
+                                  Obx(
+                                    () => GestureDetector(
+                                      onTap: () => ctrl.isPlaying.value
+                                          ? ctrl.pause()
+                                          : ctrl.resume(),
+                                      child: Container(
+                                        width: s.playButton,
+                                        height: s.playButton,
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: _beatxGradient,
+                                        ),
+                                        child: Container(
+                                          margin: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFF050608),
+                                          ),
+                                          child: Icon(
+                                            ctrl.isPlaying.value
+                                                ? Icons.pause
+                                                : Icons.play_arrow,
+                                            color: Colors.white,
+                                            size: s.playButton * 0.55,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Obx(() {
+                                    // Read so the button follows the track,
+                                    // the queue and the repeat mode.
+                                    ctrl.trackId.value;
+                                    ctrl.queue.length;
+                                    ctrl.repeatMode.value;
+                                    ctrl.shuffle.value;
+                                    return _TransportButton(
+                                      icon: Icons.skip_next,
+                                      size: s.skipIcon,
+                                      tooltip: 'Next',
+                                      color: Colors.white,
+                                      onTap: ctrl.hasNext ? ctrl.next : null,
+                                    );
+                                  }),
+                                  Obx(() {
+                                    final mode = ctrl.repeatMode.value;
+                                    return _TransportButton(
+                                      icon: mode == PlayerRepeat.one
+                                          ? Icons.repeat_one_rounded
+                                          : Icons.repeat_rounded,
+                                      size: s.sideIcon,
+                                      tooltip: switch (mode) {
+                                        PlayerRepeat.off => 'Repeat off',
+                                        PlayerRepeat.all => 'Repeat all',
+                                        PlayerRepeat.one => 'Repeat one',
+                                      },
+                                      active: mode != PlayerRepeat.off,
+                                      onTap: ctrl.cycleRepeat,
+                                    );
+                                  }),
+                                ],
+                              ),
+                              SizedBox(height: s.gap),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: s.actionsPadding,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF151515),
+                                  borderRadius: BorderRadius.circular(35),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    const Expanded(
+                                      child: _BottomAction(
+                                        icon: Icons.lyrics,
+                                        title: 'LYRICS',
+                                      ),
+                                    ),
+                                    _divider(),
+                                    const Expanded(
+                                      child: _BottomAction(
+                                        icon: Icons.queue_music,
+                                        title: 'QUEUE',
+                                      ),
+                                    ),
+                                    _divider(),
+                                    const Expanded(
+                                      child: _BottomAction(
+                                        icon: Icons.share,
+                                        title: 'SHARE',
+                                      ),
+                                    ),
+                                    _divider(),
+                                    Expanded(
+                                      child: Obx(() {
+                                        // Whichever of the song and podcast
+                                        // bindings owns the current play session,
+                                        // or neither for an audiobook.
+                                        final target = _activeLikeTarget();
+                                        final liked =
+                                            target?.isLiked.value ?? false;
+
+                                        return _BottomAction(
+                                          icon: liked
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          title: 'LIKE',
+                                          active: liked,
+                                          onTap: target == null
+                                              ? null
+                                              : () => _toggleLike(
+                                                  context,
+                                                  target,
+                                                ),
+                                        );
+                                      }),
+                                    ),
+                                    _divider(),
+                                    const Expanded(child: _DownloadAction()),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: s.bottom),
+                            ],
+                          );
+                          final cover = Obx(
+                            () => ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 350),
+                              child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(42),
@@ -181,13 +427,20 @@ class PlayerScreen extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  padding: const EdgeInsets.only(bottom: 20),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    20,
+                                  ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       Text(
                                         ctrl.title.value,
                                         textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 28,
@@ -197,6 +450,8 @@ class PlayerScreen extends StatelessWidget {
                                       const SizedBox(height: 8),
                                       Text(
                                         ctrl.artist.value,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           color: Color(0xFF40DDEB),
                                           fontSize: 18,
@@ -207,210 +462,32 @@ class PlayerScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 24),
+                          );
 
-                            // Live waveform — bars react while audio plays
-                            Obx(() {
-                              final progress =
-                                  ctrl.duration.value.inMilliseconds > 0
-                                  ? ctrl.position.value.inMilliseconds /
-                                        ctrl.duration.value.inMilliseconds
-                                  : 0.0;
-                              return LiveWaveform(
-                                isPlaying: ctrl.isPlaying.value,
-                                progress: progress,
-                              );
-                            }),
-                            const SizedBox(height: 14),
-
-                            // Progress bar (scrubbable)
-                            Obx(() {
-                              final durationMs =
-                                  ctrl.duration.value.inMilliseconds;
-                              final progress = durationMs > 0
-                                  ? (ctrl.position.value.inMilliseconds /
-                                            durationMs)
-                                        .clamp(0.0, 1.0)
-                                  : 0.0;
-                              return SliderTheme(
-                                data: SliderTheme.of(context).copyWith(
-                                  trackHeight: 8,
-                                  activeTrackColor: const Color(0xFF9BFF4D),
-                                  inactiveTrackColor: Colors.white24,
-                                  thumbColor: Colors.white,
-                                  thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 8,
-                                  ),
-                                  overlayShape: const RoundSliderOverlayShape(
-                                    overlayRadius: 16,
-                                  ),
-                                  overlayColor: const Color(
-                                    0xFF9BFF4D,
-                                  ).withValues(alpha: 0.2),
-                                ),
-                                child: Slider(
-                                  value: progress,
-                                  min: 0.0,
-                                  max: 1.0,
-                                  onChanged: durationMs > 0
-                                      ? (value) {
-                                          ctrl.position.value = Duration(
-                                            milliseconds: (value * durationMs)
-                                                .round(),
-                                          );
-                                        }
-                                      : null,
-                                  onChangeEnd: durationMs > 0
-                                      ? (value) {
-                                          ctrl.seek(
-                                            Duration(
-                                              milliseconds: (value * durationMs)
-                                                  .round(),
-                                            ),
-                                          );
-                                        }
-                                      : null,
-                                ),
-                              );
-                            }),
-                            const SizedBox(height: 10),
-
-                            // Time labels
-                            Obx(
-                              () => Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                          // A screen too short for even a small cover beside
+                          // the controls (landscape, split view) scrolls.
+                          if (!s.fits) {
+                            return SingleChildScrollView(
+                              child: Column(
                                 children: [
-                                  Text(
-                                    _fmt(ctrl.position.value),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                  Text(
-                                    _fmt(ctrl.duration.value),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                    ),
-                                  ),
+                                  SizedBox(height: 220, child: cover),
+                                  controls,
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 30),
-
-                            // Playback controls
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Icon(
-                                  Icons.open_in_full,
-                                  color: Colors.white70,
-                                  size: 30,
+                            );
+                          }
+                          return Column(
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.topCenter,
+                                  child: cover,
                                 ),
-                                const Icon(
-                                  Icons.skip_previous,
-                                  color: Colors.white,
-                                  size: 46,
-                                ),
-                                Obx(
-                                  () => GestureDetector(
-                                    onTap: () => ctrl.isPlaying.value
-                                        ? ctrl.pause()
-                                        : ctrl.resume(),
-                                    child: Container(
-                                      width: 100,
-                                      height: 100,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: _beatxGradient,
-                                      ),
-                                      child: Container(
-                                        margin: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Color(0xFF050608),
-                                        ),
-                                        child: Icon(
-                                          ctrl.isPlaying.value
-                                              ? Icons.pause
-                                              : Icons.play_arrow,
-                                          color: Colors.white,
-                                          size: 54,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.skip_next,
-                                  color: Colors.white,
-                                  size: 46,
-                                ),
-                                const Icon(
-                                  Icons.repeat,
-                                  color: Colors.white70,
-                                  size: 30,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 28),
-
-                            // Bottom actions
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 18,
                               ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF151515),
-                                borderRadius: BorderRadius.circular(35),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  const _BottomAction(
-                                    icon: Icons.lyrics,
-                                    title: 'LYRICS',
-                                  ),
-                                  _divider(),
-                                  const _BottomAction(
-                                    icon: Icons.queue_music,
-                                    title: 'QUEUE',
-                                  ),
-                                  _divider(),
-                                  const _BottomAction(
-                                    icon: Icons.share,
-                                    title: 'SHARE',
-                                  ),
-                                  _divider(),
-                                  Obx(() {
-                                    // Whichever of the song and podcast
-                                    // bindings owns the current play session,
-                                    // or neither for an audiobook.
-                                    final target = _activeLikeTarget();
-                                    final liked =
-                                        target?.isLiked.value ?? false;
-
-                                    return _BottomAction(
-                                      icon: liked
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      title: 'LIKE',
-                                      active: liked,
-                                      onTap: target == null
-                                          ? null
-                                          : () => _toggleLike(context, target),
-                                    );
-                                  }),
-                                  _divider(),
-                                  const _DownloadAction(),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        ),
+                              controls,
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -467,6 +544,48 @@ class PlayerScreen extends StatelessWidget {
       Container(width: 1, height: 35, color: Colors.white10);
 }
 
+/// One of the transport's icon buttons. [active] shows a mode that is on
+/// (shuffle, repeat) in the accent green; a null [onTap] dims it.
+class _TransportButton extends StatelessWidget {
+  const _TransportButton({
+    required this.icon,
+    required this.size,
+    required this.tooltip,
+    required this.onTap,
+    this.active = false,
+    this.color = Colors.white70,
+  });
+
+  final IconData icon;
+  final double size;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool active;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = onTap == null
+        ? Colors.white24
+        : active
+        ? const Color(0xFF9BFF4D)
+        : color;
+    return Semantics(
+      button: true,
+      selected: active,
+      label: tooltip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: size * 0.9,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, color: tint, size: size),
+        ),
+      ),
+    );
+  }
+}
+
 class _BottomAction extends StatelessWidget {
   const _BottomAction({
     required this.icon,
@@ -492,7 +611,16 @@ class _BottomAction extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 8),
-          Text(title, style: TextStyle(color: color, fontSize: 11)),
+          // Shrinks rather than overflows when five labels share a narrow
+          // phone's width.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              maxLines: 1,
+              style: TextStyle(color: color, fontSize: 11),
+            ),
+          ),
         ],
       ),
     );
@@ -543,11 +671,15 @@ class _DownloadAction extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  percent == null ? 'SAVING' : '$percent%',
-                  style: const TextStyle(
-                    color: Color(0xFF9BFF4D),
-                    fontSize: 11,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    percent == null ? 'SAVING' : '$percent%',
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: Color(0xFF9BFF4D),
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               ],
@@ -590,5 +722,107 @@ class _DownloadAction extends StatelessWidget {
           );
       }
     });
+  }
+}
+
+/// Sizes for the player's controls, chosen by how tall the screen is, so the
+/// whole player fits without scrolling. The cover gets the height left over.
+class _PlayerSpacing {
+  const _PlayerSpacing({
+    required this.gap,
+    required this.waveform,
+    required this.playButton,
+    required this.skipIcon,
+    required this.sideIcon,
+    required this.actionsPadding,
+    required this.bottom,
+    this.minCover = 0,
+    this.fits = true,
+  });
+
+  final double gap;
+  final double waveform;
+  final double playButton;
+  final double skipIcon;
+  final double sideIcon;
+  final double actionsPadding;
+  final double bottom;
+
+  /// The shortest cover worth showing at these sizes; a roomier tier is only
+  /// used when it leaves the cover at least this tall.
+  final double minCover;
+
+  /// False when even the tightest sizes leave no room for a cover; the
+  /// player then scrolls.
+  final bool fits;
+
+  static const _tiers = [
+    // Tall phones: the original look.
+    _PlayerSpacing(
+      gap: 24,
+      waveform: 70,
+      playButton: 100,
+      skipIcon: 46,
+      sideIcon: 30,
+      actionsPadding: 18,
+      bottom: 24,
+      minCover: 280,
+    ),
+    _PlayerSpacing(
+      gap: 18,
+      waveform: 56,
+      playButton: 88,
+      skipIcon: 42,
+      sideIcon: 28,
+      actionsPadding: 15,
+      bottom: 14,
+      minCover: 220,
+    ),
+    // Small phones (iPhone SE, mini…).
+    _PlayerSpacing(
+      gap: 12,
+      waveform: 44,
+      playButton: 76,
+      skipIcon: 38,
+      sideIcon: 26,
+      actionsPadding: 12,
+      bottom: 8,
+      minCover: 140,
+    ),
+  ];
+
+  /// Height of everything under the cover. The slider row is 48 tall
+  /// (Material's minimum tap height), the time labels about 20, and an
+  /// action is its 22 icon, 8 gap and a line of text.
+  double get controlsHeight =>
+      gap +
+      waveform +
+      gap / 2 +
+      48 +
+      20 +
+      gap +
+      playButton +
+      gap +
+      actionsPadding * 2 +
+      22 +
+      8 +
+      20 +
+      bottom;
+
+  static _PlayerSpacing forHeight(double height) {
+    for (final tier in _tiers) {
+      if (height - tier.controlsHeight >= tier.minCover) return tier;
+    }
+    final tightest = _tiers.last;
+    return _PlayerSpacing(
+      gap: tightest.gap,
+      waveform: tightest.waveform,
+      playButton: tightest.playButton,
+      skipIcon: tightest.skipIcon,
+      sideIcon: tightest.sideIcon,
+      actionsPadding: tightest.actionsPadding,
+      bottom: tightest.bottom,
+      fits: false,
+    );
   }
 }

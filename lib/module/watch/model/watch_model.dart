@@ -128,23 +128,14 @@ class GenreModel {
   final String id;
   final String name;
 
-  GenreModel({
-    required this.id,
-    required this.name,
-  });
+  GenreModel({required this.id, required this.name});
 
   factory GenreModel.fromJson(Map<String, dynamic> json) {
-    return GenreModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return GenreModel(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
@@ -152,23 +143,14 @@ class OwnerModel {
   final String id;
   final String name;
 
-  OwnerModel({
-    required this.id,
-    required this.name,
-  });
+  OwnerModel({required this.id, required this.name});
 
   factory OwnerModel.fromJson(Map<String, dynamic> json) {
-    return OwnerModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return OwnerModel(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
@@ -192,11 +174,7 @@ class TopCategoryModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'genreId': genreId,
-      'name': name,
-      'videoCount': videoCount,
-    };
+    return {'genreId': genreId, 'name': name, 'videoCount': videoCount};
   }
 }
 
@@ -273,19 +251,13 @@ class CreatorModel {
 class Metadata {
   final String duration;
 
-  Metadata({
-    required this.duration,
-  });
+  Metadata({required this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'] ?? '',
-    );
+    return Metadata(duration: json['duration'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }

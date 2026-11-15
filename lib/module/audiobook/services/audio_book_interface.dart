@@ -10,8 +10,13 @@ import '../model/audiobook_model.dart';
 
 abstract base class AudioBookInterface extends BaseRepository {
   FutureRequest<Success<HomeAudiobookData>> audiobookHome();
-  FutureRequest<Success<AudiobookDetailsData>> audiobookDetails(String audiobookId);
-  FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(String audiobookId, String chapterId);
+  FutureRequest<Success<AudiobookDetailsData>> audiobookDetails(
+    String audiobookId,
+  );
+  FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(
+    String audiobookId,
+    String chapterId,
+  );
   FutureRequest<Success<AudioBookLikeModel>> likeAudiobook(String audiobookId);
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks();
   FutureRequest<Success<PagedResult<Audiobook>>> searchAudiobook({

@@ -24,6 +24,7 @@ class ArtistProfileScreen extends StatefulWidget {
   static const Color _surface = Color(0xFF141417);
   static const Color _teal = Color(0xFF3BDDEB);
   static const Color _dimText = Color(0xFFA7A3AA);
+  static const Color _green = Color(0xFF56E768);
 
   /// Opens [artistId]'s page.
   static void open(BuildContext context, String artistId) {
@@ -75,6 +76,15 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                         : controller.artist.name,
                     onBack: () => Navigator.of(context).maybePop(),
                     showActions: false,
+                    titleTrailing:
+                        controller.profile.value != null &&
+                            controller.artist.isVerified
+                        ? const Icon(
+                            Icons.verified_rounded,
+                            color: ArtistProfileScreen._green,
+                            size: 18,
+                          )
+                        : null,
                   ),
                 ),
                 Expanded(
@@ -181,7 +191,6 @@ class _HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rank = controller.artist.rank;
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: AspectRatio(
@@ -213,20 +222,6 @@ class _HeroSection extends StatelessWidget {
                 ),
               ),
             ),
-            if (rank.isNotEmpty)
-              Positioned(
-                top: 14,
-                right: 16,
-                child: Text(
-                  rank,
-                  style: const TextStyle(
-                    color: ArtistProfileScreen._teal,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -247,8 +242,24 @@ class _ArtistInfo extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          a.name,
+        Text.rich(
+          TextSpan(
+            text: a.name,
+            children: [
+              if (a.isVerified)
+                const WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Icon(
+                      Icons.verified_rounded,
+                      color: ArtistProfileScreen._green,
+                      size: 26,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 34,
@@ -257,6 +268,18 @@ class _ArtistInfo extends StatelessWidget {
             height: 1.1,
           ),
         ),
+        if (a.isVerified) ...[
+          const SizedBox(height: 6),
+          const Text(
+            'Verified Artist',
+            style: TextStyle(
+              color: ArtistProfileScreen._green,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
         const SizedBox(height: 8),
         Text(
           a.monthlyListeners,

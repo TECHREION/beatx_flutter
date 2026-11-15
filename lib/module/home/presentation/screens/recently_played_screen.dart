@@ -198,9 +198,7 @@ class _HistoryRow extends StatelessWidget {
               onTap: () => controller.play(entry),
             ),
             LikedAction(
-              icon: liked
-                  ? Icons.heart_broken_rounded
-                  : Icons.favorite_rounded,
+              icon: liked ? Icons.heart_broken_rounded : Icons.favorite_rounded,
               label: liked ? 'Remove from Liked' : 'Add to Liked',
               onTap: () => controller.toggleLike(entry),
             ),

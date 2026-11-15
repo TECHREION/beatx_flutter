@@ -107,7 +107,8 @@ class _LiveWaveformState extends State<LiveWaveform>
       final tilt = 1.0 - (i / widget.barCount) * 0.45;
       final amplitude = ((wave + 1) / 2) * tilt;
       final target =
-          minH + amplitude * (widget.height - minH) * _energy +
+          minH +
+          amplitude * (widget.height - minH) * _energy +
           (1 - _energy) * widget.height * 0.06;
       _heights[i] += (target - _heights[i]) * 0.25;
     }
@@ -136,7 +137,9 @@ class _LiveWaveformState extends State<LiveWaveform>
             height: _heights[i],
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: i < activeCount ? widget.activeColor : widget.inactiveColor,
+              color: i < activeCount
+                  ? widget.activeColor
+                  : widget.inactiveColor,
             ),
           );
         }),

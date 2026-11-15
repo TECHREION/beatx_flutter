@@ -78,8 +78,9 @@ class ExploreScreen extends StatelessWidget {
                               ) {
                                 return _GenreTile(
                                   title: genres[index].name,
-                                  colors: _genreGradients[index %
-                                      _genreGradients.length],
+                                  colors:
+                                      _genreGradients[index %
+                                          _genreGradients.length],
                                 );
                               }, childCount: genres.length),
                               gridDelegate:

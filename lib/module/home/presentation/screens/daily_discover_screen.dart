@@ -173,9 +173,7 @@ class _PickRow extends StatelessWidget {
               onTap: () => controller.play(song),
             ),
             LikedAction(
-              icon: liked
-                  ? Icons.heart_broken_rounded
-                  : Icons.favorite_rounded,
+              icon: liked ? Icons.heart_broken_rounded : Icons.favorite_rounded,
               label: liked ? 'Remove from Liked' : 'Add to Liked',
               onTap: () => controller.toggleLike(song),
             ),

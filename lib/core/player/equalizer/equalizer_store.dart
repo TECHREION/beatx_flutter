@@ -12,7 +12,7 @@ import 'models/equalizer_settings.dart';
 /// controller) rather than introducing a second key-value store.
 class EqualizerStore {
   EqualizerStore({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const storageKey = 'equalizer_settings';
 

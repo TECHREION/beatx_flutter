@@ -18,9 +18,7 @@ class PodcastSearchScreen extends StatelessWidget {
 
   static const _artGradient = [Color(0xFFBD89FF), Color(0xFF2A1B4A)];
 
-  final PodcastSearchController controller = Get.put(
-    PodcastSearchController(),
-  );
+  final PodcastSearchController controller = Get.put(PodcastSearchController());
 
   @override
   Widget build(BuildContext context) {

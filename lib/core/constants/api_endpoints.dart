@@ -68,12 +68,15 @@ base class ApiEndpoints {
   static const String audiobookhome = _Audiobook.audiobookhome;
   static String audiobookDetails({required String audiobookId}) =>
       _Audiobook._audiobookDetails(audiobookId);
-  static String audiobookStreamUrl({required String audiobookId, required String chapterId}) =>
-      _Audiobook._audiobookStreamUrl(audiobookId, chapterId);
-  static String likaudiobook({required String audiobookId}) =>_Audiobook._likeAudibook(audiobookId);
-  static const String getLikedAudiobooks= _Audiobook.getLikedAudiobooks;
+  static String audiobookStreamUrl({
+    required String audiobookId,
+    required String chapterId,
+  }) => _Audiobook._audiobookStreamUrl(audiobookId, chapterId);
+  static String likaudiobook({required String audiobookId}) =>
+      _Audiobook._likeAudibook(audiobookId);
+  static const String getLikedAudiobooks = _Audiobook.getLikedAudiobooks;
   static const String searchAudiobook = _Audiobook.searchAudiobook;
-  
+
   //----------------------- watch -----------------------------
   static const String videoHome = _Video.videoHome;
   static String videoDetails({required String videoId}) =>
@@ -85,7 +88,8 @@ base class ApiEndpoints {
   static String likeUnlike({required String videoId}) =>
       _Video._likeUnlike(videoId);
   static const String searchVideo = _Video.searchVideo;
-  static String videoProgress({required String videoId}) => _Video._videoProgress(videoId);
+  static String videoProgress({required String videoId}) =>
+      _Video._videoProgress(videoId);
 
   //---------------------- home/listen -----------------------------
   static const String listenHome = _Listen.listenHome;
@@ -96,7 +100,7 @@ base class ApiEndpoints {
       _Listen._listenDetails(listenId);
   static String listenStreamUrl({required String listenId}) =>
       _Listen._listenStreamUrl(listenId);
-  static String likesong({required String songId}) =>_Listen._likesong(songId);
+  static String likesong({required String songId}) => _Listen._likesong(songId);
   static const String getLikesong = _Listen.getLikesong;
   static String recentlyPlayed({required String userId}) =>
       _Listen._recentlyPlayed(userId);
@@ -156,7 +160,8 @@ base class ApiEndpoints {
     required int page,
     required int limit,
   }) => _Podcast._searchPodcast(query, genreId, page, limit);
-  static String likpodcast({required String podcastid}) =>_Podcast._likesong(podcastid);
+  static String likpodcast({required String podcastid}) =>
+      _Podcast._likesong(podcastid);
   static const String getLikepodcast = _Podcast.getLikesong;
 
   //---------------------- Notification -----------------------------
@@ -172,7 +177,6 @@ base class ApiEndpoints {
   /// ### get
   static const String notificationsUnreadCount = _Notification.unreadCount;
 }
-
 
 // class _RemoteServer {
 //   static const String socketUrl =
@@ -267,44 +271,38 @@ class _Audiobook {
 class _Video {
   static const String videoRoute = '${ApiEndpoints.baseUrl}/videos';
   static const String videoHome = '$videoRoute/home';
-  static String _videoDetails(String videoId) =>
-      '$videoRoute/$videoId';
+  static String _videoDetails(String videoId) => '$videoRoute/$videoId';
   static String _videoStreamUrl(String videoId) =>
       '$videoRoute/$videoId/stream';
   static String _relatedVideos(String videoId) =>
       '$videoRoute/$videoId/related';
-  static String _likeUnlike(String videoId) =>
-      '$videoRoute/$videoId/like';
+  static String _likeUnlike(String videoId) => '$videoRoute/$videoId/like';
   static const String searchVideo = '$videoRoute/search';
-  static String _videoProgress(String videoId) => '$videoRoute/$videoId/progress';
+  static String _videoProgress(String videoId) =>
+      '$videoRoute/$videoId/progress';
 }
 
 // ---------------------- Listen/Home -----------------------------
 class _Listen {
   static const String listen = '${ApiEndpoints.baseUrl}/songs';
   static const String listenHome = '$listen/home';
-  static String _listenDetails(String listenId) =>
-      '$listen/$listenId';
-  static String _listenStreamUrl(String listenId) =>
-      '$listen/$listenId/stream';
-  static String _likesong(String songId) =>
-      '$listen/$songId/like';
+  static String _listenDetails(String listenId) => '$listen/$listenId';
+  static String _listenStreamUrl(String listenId) => '$listen/$listenId/stream';
+  static String _likesong(String songId) => '$listen/$songId/like';
   static const String getLikesong = '$listen/liked';
   static const String _searchSong = '$listen/search';
   static String _recentlyPlayed(String userId) => '$listen/recently-played';
   static const String _onRepeatedSong = '$listen/on-repeat';
   static const String searchSong = '$listen/search';
   static const String dailyDiscover = '$listen/daily-discovery';
-  static String _songsaveProgress(String songId) =>
-      '$listen/$songId/progress';
+  static String _songsaveProgress(String songId) => '$listen/$songId/progress';
 }
 
 // ---------------------- podcast -----------------------------
 class _Podcast {
   static const String podcastRoute = '${ApiEndpoints.baseUrl}/podcasts';
   static const String podcastHome = '$podcastRoute/home';
-  static String _podcastDetails(String podcastId) =>
-      '$podcastRoute/$podcastId';
+  static String _podcastDetails(String podcastId) => '$podcastRoute/$podcastId';
   static String _episodeDetails(String episodeId) =>
       '$podcastRoute/episodes/$episodeId';
   static String _getStreamUrl(String episodeId) =>
@@ -329,17 +327,19 @@ class _Podcast {
     int page,
     int limit,
   ) {
-    return Uri.parse('$podcastRoute/search').replace(
-      queryParameters: <String, String>{
-        if (query.isNotEmpty) 'q': query,
-        if (categoryId.isNotEmpty) 'category': categoryId,
-        'page': '$page',
-        'limit': '$limit',
-      },
-    ).toString();
+    return Uri.parse('$podcastRoute/search')
+        .replace(
+          queryParameters: <String, String>{
+            if (query.isNotEmpty) 'q': query,
+            if (categoryId.isNotEmpty) 'category': categoryId,
+            'page': '$page',
+            'limit': '$limit',
+          },
+        )
+        .toString();
   }
-  static String _likesong(String podcastid) =>
-      '$podcastRoute/$podcastid/like';
+
+  static String _likesong(String podcastid) => '$podcastRoute/$podcastid/like';
   static const String getLikesong = '$podcastRoute/liked';
 }
 
@@ -378,12 +378,14 @@ class _Settings {
 
 // ---------------------- Notification -----------------------------
 class _Notification {
-  static const String notificationRoute = '${ApiEndpoints.baseUrl}/notifications';
+  static const String notificationRoute =
+      '${ApiEndpoints.baseUrl}/notifications';
 
-  static String _list(int page, int limit) =>
-      Uri.parse(notificationRoute).replace(
+  static String _list(int page, int limit) => Uri.parse(notificationRoute)
+      .replace(
         queryParameters: <String, String>{'page': '$page', 'limit': '$limit'},
-      ).toString();
+      )
+      .toString();
 
   static String _markRead(String notificationId) =>
       '$notificationRoute/$notificationId/read';

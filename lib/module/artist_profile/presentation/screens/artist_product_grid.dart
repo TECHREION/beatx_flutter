@@ -24,8 +24,10 @@ class ArtistProductGrid extends StatelessWidget {
             scaler.scale(13 * 1.3) * 2 + // title, two lines
             scaler.scale(11 * 1.4) + // category
             scaler.scale(15 * 1.4) + // price
-            4 + 8 + // gaps between them
-            10 + 12 + // padding above and below
+            4 +
+            8 + // gaps between them
+            10 +
+            12 + // padding above and below
             2; // rounding slack
         return GridView.builder(
           shrinkWrap: true,

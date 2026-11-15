@@ -113,21 +113,18 @@ class AudiobookLikeController extends GetxController
 
     final result = await _audioBookInterface().likeAudiobook(id);
 
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        // A backend that only acknowledges the call reports no flag, so fall
-        // back to flipping what is on screen.
-        final liked = success.data?.liked ?? !isLiked.value;
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      // A backend that only acknowledges the call reports no flag, so fall
+      // back to flipping what is on screen.
+      final liked = success.data?.liked ?? !isLiked.value;
 
-        isLiked.value = liked;
-        LikedAudiobooksController.syncHearts(id, liked);
+      isLiked.value = liked;
+      LikedAudiobooksController.syncHearts(id, liked);
 
-        if (Get.isRegistered<LikedAudiobooksController>()) {
-          LikedAudiobooksController.instance.fetch();
-        }
-      },
-    );
+      if (Get.isRegistered<LikedAudiobooksController>()) {
+        LikedAudiobooksController.instance.fetch();
+      }
+    });
 
     isToggling.value = false;
   }

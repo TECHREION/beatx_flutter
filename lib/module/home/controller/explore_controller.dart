@@ -35,9 +35,7 @@ class ExploreController extends GetxController {
 
     final result = await _listenInterface().getListen();
 
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (
-      success,
-    ) {
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
       listenData.value = success.data ?? ListenMusicModel();
     });
 

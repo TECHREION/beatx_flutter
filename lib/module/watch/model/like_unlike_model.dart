@@ -2,10 +2,7 @@ class LikeUnlikeModel {
   final bool liked;
   final int likeCount;
 
-  LikeUnlikeModel({
-    required this.liked,
-    required this.likeCount,
-  });
+  LikeUnlikeModel({required this.liked, required this.likeCount});
 
   factory LikeUnlikeModel.fromJson(Map<String, dynamic> json) {
     return LikeUnlikeModel(
@@ -15,9 +12,6 @@ class LikeUnlikeModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'liked': liked,
-      'likeCount': likeCount,
-    };
+    return {'liked': liked, 'likeCount': likeCount};
   }
 }

@@ -94,9 +94,7 @@ class OnRepeatController extends GetxController {
       entries.assignAll(page.items);
       likedIds
         ..clear()
-        ..addAll(
-          page.items.where((e) => e.song.isLiked).map((e) => e.song.id),
-        );
+        ..addAll(page.items.where((e) => e.song.isLiked).map((e) => e.song.id));
     });
 
     hasLoaded.value = true;
@@ -126,9 +124,7 @@ class OnRepeatController extends GetxController {
       final fresh = page.items.where((entry) => !seen.contains(entry.song.id));
 
       entries.addAll(fresh);
-      likedIds.addAll(
-        fresh.where((e) => e.song.isLiked).map((e) => e.song.id),
-      );
+      likedIds.addAll(fresh.where((e) => e.song.isLiked).map((e) => e.song.id));
     });
 
     isLoadingMore.value = false;
@@ -136,8 +132,10 @@ class OnRepeatController extends GetxController {
 
   /// Plays [entry] and opens the player, through the same path the home
   /// screen uses.
-  Future<void> play(OnRepeatModel entry) =>
-      _homeController().playSong(entry.song.id);
+  Future<void> play(OnRepeatModel entry) => _homeController().playSong(
+    entry.song.id,
+    queue: [for (final e in entries) e.song.id],
+  );
 
   /// Likes the song, or unlikes it when it is already liked — the endpoint
   /// toggles, so both directions are the same call.

@@ -87,17 +87,14 @@ class LikedAudiobooksController extends GetxController {
 
     final result = await _audioBookInterface().likeAudiobook(book.id);
 
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        // The endpoint toggles, so a `liked: true` answer means the book was
-        // not liked to begin with and is now — leave it on the list.
-        if (success.data?.liked == true) return;
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      // The endpoint toggles, so a `liked: true` answer means the book was
+      // not liked to begin with and is now — leave it on the list.
+      if (success.data?.liked == true) return;
 
-        books.removeWhere((item) => item.id == book.id);
-        syncHearts(book.id, false);
-      },
-    );
+      books.removeWhere((item) => item.id == book.id);
+      syncHearts(book.id, false);
+    });
 
     unliking.remove(book.id);
   }

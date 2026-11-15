@@ -58,9 +58,7 @@ class MusicPlayerController extends GetxController {
   VideoInterface _videoInterface() {
     if (!Get.isRegistered<VideoInterface>() &&
         Get.isRegistered<AuthorizedPigeon>()) {
-      Get.put<VideoInterface>(
-        VideoInterfaceImpl(Get.find<AuthorizedPigeon>()),
-      );
+      Get.put<VideoInterface>(VideoInterfaceImpl(Get.find<AuthorizedPigeon>()));
     }
     return Get.find<VideoInterface>();
   }
@@ -93,15 +91,14 @@ class MusicPlayerController extends GetxController {
     final streamUrlResult = await streamUrlRequest;
     final relatedResult = await relatedRequest;
 
-    detailsResult.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        details.value = success.data;
-        savedProgress.value = success.data?.userProgress;
-        isLiked.value = success.data?.isLiked ?? false;
-        likeCount.value = success.data?.likeCount ?? 0;
-      },
-    );
+    detailsResult.fold((failure) => errorMessage.value = failure.uiMessage, (
+      success,
+    ) {
+      details.value = success.data;
+      savedProgress.value = success.data?.userProgress;
+      isLiked.value = success.data?.isLiked ?? false;
+      likeCount.value = success.data?.likeCount ?? 0;
+    });
 
     streamUrlResult.fold(
       (failure) => errorMessage.value = failure.uiMessage,
@@ -122,13 +119,10 @@ class MusicPlayerController extends GetxController {
 
     final result = await _videoInterface().likeUnlike(videoId);
 
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        isLiked.value = success.data?.liked ?? isLiked.value;
-        likeCount.value = success.data?.likeCount ?? likeCount.value;
-      },
-    );
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      isLiked.value = success.data?.liked ?? isLiked.value;
+      likeCount.value = success.data?.likeCount ?? likeCount.value;
+    });
   }
 
   void togglePlay() {
@@ -205,8 +199,9 @@ class MusicPlayerController extends GetxController {
     if (!force && positionMs == _lastSavedMs) return;
 
     // A stale tick can report past the end of a re-cut video.
-    final boundedMs =
-        durationMs > 0 ? positionMs.clamp(0, durationMs) : positionMs;
+    final boundedMs = durationMs > 0
+        ? positionMs.clamp(0, durationMs)
+        : positionMs;
 
     _lastSavedMs = boundedMs;
     _lastSavedAt = DateTime.now();

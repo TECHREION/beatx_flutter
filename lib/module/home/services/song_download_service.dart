@@ -65,7 +65,16 @@ class SongDownloadService {
   static const _partSuffix = '.part';
 
   static const _audioExtensions = {
-    'mp3', 'm4a', 'aac', 'flac', 'wav', 'ogg', 'oga', 'opus', 'webm', 'mp4',
+    'mp3',
+    'm4a',
+    'aac',
+    'flac',
+    'wav',
+    'ogg',
+    'oga',
+    'opus',
+    'webm',
+    'mp4',
   };
   static const _imageExtensions = {'jpg', 'jpeg', 'png', 'webp', 'gif'};
 

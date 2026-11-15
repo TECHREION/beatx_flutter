@@ -43,8 +43,9 @@ final class VideoInterfaceImpl extends VideoInterface {
   FutureRequest<Success<VideoDetailsModel>> videoDetails(String id) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response =
-            await appPigeon.get(ApiEndpoints.videoDetails(videoId: id));
+        final response = await appPigeon.get(
+          ApiEndpoints.videoDetails(videoId: id),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -66,8 +67,9 @@ final class VideoInterfaceImpl extends VideoInterface {
   FutureRequest<Success<VideoStreamUrlModel>> getStreamUrl(String id) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response =
-            await appPigeon.get(ApiEndpoints.videoStreamUrl(videoId: id));
+        final response = await appPigeon.get(
+          ApiEndpoints.videoStreamUrl(videoId: id),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -89,8 +91,10 @@ final class VideoInterfaceImpl extends VideoInterface {
   FutureRequest<Success<List<VideoModel>>> relatedVideos(String id) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response =
-            await appPigeon.get(ApiEndpoints.relatedVideos(videoId: id), queryParameters: {'limit': 10, 'page': 1});
+        final response = await appPigeon.get(
+          ApiEndpoints.relatedVideos(videoId: id),
+          queryParameters: {'limit': 10, 'page': 1},
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -98,10 +102,13 @@ final class VideoInterfaceImpl extends VideoInterface {
 
         final data = body['data'] is List
             ? List<Map<String, dynamic>>.from(
-                (body['data'] as List).map((e) => Map<String, dynamic>.from(e)))
+                (body['data'] as List).map((e) => Map<String, dynamic>.from(e)),
+              )
             : <Map<String, dynamic>>[];
 
-        final videos = data.map((videoJson) => VideoModel.fromJson(videoJson)).toList();
+        final videos = data
+            .map((videoJson) => VideoModel.fromJson(videoJson))
+            .toList();
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
@@ -115,8 +122,9 @@ final class VideoInterfaceImpl extends VideoInterface {
   FutureRequest<Success<LikeUnlikeModel>> likeUnlike(String id) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response =
-            await appPigeon.post(ApiEndpoints.likeUnlike(videoId: id));
+        final response = await appPigeon.post(
+          ApiEndpoints.likeUnlike(videoId: id),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)

@@ -37,11 +37,13 @@ class BeatxAudioHandler extends BaseAudioHandler with SeekHandler {
     final playing = _player.playing;
     return PlaybackState(
       controls: [
+        MediaControl.skipToPrevious,
         if (playing) MediaControl.pause else MediaControl.play,
+        MediaControl.skipToNext,
         MediaControl.stop,
       ],
       systemActions: const {MediaAction.seek},
-      androidCompactActionIndices: const [0, 1],
+      androidCompactActionIndices: const [0, 1, 2],
       processingState: _processingStates[_player.processingState]!,
       playing: playing,
       updatePosition: _player.position,
@@ -116,4 +118,13 @@ class BeatxAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> seek(Duration position) => _controller.seek(position);
+
+  /// Lock screen and notification: the same queue as the player screen.
+  @override
+  Future<void> skipToNext() async {
+    await _controller.next();
+  }
+
+  @override
+  Future<void> skipToPrevious() => _controller.previous();
 }

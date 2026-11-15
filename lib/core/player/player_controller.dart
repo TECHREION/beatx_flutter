@@ -1,11 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math' show Random;
 
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
+
+/// What happens when a track ends.
+enum PlayerRepeat {
+  /// Plays through the queue once, then stops.
+  off,
+
+  /// Starts the queue over after its last track.
+  all,
+
+  /// Plays the same track again.
+  one,
+}
 
 class PlayerController extends GetxController {
   static const _measuredDurationsKey = 'measured_track_durations';
@@ -70,6 +83,112 @@ class PlayerController extends GetxController {
   // a remembered length updates once [_restoreMeasuredDurations] lands.
   final _measuredDurations = <String, int>{}.obs;
 
+  // ── Queue ──────────────────────────────────────────────────────────────
+  //
+  // The list a track was started from (the home releases, an artist's songs,
+  // the liked songs…), so next and previous have somewhere to go. Each track
+  // is started through [_startTrack], which the screen that set the queue
+  // supplies: a song needs its stream url fetched before it can play.
+
+  /// Track ids in the order they were listed.
+  final queue = <String>[].obs;
+
+  /// Track ids in the order they play: [queue], or a shuffle of it.
+  final _order = <String>[];
+
+  Future<void> Function(String trackId)? _startTrack;
+
+  final shuffle = false.obs;
+  final repeatMode = PlayerRepeat.off.obs;
+
+  /// How far into a track "previous" restarts it rather than going back.
+  static const restartThreshold = Duration(seconds: 3);
+
+  int get _orderIndex => _order.indexOf(trackId.value);
+
+  bool get hasQueue => _startTrack != null && _orderIndex >= 0;
+
+  bool get hasNext =>
+      hasQueue &&
+      (_orderIndex < _order.length - 1 || repeatMode.value == PlayerRepeat.all);
+
+  bool get hasPrevious =>
+      hasQueue && (_orderIndex > 0 || repeatMode.value == PlayerRepeat.all);
+
+  /// Makes [trackIds] the list next and previous move through. Call just
+  /// before starting [current], one of them; [start] plays a track by id.
+  void setQueue(
+    List<String> trackIds, {
+    required String current,
+    required Future<void> Function(String trackId) start,
+  }) {
+    final ids = trackIds.where((id) => id.isNotEmpty).toSet().toList();
+    queue.assignAll(ids);
+    _startTrack = ids.isEmpty ? null : start;
+    _rebuildOrder(first: current);
+  }
+
+  void clearQueue() {
+    queue.clear();
+    _order.clear();
+    _startTrack = null;
+  }
+
+  /// [queue] in play order, the track [first] leading a shuffle.
+  void _rebuildOrder({String first = ''}) {
+    _order
+      ..clear()
+      ..addAll(queue);
+    if (!shuffle.value) return;
+    _order.shuffle(_random);
+    if (_order.remove(first)) _order.insert(0, first);
+  }
+
+  final _random = Random();
+
+  void toggleShuffle() {
+    shuffle.value = !shuffle.value;
+    _rebuildOrder(first: trackId.value);
+  }
+
+  /// off → all → one → off.
+  void cycleRepeat() {
+    repeatMode.value = PlayerRepeat
+        .values[(repeatMode.value.index + 1) % PlayerRepeat.values.length];
+  }
+
+  /// Plays the next track in the queue. Returns false when there is none.
+  Future<bool> next() async {
+    if (!hasNext) return false;
+    final i = _orderIndex + 1;
+    await _startTrack!(_order[i % _order.length]);
+    return true;
+  }
+
+  /// Restarts the track when it is past [restartThreshold] or nothing comes
+  /// before it; otherwise plays the previous track.
+  Future<void> previous() async {
+    if (position.value > restartThreshold || !hasPrevious) {
+      await seek(Duration.zero);
+      return;
+    }
+    final i = _orderIndex - 1;
+    await _startTrack!(_order[(i + _order.length) % _order.length]);
+  }
+
+  /// A track finished on its own.
+  Future<void> _onCompleted() async {
+    if (repeatMode.value == PlayerRepeat.one) {
+      await seek(Duration.zero);
+      await resume();
+      return;
+    }
+    if (await next()) return;
+    // End of the queue (or no queue): stop, rewound to the start.
+    isPlaying.value = false;
+    position.value = Duration.zero;
+  }
+
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration?>? _durationSub;
   StreamSubscription<PlayerState>? _stateSub;
@@ -86,14 +205,11 @@ class PlayerController extends GetxController {
       duration.value = dur;
       _rememberDuration(trackId.value, dur);
     });
-    // audioplayers had a dedicated completion callback. just_audio folds it
-    // into the player state, so filter for the completed edge and reproduce
-    // the previous behaviour exactly: stop reporting playback and rewind the
-    // reported position. Deliberately no auto-advance — there is no queue.
+    // just_audio folds completion into the player state: on the completed
+    // edge, repeat or move on through the queue, or stop at its end.
     _stateSub = _player.playerStateStream.listen((state) {
       if (state.processingState != ProcessingState.completed) return;
-      isPlaying.value = false;
-      position.value = Duration.zero;
+      unawaited(_onCompleted());
     });
   }
 
@@ -108,6 +224,9 @@ class PlayerController extends GetxController {
     String trackId = '',
   }) async {
     final session = ++playCount.value;
+    // Something from outside the queue (a podcast, an audiobook, a song from
+    // a screen that sets none) ends it, so next does not jump back into it.
+    if (!_order.contains(trackId)) clearQueue();
     this.title.value = title;
     this.artist.value = artist;
     this.imageAsset.value = imageAsset;
@@ -261,6 +380,7 @@ class PlayerController extends GetxController {
     position.value = Duration.zero;
     duration.value = Duration.zero;
     loadError.value = null;
+    clearQueue();
   }
 
   @override

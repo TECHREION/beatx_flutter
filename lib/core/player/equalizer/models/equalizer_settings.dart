@@ -25,19 +25,18 @@ class EqualizerSettings {
     bool? enabled,
     EqualizerPreset? preset,
     List<double>? gains,
-  }) =>
-      EqualizerSettings(
-        enabled: enabled ?? this.enabled,
-        preset: preset ?? this.preset,
-        gains: gains ?? this.gains,
-      );
+  }) => EqualizerSettings(
+    enabled: enabled ?? this.enabled,
+    preset: preset ?? this.preset,
+    gains: gains ?? this.gains,
+  );
 
   Map<String, dynamic> toJson() => {
-        'schemaVersion': schemaVersion,
-        'enabled': enabled,
-        'preset': preset.name,
-        'gains': gains,
-      };
+    'schemaVersion': schemaVersion,
+    'enabled': enabled,
+    'preset': preset.name,
+    'gains': gains,
+  };
 
   /// Rebuilds settings from stored JSON.
   ///

@@ -84,8 +84,10 @@ class LikedSongsController extends GetxController {
 
   /// Plays [song] and opens the player, through the same path the home
   /// screen uses.
-  Future<void> play(ListenMusicDetailsModel song) =>
-      _homeController().playSong(song.id);
+  Future<void> play(ListenMusicDetailsModel song) => _homeController().playSong(
+    song.id,
+    queue: [for (final liked in songs) liked.id],
+  );
 
   /// Plays a song picked at random. The player holds one track at a time, so
   /// this shuffles the pick rather than queueing the whole list.
@@ -103,21 +105,18 @@ class LikedSongsController extends GetxController {
 
     final result = await _listenInterface().likesong(song.id);
 
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) {
-        // The endpoint toggles, so a `liked: true` answer means the song was
-        // not liked to begin with and is now — leave it on the list.
-        if (success.data?.liked == true) return;
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
+      // The endpoint toggles, so a `liked: true` answer means the song was
+      // not liked to begin with and is now — leave it on the list.
+      if (success.data?.liked == true) return;
 
-        songs.removeWhere((item) => item.id == song.id);
+      songs.removeWhere((item) => item.id == song.id);
 
-        // Keep the heart on the player screen honest when the song unliked
-        // here is the one playing.
-        final playing = SongLikeController.instance;
-        if (playing.songId.value == song.id) playing.isLiked.value = false;
-      },
-    );
+      // Keep the heart on the player screen honest when the song unliked
+      // here is the one playing.
+      final playing = SongLikeController.instance;
+      if (playing.songId.value == song.id) playing.isLiked.value = false;
+    });
 
     unliking.remove(song.id);
   }

@@ -12,7 +12,16 @@ import 'dart:math' as math;
 /// So the user always edits this curve, and [resampleCurve] projects it onto
 /// whatever bands the hardware really has.
 const kDisplayFrequenciesHz = <double>[
-  31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000,
+  31,
+  62,
+  125,
+  250,
+  500,
+  1000,
+  2000,
+  4000,
+  8000,
+  16000,
 ];
 
 /// The range the screen offers, in decibels.
@@ -71,5 +80,6 @@ double _interpolate(List<double> gains, List<double> fromHz, double hz) {
 ///
 /// The service rejects an out-of-range gain rather than correcting it, so this
 /// is where a curve is fitted to what a given device will actually accept.
-List<double> clampCurve(List<double> gains, double min, double max) =>
-    gains.map((gain) => gain.clamp(min, max).toDouble()).toList(growable: false);
+List<double> clampCurve(List<double> gains, double min, double max) => gains
+    .map((gain) => gain.clamp(min, max).toDouble())
+    .toList(growable: false);

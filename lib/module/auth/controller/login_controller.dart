@@ -17,6 +17,7 @@ class LoginController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final isPasswordVisible = false.obs;
+
   /// Sent as `rememberMe`: a 30-day refresh token rather than 7 days. On by
   /// default, since the app keeps the user signed in across launches.
   final keepSignedIn = true.obs;
@@ -94,7 +95,8 @@ class LoginController extends GetxController {
     result.fold(
       (failure) {
         final msg = failure.uiMessage.toLowerCase();
-        final isUnverified = failure.failure == Failure.forbidden ||
+        final isUnverified =
+            failure.failure == Failure.forbidden ||
             msg.contains('verif') ||
             msg.contains('not verified') ||
             msg.contains('please verify');

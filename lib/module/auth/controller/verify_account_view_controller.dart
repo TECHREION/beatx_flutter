@@ -75,13 +75,12 @@ class VerifyEmailOtpController extends VerifyOtpController {
 
     final result = await authInterface.resendEmailOtp(email);
 
-    result.fold(
-      (err) => snackbarNotifier.notifyError(message: err.uiMessage),
-      (success) {
-        snackbarNotifier.notifySuccess(message: success.message);
-        _startCountdown();
-      },
-    );
+    result.fold((err) => snackbarNotifier.notifyError(message: err.uiMessage), (
+      success,
+    ) {
+      snackbarNotifier.notifySuccess(message: success.message);
+      _startCountdown();
+    });
 
     isResending = false;
     notifyListeners();

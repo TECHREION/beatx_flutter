@@ -83,7 +83,13 @@ class HomeScreen extends StatelessWidget {
                                 coverUrl: item?.coverUrl,
                                 onPlay: () {
                                   if (item != null) {
-                                    controller.playSong(item.id);
+                                    controller.playSong(
+                                      item.id,
+                                      queue: [
+                                        for (final song in controller.trending)
+                                          song.id,
+                                      ],
+                                    );
                                   }
                                 },
                               );
@@ -916,7 +922,12 @@ class _ReleaseTile extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         final id = item.listenId;
-        if (id != null) Get.find<HomeController>().playSong(id);
+        if (id == null) return;
+        final home = Get.find<HomeController>();
+        home.playSong(
+          id,
+          queue: [for (final song in home.newReleases) song.id],
+        );
       },
       child: Row(
         children: [

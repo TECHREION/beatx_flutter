@@ -95,24 +95,19 @@ class ListenMusicDetailsModel {
       ownerId: json['ownerId'],
       submittedStatus: json['submittedStatus'],
 
-      submittedScheduledAt:
-          _parseDate(json['submittedScheduledAt']),
+      submittedScheduledAt: _parseDate(json['submittedScheduledAt']),
 
-      submittedAt:
-          _parseDate(json['submittedAt']),
+      submittedAt: _parseDate(json['submittedAt']),
 
       rejectionReason: json['rejectionReason'],
       reviewedBy: json['reviewedBy'],
 
-      reviewedAt:
-          _parseDate(json['reviewedAt']),
+      reviewedAt: _parseDate(json['reviewedAt']),
 
       title: json['title'] ?? '',
       artist: json['artist'] ?? '',
       album: json['album'] is Map
-          ? AlbumModel.fromJson(
-              Map<String, dynamic>.from(json['album'] as Map),
-            )
+          ? AlbumModel.fromJson(Map<String, dynamic>.from(json['album'] as Map))
           : null,
 
       genre: GenreModel.fromJson(
@@ -129,44 +124,33 @@ class ListenMusicDetailsModel {
 
       hlsMasterUrl: json['hlsMasterUrl'],
 
-      transcodeStatus:
-          json['transcodeStatus'] ?? '',
+      transcodeStatus: json['transcodeStatus'] ?? '',
 
       explicit: json['explicit'] ?? false,
 
       playCount: json['playCount'] ?? 0,
 
-      playCountWeek:
-          json['playCountWeek'] ?? 0,
+      playCountWeek: json['playCountWeek'] ?? 0,
 
       status: json['status'] ?? '',
 
-      scheduledAt:
-          _parseDate(json['scheduledAt']),
+      scheduledAt: _parseDate(json['scheduledAt']),
 
-      publishedAt:
-          _parseDate(json['publishedAt']),
+      publishedAt: _parseDate(json['publishedAt']),
 
-      createdAt:
-          _parseDate(json['createdAt']),
+      createdAt: _parseDate(json['createdAt']),
 
-      updatedAt:
-          _parseDate(json['updatedAt']),
+      updatedAt: _parseDate(json['updatedAt']),
 
-      isFeatured:
-          json['isFeatured'] ?? false,
+      isFeatured: json['isFeatured'] ?? false,
 
-      isTrending:
-          json['isTrending'] ?? false,
+      isTrending: json['isTrending'] ?? false,
 
-      trendDirection:
-          json['trendDirection'],
+      trendDirection: json['trendDirection'],
 
-      likeCount:
-          json['likeCount'] ?? 0,
+      likeCount: json['likeCount'] ?? 0,
 
-      isLiked:
-          json['isLiked'] ?? false,
+      isLiked: json['isLiked'] ?? false,
 
       userProgress: json['userProgress'] is Map
           ? SaveProgressModel.fromJson(
@@ -174,8 +158,7 @@ class ListenMusicDetailsModel {
             )
           : null,
 
-      version:
-          json['__v'] ?? 0,
+      version: json['__v'] ?? 0,
     );
   }
 
@@ -186,17 +169,14 @@ class ListenMusicDetailsModel {
       'ownerId': ownerId,
       'submittedStatus': submittedStatus,
 
-      'submittedScheduledAt':
-          submittedScheduledAt?.toIso8601String(),
+      'submittedScheduledAt': submittedScheduledAt?.toIso8601String(),
 
-      'submittedAt':
-          submittedAt?.toIso8601String(),
+      'submittedAt': submittedAt?.toIso8601String(),
 
       'rejectionReason': rejectionReason,
       'reviewedBy': reviewedBy,
 
-      'reviewedAt':
-          reviewedAt?.toIso8601String(),
+      'reviewedAt': reviewedAt?.toIso8601String(),
 
       'title': title,
       'artist': artist,
@@ -220,17 +200,13 @@ class ListenMusicDetailsModel {
 
       'status': status,
 
-      'scheduledAt':
-          scheduledAt?.toIso8601String(),
+      'scheduledAt': scheduledAt?.toIso8601String(),
 
-      'publishedAt':
-          publishedAt?.toIso8601String(),
+      'publishedAt': publishedAt?.toIso8601String(),
 
-      'createdAt':
-          createdAt?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
 
-      'updatedAt':
-          updatedAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
 
       'isFeatured': isFeatured,
       'isTrending': isTrending,
@@ -274,12 +250,7 @@ class AlbumModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'title': title,
-      'artist': artist,
-      'coverUrl': coverUrl,
-    };
+    return {'_id': id, 'title': title, 'artist': artist, 'coverUrl': coverUrl};
   }
 }
 
@@ -287,44 +258,27 @@ class GenreModel {
   final String id;
   final String name;
 
-  GenreModel({
-    required this.id,
-    required this.name,
-  });
+  GenreModel({required this.id, required this.name});
 
   factory GenreModel.fromJson(Map<String, dynamic> json) {
-    return GenreModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return GenreModel(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
 class MetadataModel {
   final String duration;
 
-  MetadataModel({
-    required this.duration,
-  });
+  MetadataModel({required this.duration});
 
-  factory MetadataModel.fromJson(
-    Map<String, dynamic> json,
-  ) {
-    return MetadataModel(
-      duration: json['duration'] ?? '',
-    );
+  factory MetadataModel.fromJson(Map<String, dynamic> json) {
+    return MetadataModel(duration: json['duration'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }

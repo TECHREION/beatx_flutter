@@ -65,7 +65,10 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
   }
 
   @override
-  FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(String audiobookId, String chapterId) async {
+  FutureRequest<Success<AudioBookStreamUrlModel>> audiobookStreamUrl(
+    String audiobookId,
+    String chapterId,
+  ) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(

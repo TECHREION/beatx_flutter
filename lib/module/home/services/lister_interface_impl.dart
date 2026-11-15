@@ -116,11 +116,14 @@ final class ListenInterfaceImpl extends ListenInterface {
   }
 
   @override
-  FutureRequest<Success<ListenMusicDetailsModel>> getListenDetails(String listenId) async {
+  FutureRequest<Success<ListenMusicDetailsModel>> getListenDetails(
+    String listenId,
+  ) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response =
-            await appPigeon.get(ApiEndpoints.listenDetails(listenId: listenId));
+        final response = await appPigeon.get(
+          ApiEndpoints.listenDetails(listenId: listenId),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -139,11 +142,14 @@ final class ListenInterfaceImpl extends ListenInterface {
   }
 
   @override
-  FutureRequest<Success<SongStreamUrlModel>> getListenStreamUrl(String listenId) async {
+  FutureRequest<Success<SongStreamUrlModel>> getListenStreamUrl(
+    String listenId,
+  ) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response =
-            await appPigeon.get(ApiEndpoints.listenStreamUrl(listenId: listenId));
+        final response = await appPigeon.get(
+          ApiEndpoints.listenStreamUrl(listenId: listenId),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -197,7 +203,9 @@ final class ListenInterfaceImpl extends ListenInterface {
   FutureRequest<Success<SongLikeModel>> likesong(String songId) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response = await appPigeon.post(ApiEndpoints.likesong(songId: songId));
+        final response = await appPigeon.post(
+          ApiEndpoints.likesong(songId: songId),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)

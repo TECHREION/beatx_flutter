@@ -24,8 +24,12 @@ class DownloadsScreen extends StatelessWidget {
     return Get.find<HomeController>();
   }
 
-  static void _play(DownloadedSong song) =>
-      _homeController().playSong(song.id);
+  static void _play(DownloadedSong song) => _homeController().playSong(
+    song.id,
+    queue: [
+      for (final saved in DownloadController.instance.visibleSongs) saved.id,
+    ],
+  );
 
   /// Bytes as the largest whole unit, e.g. "428 MB".
   static String formatBytes(int bytes) {
@@ -125,10 +129,8 @@ class DownloadsScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                   itemCount: songs.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) => _DownloadRow(
-                    song: songs[index],
-                    position: index + 1,
-                  ),
+                  itemBuilder: (_, index) =>
+                      _DownloadRow(song: songs[index], position: index + 1),
                 );
               }),
             ),

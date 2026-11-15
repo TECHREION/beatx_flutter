@@ -29,19 +29,13 @@ class SongStreamUrlModel {
 class MetadataModel {
   final String duration;
 
-  MetadataModel({
-    required this.duration,
-  });
+  MetadataModel({required this.duration});
 
   factory MetadataModel.fromJson(Map<String, dynamic> json) {
-    return MetadataModel(
-      duration: json['duration'] ?? '',
-    );
+    return MetadataModel(duration: json['duration'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }

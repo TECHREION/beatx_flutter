@@ -21,7 +21,8 @@ class CreateNewPasswordScreen extends StatefulWidget {
   final String otp;
 
   @override
-  State<CreateNewPasswordScreen> createState() => _CreateNewPasswordScreenState();
+  State<CreateNewPasswordScreen> createState() =>
+      _CreateNewPasswordScreenState();
 }
 
 class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
@@ -33,10 +34,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   String _password = '';
 
   static const _buttonGradient = LinearGradient(
-    colors: [
-      Color(0xFF9BFF4D),
-      Color(0xFF40DDEB),
-    ],
+    colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
@@ -46,9 +44,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
     super.initState();
     _ownsController = !Get.isRegistered<ResetPasswordController>();
     _controller = _ownsController
-        ? Get.put(
-            ResetPasswordController(email: widget.email, otp: widget.otp),
-          )
+        ? Get.put(ResetPasswordController(email: widget.email, otp: widget.otp))
         : Get.find<ResetPasswordController>();
   }
 
@@ -101,12 +97,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                     vertical: 20,
                   ),
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(
-                      20,
-                      34,
-                      20,
-                      24,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 34, 20, 24),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0D0D0E),
                       borderRadius: BorderRadius.circular(48),

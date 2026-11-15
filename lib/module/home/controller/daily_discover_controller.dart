@@ -97,8 +97,10 @@ class DailyDiscoverController extends GetxController {
 
   /// Plays [song] and opens the player, through the same path the home screen
   /// uses.
-  Future<void> play(ListenMusicDetailsModel song) =>
-      _homeController().playSong(song.id);
+  Future<void> play(ListenMusicDetailsModel song) => _homeController().playSong(
+    song.id,
+    queue: [for (final pick in songs) pick.id],
+  );
 
   /// Plays a pick at random. The player holds one track at a time, so this
   /// shuffles the pick rather than queueing the whole list.

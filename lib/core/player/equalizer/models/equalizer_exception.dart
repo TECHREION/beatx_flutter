@@ -44,36 +44,36 @@ class EqualizerException implements Exception {
   final Object? cause;
 
   const EqualizerException.notSupported()
-      : this(
-          EqualizerErrorKind.notSupported,
-          'This platform does not provide a native equalizer.',
-        );
+    : this(
+        EqualizerErrorKind.notSupported,
+        'This platform does not provide a native equalizer.',
+      );
 
   const EqualizerException.notReady()
-      : this(
-          EqualizerErrorKind.notReady,
-          'The equalizer has no audio session yet. Start playback first.',
-        );
+    : this(
+        EqualizerErrorKind.notReady,
+        'The equalizer has no audio session yet. Start playback first.',
+      );
 
   EqualizerException.invalidBandIndex(int index, int bandCount)
-      : this(
-          EqualizerErrorKind.invalidBandIndex,
-          'Band index $index is out of range; the device reports $bandCount '
-          'band(s).',
-        );
+    : this(
+        EqualizerErrorKind.invalidBandIndex,
+        'Band index $index is out of range; the device reports $bandCount '
+        'band(s).',
+      );
 
   EqualizerException.gainOutOfRange(double gainDb, double minDb, double maxDb)
-      : this(
-          EqualizerErrorKind.gainOutOfRange,
-          'Gain ${gainDb}dB is outside the device range '
-          '${minDb}dB..${maxDb}dB.',
-        );
+    : this(
+        EqualizerErrorKind.gainOutOfRange,
+        'Gain ${gainDb}dB is outside the device range '
+        '${minDb}dB..${maxDb}dB.',
+      );
 
   EqualizerException.bandCountMismatch(int supplied, int expected)
-      : this(
-          EqualizerErrorKind.bandCountMismatch,
-          'Supplied $supplied gain(s) but the device reports $expected band(s).',
-        );
+    : this(
+        EqualizerErrorKind.bandCountMismatch,
+        'Supplied $supplied gain(s) but the device reports $expected band(s).',
+      );
 
   @override
   String toString() => 'EqualizerException(${kind.name}): $message';

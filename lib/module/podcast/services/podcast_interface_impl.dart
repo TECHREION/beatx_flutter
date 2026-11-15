@@ -269,7 +269,9 @@ final class PodcastInterfaceImpl extends PodcastInterface {
   FutureRequest<Success<PodcastLikeModel>> likePodcast(String podcastid) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        final response = await appPigeon.post(ApiEndpoints.likpodcast(podcastid: podcastid));
+        final response = await appPigeon.post(
+          ApiEndpoints.likpodcast(podcastid: podcastid),
+        );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)

@@ -35,8 +35,7 @@ class ListenMusicModel {
           .map((e) => DailyDiscoverySong.fromJson(e))
           .toList(),
       onRepeat: PaginatedSongs.fromJson(json['onRepeat'] ?? {}),
-      recentlyPlayed:
-          PaginatedSongs.fromJson(json['recentlyPlayed'] ?? {}),
+      recentlyPlayed: PaginatedSongs.fromJson(json['recentlyPlayed'] ?? {}),
     );
   }
 
@@ -57,23 +56,14 @@ class Genre {
   final String id;
   final String name;
 
-  Genre({
-    required this.id,
-    required this.name,
-  });
+  Genre({required this.id, required this.name});
 
   factory Genre.fromJson(Map<String, dynamic> json) {
-    return Genre(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return Genre(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-    };
+    return {'_id': id, 'name': name};
   }
 }
 
@@ -269,11 +259,7 @@ class TopCategory {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'genreId': genreId,
-      'name': name,
-      'songCount': songCount,
-    };
+    return {'genreId': genreId, 'name': name, 'songCount': songCount};
   }
 }
 
@@ -300,31 +286,20 @@ class PaginatedSongs {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'data': data,
-      'total': total,
-      'page': page,
-      'limit': limit,
-    };
+    return {'data': data, 'total': total, 'page': page, 'limit': limit};
   }
 }
 
 class Metadata {
   final String duration;
 
-  Metadata({
-    required this.duration,
-  });
+  Metadata({required this.duration});
 
   factory Metadata.fromJson(Map<String, dynamic> json) {
-    return Metadata(
-      duration: json['duration'] ?? '',
-    );
+    return Metadata(duration: json['duration'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'duration': duration,
-    };
+    return {'duration': duration};
   }
 }
