@@ -1,3 +1,4 @@
+import 'core/common/widget/mini_player_host.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:beatx_flutter/core/availability/availability_banners.dart';
 import 'package:beatx_flutter/core/di/external_service_di.dart';
@@ -50,8 +51,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0B0B0C),
       ),
-      builder: (context, child) =>
-          AvailabilityBanners(child: child ?? const SizedBox.shrink()),
+      // Lets the mini player follow the top screen (see MiniPlayerHost).
+      navigatorObservers: [MiniPlayerHost.observer],
+      builder: (context, child) => AvailabilityBanners(
+        // The mini player floats above every screen.
+        child: MiniPlayerOverlay(child: child ?? const SizedBox.shrink()),
+      ),
       home: const SplashView(),
     );
   }

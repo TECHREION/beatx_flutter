@@ -54,6 +54,7 @@ import 'package:get/get_rx/src/rx_workers/utils/debouncer.dart';
 import '../core/constants/api_endpoints.dart';
 import '../core/helpers/auth_role.dart';
 import '../core/helpers/onboarding_gate.dart';
+import '../core/player/player_controller.dart';
 import '../core/network/notification_socket.dart';
 import '../module/auth/presentation/screens/select_artist_screen.dart';
 import '../module/notification/controller/notification_controller.dart';
@@ -136,6 +137,11 @@ class AppManager extends GetxController {
       _authStatus = authStatus;
       _disconnectSocket();
       OnboardingGate.clear();
+      // A signed-out app keeps nothing playing from the previous account;
+      // stopping also hides the mini player.
+      if (Get.isRegistered<PlayerController>()) {
+        unawaited(Get.find<PlayerController>().stop());
+      }
       if (Get.isRegistered<LoginController>()) {
         Get.delete<LoginController>(force: true);
       }

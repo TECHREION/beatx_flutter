@@ -110,17 +110,17 @@ Widget _buildContent(BuildContext context, PodcastController controller) {
     ),
     sliver: SliverList.list(
       children: [
-        const SizedBox(height: 28),
-        const Text(
-          'CURATION',
-          style: TextStyle(
-            color: Color(0xFF9BFF4D),
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
+        // const Text(
+        //   'CURATION',
+        //   style: TextStyle(
+        //     color: Color(0xFF9BFF4D),
+        //     fontSize: 11,
+        //     fontWeight: FontWeight.w800,
+        //     letterSpacing: 0,
+        //   ),
+        // ),
+        // const SizedBox(height: 14),
         Row(
           children: [
             const Expanded(

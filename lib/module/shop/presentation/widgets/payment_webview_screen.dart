@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -95,7 +96,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // No mini player here: the payment page needs the whole screen.
+      MiniPlayerHidden(child: _buildScreen(context));
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
       appBar: AppBar(

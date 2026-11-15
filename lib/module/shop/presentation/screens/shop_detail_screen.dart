@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -38,7 +39,9 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
     // header and the scrolling content, so the two never look different.
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
-      bottomNavigationBar: _BottomActionBar(controller: controller),
+      bottomNavigationBar: MiniPlayerAnchor(
+        child: _BottomActionBar(controller: controller),
+      ),
       body: AppBackgroundImage(
         child: SafeArea(
           bottom: false,

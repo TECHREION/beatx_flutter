@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'dart:async';
 
 import 'package:app_pigeon/app_pigeon.dart';
@@ -100,7 +101,11 @@ class _SplashViewState extends State<SplashView> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // No mini player here: nothing plays before launch finishes.
+      MiniPlayerHidden(child: _buildScreen(context));
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SizedBox.expand(

@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'dart:async';
 
 import 'package:beatx_flutter/module/watch/controller/music_player_controller.dart';
@@ -42,14 +43,13 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   void initState() {
     super.initState();
     controller.loadVideo(widget.videoId);
-    _streamUrlWorker = ever<VideoStreamUrlModel?>(
-      controller.streamUrlData,
-      (streamUrlData) {
-        if (streamUrlData != null && streamUrlData.streamUrl.isNotEmpty) {
-          _initializePlayer(streamUrlData.streamUrl);
-        }
-      },
-    );
+    _streamUrlWorker = ever<VideoStreamUrlModel?>(controller.streamUrlData, (
+      streamUrlData,
+    ) {
+      if (streamUrlData != null && streamUrlData.streamUrl.isNotEmpty) {
+        _initializePlayer(streamUrlData.streamUrl);
+      }
+    });
   }
 
   /// Switches the player to [videoId] without leaving the screen.
@@ -203,7 +203,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // No mini player here: a video is playing full screen.
+      MiniPlayerHidden(child: _buildScreen(context));
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       // The way out sits above the video rather than on top of it, so nothing
@@ -248,145 +252,145 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      /// Title and stats
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              controller.details.value?.title ?? '',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                        /// Title and stats
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                controller.details.value?.title ?? '',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                height: 1.5,
+                              const SizedBox(height: 10),
+                              Text(
+                                '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  height: 1.5,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      /// Action Buttons
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ActionCard(
-                              icon: controller.isLiked.value
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              title: 'LIKE',
-                              active: controller.isLiked.value,
-                              onTap: controller.toggleLike,
-                            ),
-                            const ActionCard(
-                              icon: Icons.share,
-                              title: 'SHARE',
-                            ),
-                            const ActionCard(
-                              icon: Icons.download,
-                              title: 'GET',
-                            ),
-                            const ActionCard(
-                              icon: Icons.playlist_add,
-                              title: 'SAVE',
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      /// Up Next
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            const Text(
-                              "Up Next",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Spacer(),
-                            const Text("Auto-play"),
-                            Switch(
-                              value: controller.autoPlay.value,
-                              onChanged: controller.toggleAutoPlay,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      if (controller.isLoading.value &&
-                          controller.upNextList.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.cyanAccent,
-                            ),
+                            ],
                           ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: controller.upNextList.length,
-                          itemBuilder: (_, index) {
-                            final relatedVideo = controller.upNextList[index];
-
-                            return ListTile(
-                              onTap: () => _playVideo(relatedVideo.id),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: context.responsive(
-                                  phone: 16.0,
-                                  tablet: 20.0,
-                                ),
-                                vertical: context.responsive(
-                                  phone: 0.0,
-                                  tablet: 6.0,
-                                ),
-                              ),
-                              leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  relatedVideo.coverUrl,
-                                  // A 90pt thumbnail beside a tablet-width
-                                  // title reads as a placeholder.
-                                  width: context.responsive(
-                                    phone: 90.0,
-                                    tablet: 132.0,
-                                  ),
-                                  height: context.responsive(
-                                    phone: 70.0,
-                                    tablet: 84.0,
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              title: Text(
-                                relatedVideo.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                '${relatedVideo.ownerId.name} • ${_formatDuration(relatedVideo.durationMs)}',
-                              ),
-                            );
-                          },
                         ),
+
+                        const SizedBox(height: 16),
+
+                        /// Action Buttons
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ActionCard(
+                                icon: controller.isLiked.value
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                title: 'LIKE',
+                                active: controller.isLiked.value,
+                                onTap: controller.toggleLike,
+                              ),
+                              const ActionCard(
+                                icon: Icons.share,
+                                title: 'SHARE',
+                              ),
+                              const ActionCard(
+                                icon: Icons.download,
+                                title: 'GET',
+                              ),
+                              const ActionCard(
+                                icon: Icons.playlist_add,
+                                title: 'SAVE',
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        /// Up Next
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              const Text(
+                                "Up Next",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              const Text("Auto-play"),
+                              Switch(
+                                value: controller.autoPlay.value,
+                                onChanged: controller.toggleAutoPlay,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (controller.isLoading.value &&
+                            controller.upNextList.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.cyanAccent,
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: controller.upNextList.length,
+                            itemBuilder: (_, index) {
+                              final relatedVideo = controller.upNextList[index];
+
+                              return ListTile(
+                                onTap: () => _playVideo(relatedVideo.id),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: context.responsive(
+                                    phone: 16.0,
+                                    tablet: 20.0,
+                                  ),
+                                  vertical: context.responsive(
+                                    phone: 0.0,
+                                    tablet: 6.0,
+                                  ),
+                                ),
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    relatedVideo.coverUrl,
+                                    // A 90pt thumbnail beside a tablet-width
+                                    // title reads as a placeholder.
+                                    width: context.responsive(
+                                      phone: 90.0,
+                                      tablet: 132.0,
+                                    ),
+                                    height: context.responsive(
+                                      phone: 70.0,
+                                      tablet: 84.0,
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                title: Text(
+                                  relatedVideo.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  '${relatedVideo.ownerId.name} • ${_formatDuration(relatedVideo.durationMs)}',
+                                ),
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -472,15 +476,9 @@ class ActionCard extends StatelessWidget {
         //       BorderRadius.circular(18),
         // ),
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: active
-                  ? Colors.redAccent
-                  : Colors.cyanAccent,
-            ),
+            Icon(icon, color: active ? Colors.redAccent : Colors.cyanAccent),
             // const SizedBox(height: 8),
             // Text(title),
           ],

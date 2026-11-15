@@ -14,6 +14,8 @@ import '../../../module/profile/presentation/widgets/user_avatar.dart';
 ///
 /// - [showLogo] = true  → renders the AppLogo (Listen / Home tab)
 /// - [showLogo] = false → renders [title] as the screen name (all other tabs)
+/// - [onBack] set → a back button takes the profile avatar's place, for
+///   pages pushed on top of a tab (artist profile…)
 class AppHeader extends StatelessWidget {
   const AppHeader({
     super.key,
@@ -22,6 +24,7 @@ class AppHeader extends StatelessWidget {
     this.onSearchTap,
     this.onNotificationTap,
     this.notificationBadge,
+    this.onBack,
   });
 
   final bool showLogo;
@@ -34,6 +37,9 @@ class AppHeader extends StatelessWidget {
   /// exists so a screen with its own source of truth can say otherwise.
   final String? notificationBadge;
 
+  /// Shows a back button in place of the profile avatar.
+  final VoidCallback? onBack;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -45,18 +51,28 @@ class AppHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const _ProfileAvatar(),
+          if (onBack != null)
+            _ActionButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: onBack!,
+            )
+          else
+            const _ProfileAvatar(),
           const SizedBox(width: 12),
           if (showLogo)
             const AppLogo(height: 42, width: 128)
           else
-            Text(
-              title ?? '',
-              style: TextStyle(
-                color: Color(0xFF40DDEB),
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
+            Flexible(
+              child: Text(
+                title ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Color(0xFF40DDEB),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                ),
               ),
             ),
           const Spacer(),

@@ -1,4 +1,4 @@
-import 'package:beatx_flutter/core/common/widget/floating_player.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/material.dart';
 import '../core/theme/responsive.dart';
 import 'package:get/get.dart';
@@ -55,42 +55,45 @@ class _AppGroundState extends State<AppGround> {
       backgroundColor: const Color(0xFF0B0B0C),
       extendBody: true,
       body: Obx(() => pages[nav.currentIndex.value]),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const FloatingPlayer(),
-          // Left to run the full width the bar would spread five destinations
-          // across a tablet, so each label sits alone in the middle of nowhere
-          // and the row reads as a stretched phone bar. Capped and centred, it
-          // stays a bar.
-          ContentWidth(
-            maxWidth: 620,
-            padded: false,
-            child: Container(
-              height: 80,
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: const BoxDecoration(
-                color: Color(0xFF202020),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-              ),
-              child: Obx(
-                () => Row(
-                  children: List.generate(_navItems.length, (index) {
-                    final item = _navItems[index];
-                    final selected = nav.currentIndex.value == index;
-                    return Expanded(
-                      child: _NavItem(
-                        item: item,
-                        selected: selected,
-                        onTap: () => nav.goToIndex(index),
-                      ),
-                    );
-                  }),
+      // The mini player floats app-wide (MiniPlayerOverlay) and sits just
+      // above this bar.
+      bottomNavigationBar: MiniPlayerAnchor(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Left to run the full width the bar would spread five destinations
+            // across a tablet, so each label sits alone in the middle of nowhere
+            // and the row reads as a stretched phone bar. Capped and centred, it
+            // stays a bar.
+            ContentWidth(
+              maxWidth: 620,
+              padded: false,
+              child: Container(
+                height: 80,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF202020),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+                ),
+                child: Obx(
+                  () => Row(
+                    children: List.generate(_navItems.length, (index) {
+                      final item = _navItems[index];
+                      final selected = nav.currentIndex.value == index;
+                      return Expanded(
+                        child: _NavItem(
+                          item: item,
+                          selected: selected,
+                          onTap: () => nav.goToIndex(index),
+                        ),
+                      );
+                    }),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

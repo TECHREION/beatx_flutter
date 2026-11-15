@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,52 +49,54 @@ class CartScreen extends StatelessWidget {
           itemBuilder: (_, index) => _CartRow(line: cart.lines[index]),
         );
       }),
-      bottomNavigationBar: Obx(() {
-        if (cart.lines.isEmpty) return const SizedBox.shrink();
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Shipping and the final total are worked out at checkout.',
-                  style: TextStyle(color: _dimText, fontSize: 12),
-                ),
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () => Get.to<void>(
-                    () => CheckoutScreen(
-                      lines: cart.lines.toList(),
-                      fromCart: true,
-                    ),
+      bottomNavigationBar: MiniPlayerAnchor(
+        child: Obx(() {
+          if (cart.lines.isEmpty) return const SizedBox.shrink();
+          return SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Shipping and the final total are worked out at checkout.',
+                    style: TextStyle(color: _dimText, fontSize: 12),
                   ),
-                  child: Container(
-                    height: 56,
-                    width: double.infinity,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () => Get.to<void>(
+                      () => CheckoutScreen(
+                        lines: cart.lines.toList(),
+                        fromCart: true,
                       ),
                     ),
-                    child: const Text(
-                      'Checkout',
-                      style: TextStyle(
-                        color: Color(0xFF0B0B0C),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                    child: Container(
+                      height: 56,
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF9BFF4D), Color(0xFF40DDEB)],
+                        ),
+                      ),
+                      child: const Text(
+                        'Checkout',
+                        style: TextStyle(
+                          color: Color(0xFF0B0B0C),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 }

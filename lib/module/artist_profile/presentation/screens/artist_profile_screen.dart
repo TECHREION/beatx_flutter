@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/common/background_image.dart';
+import '../../../../core/common/widget/app_header.dart';
+import '../../../../core/theme/app_sizes.dart';
+import '../../../../core/theme/responsive.dart';
+
 import '../../controller/artist_profile_controller.dart';
 import '../../model/artist_profile_model.dart';
 import '../../../shop/presentation/widgets/get_tickets_screen.dart';
@@ -50,42 +55,72 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Same frame as the Home and Watch tabs: the app background, a fixed
+    // header row, and the content scrolling beneath it.
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF202020),
       ),
       child: Scaffold(
         backgroundColor: ArtistProfileScreen._bg,
-        body: Obx(() {
-          if (controller.profile.value == null) {
-            return _LoadState(controller: controller);
-          }
-          return RefreshIndicator(
-            color: ArtistProfileScreen._teal,
-            onRefresh: controller.load,
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: _HeroSection(controller: controller)),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                  sliver: SliverList.list(
-                    children: [
-                      _ArtistInfo(controller: controller),
-                      const SizedBox(height: 20),
-                      _ActionRow(controller: controller),
-                      const SizedBox(height: 20),
-                      _TabBar(controller: controller),
-                      const SizedBox(height: 28),
-                      _TabContent(controller: controller),
-                      const SizedBox(height: 110),
-                    ],
+        body: AppBackgroundImage(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Obx(
+                  () => AppHeader(
+                    title: controller.profile.value == null
+                        ? 'Artist'
+                        : controller.artist.name,
+                    onBack: () => Navigator.of(context).maybePop(),
                   ),
+                ),
+                Expanded(
+                  child: Obx(() {
+                    if (controller.profile.value == null) {
+                      return _LoadState(controller: controller);
+                    }
+                    return ContentWidth.wide(
+                      padded: false,
+                      child: RefreshIndicator(
+                        color: ArtistProfileScreen._teal,
+                        onRefresh: controller.load,
+                        child: CustomScrollView(
+                          slivers: [
+                            SliverPadding(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSizes.screenHorizontalPadding,
+                                20,
+                                AppSizes.screenHorizontalPadding,
+                                0,
+                              ),
+                              sliver: SliverList.list(
+                                children: [
+                                  _HeroSection(controller: controller),
+                                  const SizedBox(height: 20),
+                                  _ArtistInfo(controller: controller),
+                                  const SizedBox(height: 20),
+                                  _ActionRow(controller: controller),
+                                  const SizedBox(height: 20),
+                                  _TabBar(controller: controller),
+                                  const SizedBox(height: 28),
+                                  _TabContent(controller: controller),
+                                  // Clears the floating player.
+                                  const SizedBox(height: 110),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }
@@ -101,61 +136,43 @@ class _LoadState extends StatelessWidget {
   Widget build(BuildContext context) {
     final loading = controller.isLoading.value;
     final message = controller.errorMessage.value;
-    return SafeArea(
-      child: Stack(
-        children: [
-          Center(
-            child: loading
-                ? const CircularProgressIndicator(
-                    color: ArtistProfileScreen._teal,
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.person_off_rounded,
-                          color: Colors.white38,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          message.isEmpty
-                              ? 'This artist is not available.'
-                              : message,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: ArtistProfileScreen._dimText,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: controller.load,
-                          child: const Text(
-                            'Try again',
-                            style: TextStyle(color: ArtistProfileScreen._teal),
-                          ),
-                        ),
-                      ],
+    return Center(
+      child: loading
+          ? const CircularProgressIndicator(color: ArtistProfileScreen._teal)
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.person_off_rounded,
+                    color: Colors.white38,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    message.isEmpty ? 'This artist is not available.' : message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: ArtistProfileScreen._dimText),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: controller.load,
+                    child: const Text(
+                      'Try again',
+                      style: TextStyle(color: ArtistProfileScreen._teal),
                     ),
                   ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: _CircleButton(
-              icon: Icons.arrow_back_ios_new_rounded,
-              onTap: () => Navigator.of(context).maybePop(),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
     );
   }
 }
 
 // ── Hero ──────────────────────────────────────────────────────────────────────
 
+/// The artist's picture as a rounded card, like the Home and Watch heroes.
 class _HeroSection extends StatelessWidget {
   const _HeroSection({required this.controller});
 
@@ -163,83 +180,53 @@ class _HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 360,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          artistImage(
-            controller.artist.heroImage,
-            fallback: Container(
-              color: const Color(0xFF1A1A2E),
-              child: const Icon(Icons.person, color: Colors.white54, size: 80),
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.transparent,
-                  ArtistProfileScreen._bg.withValues(alpha: 0.6),
-                  ArtistProfileScreen._bg,
-                ],
-                stops: const [0, 0.45, 0.78, 1],
+    final rank = controller.artist.rank;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: AspectRatio(
+        aspectRatio: 1.1,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            artistImage(
+              controller.artist.heroImage,
+              fallback: Container(
+                color: const Color(0xFF1A1A2E),
+                child: const Icon(
+                  Icons.person,
+                  color: Colors.white54,
+                  size: 80,
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CircleButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.of(context).maybePop(),
-                  ),
-                  const Spacer(),
-                  Text(
-                    controller.artist.rank,
-                    style: const TextStyle(
-                      color: ArtistProfileScreen._teal,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.55),
+                  ],
+                  stops: const [0.55, 1],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.35),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, color: Colors.white, size: 20),
+            if (rank.isNotEmpty)
+              Positioned(
+                top: 14,
+                right: 16,
+                child: Text(
+                  rank,
+                  style: const TextStyle(
+                    color: ArtistProfileScreen._teal,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

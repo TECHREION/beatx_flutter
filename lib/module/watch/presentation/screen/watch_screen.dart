@@ -73,7 +73,7 @@ class WatchScreen extends StatelessWidget {
                         ),
                         sliver: SliverList.list(
                           children: [
-                            const SizedBox(height: 22),
+                            const SizedBox(height: 12),
                             if (controller.featuredVideo != null)
                               _HeroVideo(video: controller.featuredVideo!),
                             const SizedBox(height: 24),
@@ -127,37 +127,37 @@ class _HeroVideo extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 5,
-                height: 5,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFBD89FF),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                video.genre.name.toUpperCase(),
-                style: const TextStyle(
-                  color: Color(0xFFBD89FF),
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
+        // Container(
+        //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        //   decoration: BoxDecoration(
+        //     color: Colors.white.withValues(alpha: 0.16),
+        //     borderRadius: BorderRadius.circular(14),
+        //   ),
+        //   child: Row(
+        //     mainAxisSize: MainAxisSize.min,
+        //     children: [
+        //       Container(
+        //         width: 5,
+        //         height: 5,
+        //         decoration: const BoxDecoration(
+        //           color: Color(0xFFBD89FF),
+        //           shape: BoxShape.circle,
+        //         ),
+        //       ),
+        //       const SizedBox(width: 6),
+        //       Text(
+        //         video.genre.name.toUpperCase(),
+        //         style: const TextStyle(
+        //           color: Color(0xFFBD89FF),
+        //           fontSize: 9,
+        //           fontWeight: FontWeight.w900,
+        //           letterSpacing: 0,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        // const SizedBox(height: 10),
         Text(
           video.title,
           style: const TextStyle(

@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'dart:io';
 
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
@@ -25,7 +26,11 @@ class PlayerScreen extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // No mini player here: the full player is open.
+      MiniPlayerHidden(child: _buildScreen(context));
+
+  Widget _buildScreen(BuildContext context) {
     final ctrl = Get.find<PlayerController>();
 
     return Scaffold(
@@ -130,259 +135,282 @@ class PlayerScreen extends StatelessWidget {
                       maxWidth: 560,
                       padded: false,
                       child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // Album art card
-                          Obx(
-                            () => Container(
-                              height: 350,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(42),
-                                color: const Color(0xFF1A1A1D),
-                                image: ctrl.imageAsset.value.isNotEmpty
-                                    ? DecorationImage(
-                                        image: ctrl.imageAsset.value
-                                                .startsWith('http')
-                                            ? NetworkImage(
-                                                ctrl.imageAsset.value,
-                                              )
-                                            // A downloaded song's saved cover.
-                                            : PlayerController.isLocalFilePath(
-                                                ctrl.imageAsset.value,
-                                              )
-                                            ? FileImage(
-                                                File(ctrl.imageAsset.value),
-                                              )
-                                            : AssetImage(
-                                                    ctrl.imageAsset.value,
-                                                  )
-                                                  as ImageProvider,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                              ),
-                              child: Container(
+                        child: Column(
+                          children: [
+                            // Album art card
+                            Obx(
+                              () => Container(
+                                height: 350,
+                                width: double.infinity,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(42),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      Colors.black.withValues(alpha: 0.75),
+                                  color: const Color(0xFF1A1A1D),
+                                  image: ctrl.imageAsset.value.isNotEmpty
+                                      ? DecorationImage(
+                                          image:
+                                              ctrl.imageAsset.value.startsWith(
+                                                'http',
+                                              )
+                                              ? NetworkImage(
+                                                  ctrl.imageAsset.value,
+                                                )
+                                              // A downloaded song's saved cover.
+                                              : PlayerController.isLocalFilePath(
+                                                  ctrl.imageAsset.value,
+                                                )
+                                              ? FileImage(
+                                                  File(ctrl.imageAsset.value),
+                                                )
+                                              : AssetImage(
+                                                      ctrl.imageAsset.value,
+                                                    )
+                                                    as ImageProvider,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(42),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withValues(alpha: 0.75),
+                                      ],
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        ctrl.title.value,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        ctrl.artist.value,
+                                        style: const TextStyle(
+                                          color: Color(0xFF40DDEB),
+                                          fontSize: 18,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                padding:
-                                    const EdgeInsets.only(bottom: 20),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      ctrl.title.value,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      ctrl.artist.value,
-                                      style: const TextStyle(
-                                        color: Color(0xFF40DDEB),
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
+                            const SizedBox(height: 24),
 
-                          // Live waveform — bars react while audio plays
-                          Obx(() {
-                            final progress =
-                                ctrl.duration.value.inMilliseconds > 0
-                                    ? ctrl.position.value.inMilliseconds /
+                            // Live waveform — bars react while audio plays
+                            Obx(() {
+                              final progress =
+                                  ctrl.duration.value.inMilliseconds > 0
+                                  ? ctrl.position.value.inMilliseconds /
                                         ctrl.duration.value.inMilliseconds
-                                    : 0.0;
-                            return LiveWaveform(
-                              isPlaying: ctrl.isPlaying.value,
-                              progress: progress,
-                            );
-                          }),
-                          const SizedBox(height: 14),
+                                  : 0.0;
+                              return LiveWaveform(
+                                isPlaying: ctrl.isPlaying.value,
+                                progress: progress,
+                              );
+                            }),
+                            const SizedBox(height: 14),
 
-                          // Progress bar (scrubbable)
-                          Obx(() {
-                            final durationMs =
-                                ctrl.duration.value.inMilliseconds;
-                            final progress = durationMs > 0
-                                ? (ctrl.position.value.inMilliseconds /
-                                        durationMs)
-                                    .clamp(0.0, 1.0)
-                                : 0.0;
-                            return SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                trackHeight: 8,
-                                activeTrackColor:
-                                    const Color(0xFF9BFF4D),
-                                inactiveTrackColor: Colors.white24,
-                                thumbColor: Colors.white,
-                                thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 8),
-                                overlayShape: const RoundSliderOverlayShape(
-                                    overlayRadius: 16),
-                                overlayColor:
-                                    const Color(0xFF9BFF4D).withValues(
-                                        alpha: 0.2),
-                              ),
-                              child: Slider(
-                                value: progress,
-                                min: 0.0,
-                                max: 1.0,
-                                onChanged: durationMs > 0
-                                    ? (value) {
-                                        ctrl.position.value = Duration(
-                                          milliseconds:
-                                              (value * durationMs).round(),
-                                        );
-                                      }
-                                    : null,
-                                onChangeEnd: durationMs > 0
-                                    ? (value) {
-                                        ctrl.seek(Duration(
-                                          milliseconds:
-                                              (value * durationMs).round(),
-                                        ));
-                                      }
-                                    : null,
-                              ),
-                            );
-                          }),
-                          const SizedBox(height: 10),
-
-                          // Time labels
-                          Obx(
-                            () => Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _fmt(ctrl.position.value),
-                                  style: const TextStyle(
-                                      color: Colors.white70),
+                            // Progress bar (scrubbable)
+                            Obx(() {
+                              final durationMs =
+                                  ctrl.duration.value.inMilliseconds;
+                              final progress = durationMs > 0
+                                  ? (ctrl.position.value.inMilliseconds /
+                                            durationMs)
+                                        .clamp(0.0, 1.0)
+                                  : 0.0;
+                              return SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  trackHeight: 8,
+                                  activeTrackColor: const Color(0xFF9BFF4D),
+                                  inactiveTrackColor: Colors.white24,
+                                  thumbColor: Colors.white,
+                                  thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 8,
+                                  ),
+                                  overlayShape: const RoundSliderOverlayShape(
+                                    overlayRadius: 16,
+                                  ),
+                                  overlayColor: const Color(
+                                    0xFF9BFF4D,
+                                  ).withValues(alpha: 0.2),
                                 ),
-                                Text(
-                                  _fmt(ctrl.duration.value),
-                                  style: const TextStyle(
-                                      color: Colors.white70),
+                                child: Slider(
+                                  value: progress,
+                                  min: 0.0,
+                                  max: 1.0,
+                                  onChanged: durationMs > 0
+                                      ? (value) {
+                                          ctrl.position.value = Duration(
+                                            milliseconds: (value * durationMs)
+                                                .round(),
+                                          );
+                                        }
+                                      : null,
+                                  onChangeEnd: durationMs > 0
+                                      ? (value) {
+                                          ctrl.seek(
+                                            Duration(
+                                              milliseconds: (value * durationMs)
+                                                  .round(),
+                                            ),
+                                          );
+                                        }
+                                      : null,
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 30),
+                              );
+                            }),
+                            const SizedBox(height: 10),
 
-                          // Playback controls
-                          Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Icon(Icons.open_in_full,
-                                  color: Colors.white70, size: 30),
-                              const Icon(Icons.skip_previous,
-                                  color: Colors.white, size: 46),
-                              Obx(
-                                () => GestureDetector(
-                                  onTap: () => ctrl.isPlaying.value
-                                      ? ctrl.pause()
-                                      : ctrl.resume(),
-                                  child: Container(
-                                    width: 100,
-                                    height: 100,
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: _beatxGradient,
+                            // Time labels
+                            Obx(
+                              () => Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _fmt(ctrl.position.value),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
                                     ),
+                                  ),
+                                  Text(
+                                    _fmt(ctrl.duration.value),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+
+                            // Playback controls
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Icon(
+                                  Icons.open_in_full,
+                                  color: Colors.white70,
+                                  size: 30,
+                                ),
+                                const Icon(
+                                  Icons.skip_previous,
+                                  color: Colors.white,
+                                  size: 46,
+                                ),
+                                Obx(
+                                  () => GestureDetector(
+                                    onTap: () => ctrl.isPlaying.value
+                                        ? ctrl.pause()
+                                        : ctrl.resume(),
                                     child: Container(
-                                      margin: const EdgeInsets.all(4),
+                                      width: 100,
+                                      height: 100,
                                       decoration: const BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Color(0xFF050608),
+                                        gradient: _beatxGradient,
                                       ),
-                                      child: Icon(
-                                        ctrl.isPlaying.value
-                                            ? Icons.pause
-                                            : Icons.play_arrow,
-                                        color: Colors.white,
-                                        size: 54,
+                                      child: Container(
+                                        margin: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Color(0xFF050608),
+                                        ),
+                                        child: Icon(
+                                          ctrl.isPlaying.value
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                          color: Colors.white,
+                                          size: 54,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const Icon(Icons.skip_next,
-                                  color: Colors.white, size: 46),
-                              const Icon(Icons.repeat,
-                                  color: Colors.white70, size: 30),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-
-                          // Bottom actions
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 18,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF151515),
-                              borderRadius: BorderRadius.circular(35),
-                            ),
-                            child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceAround,
-                              children: [
-                                const _BottomAction(
-                                    icon: Icons.lyrics, title: 'LYRICS'),
-                                _divider(),
-                                const _BottomAction(
-                                    icon: Icons.queue_music,
-                                    title: 'QUEUE'),
-                                _divider(),
-                                const _BottomAction(
-                                    icon: Icons.share, title: 'SHARE'),
-                                _divider(),
-                                Obx(() {
-                                  // Whichever of the song and podcast
-                                  // bindings owns the current play session,
-                                  // or neither for an audiobook.
-                                  final target = _activeLikeTarget();
-                                  final liked = target?.isLiked.value ?? false;
-
-                                  return _BottomAction(
-                                    icon: liked
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    title: 'LIKE',
-                                    active: liked,
-                                    onTap: target == null
-                                        ? null
-                                        : () => _toggleLike(context, target),
-                                  );
-                                }),
-                                _divider(),
-                                const _DownloadAction(),
+                                const Icon(
+                                  Icons.skip_next,
+                                  color: Colors.white,
+                                  size: 46,
+                                ),
+                                const Icon(
+                                  Icons.repeat,
+                                  color: Colors.white70,
+                                  size: 30,
+                                ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+                            const SizedBox(height: 28),
+
+                            // Bottom actions
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 18,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF151515),
+                                borderRadius: BorderRadius.circular(35),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  const _BottomAction(
+                                    icon: Icons.lyrics,
+                                    title: 'LYRICS',
+                                  ),
+                                  _divider(),
+                                  const _BottomAction(
+                                    icon: Icons.queue_music,
+                                    title: 'QUEUE',
+                                  ),
+                                  _divider(),
+                                  const _BottomAction(
+                                    icon: Icons.share,
+                                    title: 'SHARE',
+                                  ),
+                                  _divider(),
+                                  Obx(() {
+                                    // Whichever of the song and podcast
+                                    // bindings owns the current play session,
+                                    // or neither for an audiobook.
+                                    final target = _activeLikeTarget();
+                                    final liked =
+                                        target?.isLiked.value ?? false;
+
+                                    return _BottomAction(
+                                      icon: liked
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      title: 'LIKE',
+                                      active: liked,
+                                      onTap: target == null
+                                          ? null
+                                          : () => _toggleLike(context, target),
+                                    );
+                                  }),
+                                  _divider(),
+                                  const _DownloadAction(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -464,10 +492,7 @@ class _BottomAction extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(color: color, fontSize: 11),
-          ),
+          Text(title, style: TextStyle(color: color, fontSize: 11)),
         ],
       ),
     );

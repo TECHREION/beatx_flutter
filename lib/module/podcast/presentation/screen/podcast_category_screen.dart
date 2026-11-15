@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/common/widget/floating_player.dart';
 import '../../../../core/notifiers/snackbar_notifier.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../../audiobook/presentation/widget/book_cover.dart';
@@ -38,7 +37,6 @@ class PodcastCategoryScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFF080909),
-        bottomNavigationBar: const FloatingPlayer(),
         body: Stack(
           children: [
             const _CategoryGlow(),
