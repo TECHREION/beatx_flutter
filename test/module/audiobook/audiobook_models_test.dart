@@ -1,5 +1,6 @@
 import 'package:beatx_flutter/core/api_handler/success.dart';
 import 'package:beatx_flutter/core/helpers/typedefs.dart';
+import 'package:beatx_flutter/core/player/now_playing.dart';
 import 'package:beatx_flutter/module/audiobook/controller/audio_book_details_controller.dart';
 import 'package:beatx_flutter/module/audiobook/model/audio_book_details_model.dart';
 import 'package:beatx_flutter/module/audiobook/model/audiobook_model.dart';
@@ -52,6 +53,12 @@ final class _FakeBooks extends AudioBookInterface {
   @override
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks() async =>
       Right(Success(data: const []));
+
+  @override
+  FutureRequest<Success<List<Audiobook>>> relatedAudiobooks(
+    String audiobookId, {
+    int limit = 10,
+  }) async => Right(Success(data: const []));
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -159,6 +166,54 @@ void main() {
       await controller.ensureLoaded('b1');
       expect(controller.firstChapter?.id, 'c1');
       expect(controller.errorMessage.value, isEmpty);
+    });
+  });
+
+  group('series and chapter position', () {
+    test('universe links read as prequel and sequel', () {
+      final book = Book.fromJson({
+        '_id': 'b2',
+        'universe': [
+          {'audiobookId': 'b1', 'relation': 'prequel'},
+          {
+            'audiobookId': {'_id': 'b3', 'title': 'Book 3'},
+            'relation': 'sequel',
+          },
+          {'audiobookId': 'b9', 'relation': 'spin-off'},
+          {'relation': 'sequel'},
+        ],
+      });
+
+      final links = book.seriesLinks;
+      expect(links.map((l) => l.audiobookId), ['b1', 'b3']);
+      expect(links.map((l) => l.isSequel), [false, true]);
+    });
+
+    test('the player says which chapter of how many', () {
+      final playing =
+          NowPlayingContext(
+              kind: NowPlayingKind.chapter,
+              collectionId: 'b1',
+              collectionTitle: 'Hamlet',
+              entries: const [
+                NowPlayingEntry(id: 'c1', title: 'Act I', label: 'Chapter 1'),
+                NowPlayingEntry(id: 'c2', title: 'Act II', label: 'Chapter 2'),
+                NowPlayingEntry(id: 'c3', title: 'Act III', label: 'Chapter 3'),
+              ],
+            )
+            ..series.add(
+              const SeriesEntry(
+                id: 'b2',
+                title: 'Hamlet II',
+                relation: SeriesRelation.sequel,
+              ),
+            );
+
+      expect(playing.position('c2'), 'Chapter 2 of 3');
+      expect(playing.position('elsewhere'), '');
+      expect(playing.heading, 'PLAYING FROM AUDIOBOOK');
+      expect(playing.sequel?.id, 'b2');
+      expect(playing.prequel, isNull);
     });
   });
 }

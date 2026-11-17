@@ -10,6 +10,7 @@ import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
 import 'podcast_like_controller.dart';
 import 'save_progress_controller.dart';
+import 'podcast_now_playing.dart';
 
 /// Everything published under one category: the shows themselves and, below
 /// them, every episode those shows have.
@@ -196,6 +197,17 @@ class PodcastCategoryController extends GetxController {
         return;
       }
 
+      // Which show, which episode of it, and the rest of it as the queue.
+      PodcastNowPlaying.attach(
+        podcastId: episode.podcastId.id,
+        podcastTitle: episode.podcastId.title,
+        podcastCoverUrl: episode.podcastId.coverUrl,
+        episodeId: episode.id,
+        episodeTitle: episode.title,
+        seasonNumber: episode.seasonNumber,
+        episodeNumber: episode.episodeNumber,
+        durationMs: episode.durationMs,
+      );
       _playerController().play(
         title: episode.title,
         artist: episode.podcastId.title,

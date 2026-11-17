@@ -32,6 +32,7 @@ class DownloadsScreen extends StatefulWidget {
     queue: [
       for (final saved in DownloadController.instance.visibleSongs) saved.id,
     ],
+    source: 'Downloads',
   );
 
   /// Bytes as the largest whole unit, e.g. "428 MB".

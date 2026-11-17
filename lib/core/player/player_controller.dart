@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'now_playing.dart';
+
 /// What happens when a track ends.
 enum PlayerRepeat {
   /// Plays through the queue once, then stops.
@@ -82,6 +84,30 @@ class PlayerController extends GetxController {
   // after a restart, since the map is stored. Observable so a screen showing
   // a remembered length updates once [_restoreMeasuredDurations] lands.
   final _measuredDurations = <String, int>{}.obs;
+
+  // ── Now playing ────────────────────────────────────────────────────────
+
+  /// The book, show or list the current track belongs to, or null when the
+  /// caller gave none. The player screen, mini player and lock screen read
+  /// it to say which chapter of what (or which episode of which show) is on.
+  final nowPlaying = Rxn<NowPlayingContext>();
+
+  /// Called when the last track of [nowPlaying] finishes with nothing queued
+  /// after it — the end of a book, say, so the next one in the series can be
+  /// offered.
+  void Function(NowPlayingContext context)? onCollectionFinished;
+
+  /// Makes [context] what the next `play` belongs to. Call just before
+  /// `play`, with the track about to start among its entries (or, for a song
+  /// list, in the queue).
+  void setNowPlaying(NowPlayingContext? context) => nowPlaying.value = context;
+
+  /// Whether [context] still describes [trackId]. A song list is described
+  /// by the queue; a book or show by its entries.
+  bool _describes(NowPlayingContext context, String trackId) =>
+      context.kind == NowPlayingKind.song
+      ? _order.contains(trackId)
+      : context.contains(trackId);
 
   // ── Queue ──────────────────────────────────────────────────────────────
   //
@@ -187,6 +213,10 @@ class PlayerController extends GetxController {
     // End of the queue (or no queue): stop, rewound to the start.
     isPlaying.value = false;
     position.value = Duration.zero;
+    final context = nowPlaying.value;
+    if (context != null && context.kind != NowPlayingKind.song) {
+      onCollectionFinished?.call(context);
+    }
   }
 
   StreamSubscription<Duration>? _positionSub;
@@ -227,6 +257,11 @@ class PlayerController extends GetxController {
     // Something from outside the queue (a podcast, an audiobook, a song from
     // a screen that sets none) ends it, so next does not jump back into it.
     if (!_order.contains(trackId)) clearQueue();
+    // Likewise the book or show it was playing from.
+    final context = nowPlaying.value;
+    if (context != null && !_describes(context, trackId)) {
+      nowPlaying.value = null;
+    }
     this.title.value = title;
     this.artist.value = artist;
     this.imageAsset.value = imageAsset;
@@ -381,6 +416,7 @@ class PlayerController extends GetxController {
     duration.value = Duration.zero;
     loadError.value = null;
     clearQueue();
+    nowPlaying.value = null;
   }
 
   @override

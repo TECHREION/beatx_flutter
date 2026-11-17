@@ -119,6 +119,10 @@ class Book {
     );
   }
 
+  /// The books before and after this one in its series.
+  List<SeriesLink> get seriesLinks =>
+      (universe ?? const []).map(SeriesLink.fromJson).nonNulls.toList();
+
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
@@ -148,6 +152,27 @@ class Book {
       '__v': v,
       'totalChapters': totalChapters,
     };
+  }
+}
+
+/// A link from a book to another in the same series (`universe` in the API).
+class SeriesLink {
+  const SeriesLink({required this.audiobookId, required this.isSequel});
+
+  final String audiobookId;
+
+  /// True for the book that comes after; false for the one before.
+  final bool isSequel;
+
+  static SeriesLink? fromJson(dynamic json) {
+    if (json is! Map) return null;
+    // Populated by some routes (`{_id, title…}`), a bare id on others.
+    final raw = json['audiobookId'];
+    final id = raw is Map ? raw['_id']?.toString() : raw?.toString();
+    final relation = json['relation']?.toString();
+    if (id == null || id.isEmpty) return null;
+    if (relation != 'sequel' && relation != 'prequel') return null;
+    return SeriesLink(audiobookId: id, isSequel: relation == 'sequel');
   }
 }
 

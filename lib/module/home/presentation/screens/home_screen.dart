@@ -93,6 +93,7 @@ class HomeScreen extends StatelessWidget {
                                         for (final song in controller.trending)
                                           song.id,
                                       ],
+                                      source: 'Trending',
                                     );
                                   }
                                 },
@@ -937,6 +938,7 @@ class _ReleaseTile extends StatelessWidget {
         home.playSong(
           id,
           queue: [for (final song in home.newReleases) song.id],
+          source: 'New Releases',
         );
       },
       child: Row(

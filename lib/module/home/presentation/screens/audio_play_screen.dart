@@ -1,7 +1,9 @@
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'dart:io';
 
+import 'package:beatx_flutter/core/common/widget/now_playing_sheet.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/core/player/now_playing.dart';
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/core/player/player_like_target.dart';
 import 'package:flutter/material.dart';
@@ -88,28 +90,58 @@ class PlayerScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'PLAYING FROM PLAYLIST',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
+                      // What this is playing from: the book, the show or
+                      // the song list. Tap for its chapters/episodes.
+                      Expanded(
+                        child: Obx(() {
+                          final playing = ctrl.nowPlaying.value;
+                          final source = playing?.collectionTitle ?? '';
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _hasSheet(playing)
+                                ? () => showNowPlayingSheet(context)
+                                : null,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  source.isEmpty
+                                      ? 'NOW PLAYING'
+                                      : playing!.heading,
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        source.isEmpty
+                                            ? ctrl.artist.value
+                                            : source,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    if (_hasSheet(playing))
+                                      const Icon(
+                                        Icons.keyboard_arrow_right_rounded,
+                                        color: Colors.white54,
+                                      ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'New Releases',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        }),
                       ),
                       // Always reachable. Where the platform has no real
                       // equalizer the screen says so plainly — it never shows
@@ -337,11 +369,28 @@ class PlayerScreen extends StatelessWidget {
                                       ),
                                     ),
                                     _divider(),
-                                    const Expanded(
-                                      child: _BottomAction(
-                                        icon: Icons.queue_music,
-                                        title: 'QUEUE',
-                                      ),
+                                    Expanded(
+                                      child: Obx(() {
+                                        final playing = ctrl.nowPlaying.value;
+                                        final chapters =
+                                            playing?.kind ==
+                                            NowPlayingKind.chapter;
+                                        return _BottomAction(
+                                          icon: chapters
+                                              ? Icons.menu_book_rounded
+                                              : Icons.queue_music,
+                                          title:
+                                              playing == null ||
+                                                  playing.kind ==
+                                                      NowPlayingKind.song
+                                              ? 'QUEUE'
+                                              : playing.listName.toUpperCase(),
+                                          onTap: _hasSheet(playing)
+                                              ? () =>
+                                                    showNowPlayingSheet(context)
+                                              : null,
+                                        );
+                                      }),
                                     ),
                                     _divider(),
                                     const Expanded(
@@ -436,6 +485,10 @@ class PlayerScreen extends StatelessWidget {
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
+                                      // Which chapter (or episode) this is,
+                                      // so a chapter title alone never
+                                      // leaves the user guessing.
+                                      _PositionBadge(ctrl: ctrl),
                                       Text(
                                         ctrl.title.value,
                                         textAlign: TextAlign.center,
@@ -530,6 +583,12 @@ class PlayerScreen extends StatelessWidget {
     SnackbarNotifier(context: context).notifyError(message: error);
   }
 
+  /// Whether there is a list of chapters/episodes (or a series) to show.
+  static bool _hasSheet(NowPlayingContext? playing) =>
+      playing != null &&
+      playing.kind != NowPlayingKind.song &&
+      (playing.entries.isNotEmpty || playing.series.isNotEmpty);
+
   static String _fmt(Duration d) {
     final hours = d.inHours;
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -542,6 +601,63 @@ class PlayerScreen extends StatelessWidget {
 
   static Widget _divider() =>
       Container(width: 1, height: 35, color: Colors.white10);
+}
+
+/// "CHAPTER 3 OF 12" / "S2 · E5" over the title on the cover, or nothing
+/// for a song.
+class _PositionBadge extends StatelessWidget {
+  const _PositionBadge({required this.ctrl});
+
+  final PlayerController ctrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final playing = ctrl.nowPlaying.value;
+    final label = playing == null || playing.kind == NowPlayingKind.song
+        ? ''
+        : playing.position(ctrl.trackId.value);
+    if (label.isEmpty) return const SizedBox.shrink();
+    const accent = Color(0xFF9BFF4D);
+    // A button, not just a label: the quickest way to the other chapters.
+    final badge = Semantics(
+      button: true,
+      label: '$label. Show ${playing!.listName.toLowerCase()}',
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.45),
+        shape: StadiumBorder(
+          side: BorderSide(color: accent.withValues(alpha: 0.6)),
+        ),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () => showNowPlayingSheet(context),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: const TextStyle(
+                    color: accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.format_list_bulleted_rounded,
+                  color: accent,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return Padding(padding: const EdgeInsets.only(bottom: 10), child: badge);
+  }
 }
 
 /// One of the transport's icon buttons. [active] shows a mode that is on

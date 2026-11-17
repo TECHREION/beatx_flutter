@@ -135,6 +135,7 @@ class OnRepeatController extends GetxController {
   Future<void> play(OnRepeatModel entry) => _homeController().playSong(
     entry.song.id,
     queue: [for (final e in entries) e.song.id],
+    source: 'On Repeat',
   );
 
   /// Likes the song, or unlikes it when it is already liked — the endpoint

@@ -54,5 +54,6 @@ class SongSearchController
   Future<void> play(ListenMusicDetailsModel song) => _homeController().playSong(
     song.id,
     queue: [for (final result in results) result.id],
+    source: 'Search results',
   );
 }

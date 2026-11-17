@@ -12,6 +12,7 @@ import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
 import 'episode_download_controller.dart';
 import 'podcast_like_controller.dart';
+import 'podcast_now_playing.dart';
 import 'save_progress_controller.dart';
 
 class EpisodeDetailsController extends GetxController {
@@ -185,6 +186,24 @@ class EpisodeDetailsController extends GetxController {
         return;
       }
 
+      // Which show, which episode of it, and the rest of it as the queue.
+      final loaded = details.value?.episode;
+      final listed = relatedEpisodes.firstWhereOrNull((e) => e.id == episodeId);
+      final isLoaded = loaded?.id == episodeId;
+      PodcastNowPlaying.attach(
+        podcastId: podcastId,
+        podcastTitle: loaded?.podcastId.title ?? artist,
+        podcastCoverUrl: loaded?.podcastId.coverUrl,
+        episodeId: episodeId,
+        episodeTitle: title,
+        seasonNumber: isLoaded
+            ? loaded!.seasonNumber
+            : (listed?.seasonNumber ?? 0),
+        episodeNumber: isLoaded
+            ? loaded!.episodeNumber
+            : (listed?.episodeNumber ?? 0),
+        durationMs: isLoaded ? loaded!.durationMs : (listed?.durationMs ?? 0),
+      );
       _playerController().play(
         title: title,
         artist: artist,

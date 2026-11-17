@@ -90,6 +90,7 @@ class ArtistProfileController extends GetxController {
     home.playSong(
       songId,
       queue: [for (final song in profile.value?.songs ?? const []) song.id],
+      source: profile.value?.name ?? '',
     );
   }
 

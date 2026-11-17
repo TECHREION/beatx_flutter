@@ -19,6 +19,12 @@ abstract base class AudioBookInterface extends BaseRepository {
   );
   FutureRequest<Success<AudioBookLikeModel>> likeAudiobook(String audiobookId);
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks();
+
+  /// Books in the same genre as [audiobookId], to suggest after it.
+  FutureRequest<Success<List<Audiobook>>> relatedAudiobooks(
+    String audiobookId, {
+    int limit = 10,
+  });
   FutureRequest<Success<PagedResult<Audiobook>>> searchAudiobook({
     required String query,
     required String genreId,

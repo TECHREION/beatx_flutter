@@ -5,6 +5,7 @@ import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../player/now_playing.dart';
 import '../../player/player_controller.dart';
 
 class FloatingPlayer extends StatefulWidget {
@@ -199,7 +200,7 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                                       ),
                                     ),
                                     Text(
-                                      _ctrl.artist.value,
+                                      _subtitle(),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -223,7 +224,7 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            onPressed: () {},
+                            onPressed: _ctrl.previous,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -253,15 +254,17 @@ class _FloatingPlayerState extends State<FloatingPlayer>
                             ),
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: _ctrl.hasNext ? _ctrl.next : null,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 32,
                               minHeight: 32,
                             ),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.skip_next_rounded,
-                              color: Colors.white,
+                              color: _ctrl.hasNext
+                                  ? Colors.white
+                                  : Colors.white38,
                               size: 24,
                             ),
                           ),
@@ -294,6 +297,18 @@ class _FloatingPlayerState extends State<FloatingPlayer>
   /// path for the seeded ones, so pick the loader per value rather than
   /// assuming assets — an [Image.asset] on a URL only ever renders the
   /// fallback note.
+  /// "Chapter 3 · The Hobbit", "S2 · E5 · Show name", or the artist.
+  String _subtitle() {
+    final playing = _ctrl.nowPlaying.value;
+    final artist = _ctrl.artist.value;
+    if (playing == null || playing.kind == NowPlayingKind.song) return artist;
+    final label = playing.entry(_ctrl.trackId.value)?.label ?? '';
+    return [
+      if (label.isNotEmpty) label,
+      playing.collectionTitle.isNotEmpty ? playing.collectionTitle : artist,
+    ].join(' · ');
+  }
+
   Widget _artwork(String source) {
     if (source.isEmpty) return _artworkFallback();
     if (source.startsWith('http')) {

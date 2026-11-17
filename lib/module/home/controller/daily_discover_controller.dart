@@ -100,6 +100,7 @@ class DailyDiscoverController extends GetxController {
   Future<void> play(ListenMusicDetailsModel song) => _homeController().playSong(
     song.id,
     queue: [for (final pick in songs) pick.id],
+    source: 'Daily Discovery',
   );
 
   /// Plays a pick at random. The player holds one track at a time, so this

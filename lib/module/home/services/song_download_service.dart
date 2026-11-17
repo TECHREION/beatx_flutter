@@ -51,15 +51,15 @@ class SongDownloadService {
   }) : _folder = folder,
        _video = video,
        _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              connectTimeout: const Duration(seconds: 20),
-              // Between bytes, not for the whole file.
-              receiveTimeout: const Duration(seconds: 60),
-            ),
-          ),
-      _baseDirectory = baseDirectory ?? getApplicationSupportDirectory;
+           dio ??
+           Dio(
+             BaseOptions(
+               connectTimeout: const Duration(seconds: 20),
+               // Between bytes, not for the whole file.
+               receiveTimeout: const Duration(seconds: 60),
+             ),
+           ),
+       _baseDirectory = baseDirectory ?? getApplicationSupportDirectory;
 
   // A plain client on purpose: the stream url is a presigned S3 link, and an
   // Authorization header on top of its signature makes S3 reject the request.

@@ -148,6 +148,7 @@ class RecentlyPlayedController extends GetxController {
   Future<void> play(RecentlyPlayedModel entry) => _homeController().playSong(
     entry.song.id,
     queue: [for (final e in entries) e.song.id],
+    source: 'Recently Played',
   );
 
   /// Likes the song, or unlikes it when it is already liked — the endpoint

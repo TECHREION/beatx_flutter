@@ -15,6 +15,8 @@ import '../services/listen_interface.dart';
 import 'download_controller.dart';
 import 'song_like_controller.dart';
 import 'song_progress_controller.dart';
+import '../../../core/common/widget/now_playing_sheet.dart';
+import '../../../core/player/now_playing.dart';
 
 class HomeController extends GetxController {
   final isLoading = true.obs;
@@ -108,10 +110,12 @@ class HomeController extends GetxController {
   /// next and previous buttons move through it. Left empty, whatever queue is
   /// already playing is kept if it holds this song. [openPlayer] is false when
   /// the player moves on by itself, so the user is not pulled off the screen
-  /// they are on.
+  /// they are on. [source] names that list ("Liked Songs") for the player's
+  /// "Playing from" line.
   Future<void> playSong(
     String listenId, {
     List<String> queue = const [],
+    String source = '',
     bool openPlayer = true,
   }) async {
     if (isLoadingSong.value) return;
@@ -122,6 +126,17 @@ class HomeController extends GetxController {
         queue,
         current: listenId,
         start: (id) => playSong(id, openPlayer: false),
+      );
+      // Kept while the player stays in this list; dropped once anything
+      // else plays.
+      attachNowPlaying(
+        source.isEmpty
+            ? null
+            : NowPlayingContext(
+                kind: NowPlayingKind.song,
+                collectionId: source,
+                collectionTitle: source,
+              ),
       );
     }
 

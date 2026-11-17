@@ -75,6 +75,8 @@ base class ApiEndpoints {
   static String likaudiobook({required String audiobookId}) =>
       _Audiobook._likeAudibook(audiobookId);
   static const String getLikedAudiobooks = _Audiobook.getLikedAudiobooks;
+  static String relatedAudiobooks({required String audiobookId}) =>
+      _Audiobook._relatedAudiobooks(audiobookId);
   static const String searchAudiobook = _Audiobook.searchAudiobook;
 
   //----------------------- watch -----------------------------
@@ -265,6 +267,8 @@ class _Audiobook {
   static String _likeAudibook(String audiobookId) =>
       '$_audiobookRoute/$audiobookId/like';
   static const String getLikedAudiobooks = '$_audiobookRoute/liked';
+  static String _relatedAudiobooks(String audiobookId) =>
+      '$_audiobookRoute/$audiobookId/related';
   static const String searchAudiobook = '$_audiobookRoute/search';
 }
 

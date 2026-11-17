@@ -76,6 +76,9 @@ class BeatxAudioHandler extends BaseAudioHandler with SeekHandler {
           id: id,
           title: _controller.title.value,
           artist: _controller.artist.value,
+          // The book or show, so the lock screen says which one this
+          // chapter or episode belongs to.
+          album: _controller.nowPlaying.value?.collectionTitle,
           artUri: _artUri(_controller.imageAsset.value),
           duration: _knownDuration(),
         ),

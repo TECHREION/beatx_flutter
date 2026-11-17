@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/common/widget/now_playing_sheet.dart';
 import '../../../../core/notifiers/snackbar_notifier.dart';
+import '../../../../core/player/now_playing.dart';
 import '../../../home/controller/download_controller.dart';
 import '../../../home/presentation/widgets/offline_download_button.dart';
 import '../../controller/audio_book_details_controller.dart';
@@ -68,12 +70,24 @@ class AudiobookDetailScreen extends StatelessWidget {
                                   ?.synopsis,
                             ),
                           ),
+                          Obx(
+                            () => _SeriesBlock(
+                              books: detailsController.seriesBooks.toList(),
+                              controller: detailsController,
+                            ),
+                          ),
                           const SizedBox(height: 20),
                           Obx(
                             () => _ChaptersBlock(
                               chapters:
                                   detailsController.details.value?.chapters ??
                                   const [],
+                              controller: detailsController,
+                            ),
+                          ),
+                          Obx(
+                            () => _RelatedBlock(
+                              books: detailsController.relatedBooks.toList(),
                               controller: detailsController,
                             ),
                           ),
@@ -621,33 +635,68 @@ class _ChapterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
+      // The chapter the player is on stands out, so coming back to the book
+      // shows where the listener is.
+      final current = controller.isPlayingChapter(chapter);
+      return _row(context, current);
+    });
+  }
+
+  Widget _row(BuildContext context, bool current) {
+    const accent = Color(0xFF9BFF4D);
     return Row(
       children: [
         SizedBox(
           width: 58,
-          child: Text(
-            (chapter.chapterNumber ?? 0).toString().padLeft(2, '0'),
-            style: const TextStyle(
-              color: Color(0xFF6E6A72),
-              fontSize: 29,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
-            ),
-          ),
+          child: current
+              ? const Icon(Icons.graphic_eq_rounded, color: accent, size: 30)
+              : Text(
+                  (chapter.chapterNumber ?? 0).toString().padLeft(2, '0'),
+                  style: const TextStyle(
+                    color: Color(0xFF6E6A72),
+                    fontSize: 29,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
         ),
         Expanded(
-          child: Text(
-            chapter.title?.isNotEmpty == true
-                ? chapter.title!
-                : 'Chapter ${chapter.chapterNumber ?? ''}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (current)
+                const Text(
+                  'NOW PLAYING',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              Text(
+                chapter.title?.isNotEmpty == true
+                    ? chapter.title!
+                    : 'Chapter ${chapter.chapterNumber ?? ''}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: current ? accent : Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
+                ),
+              ),
+              if ((chapter.durationMs ?? 0) > 0)
+                Text(
+                  formatClock(chapter.durationMs!),
+                  style: const TextStyle(
+                    color: Color(0xFF8E8A92),
+                    fontSize: 12,
+                  ),
+                ),
+            ],
           ),
         ),
         // Saved with the book, so it plays without internet.
@@ -697,6 +746,192 @@ class _ChapterRow extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+}
+
+/// The books before and after this one in its series.
+class _SeriesBlock extends StatelessWidget {
+  const _SeriesBlock({required this.books, required this.controller});
+
+  final List<SeriesEntry> books;
+  final AudioBookDetailsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    if (books.isEmpty) return const SizedBox.shrink();
+    final ordered = [
+      ...books.where((b) => b.relation == SeriesRelation.prequel),
+      ...books.where((b) => b.relation == SeriesRelation.sequel),
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF202020),
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionTitle(title: 'In this series'),
+            const SizedBox(height: 14),
+            for (var i = 0; i < ordered.length; i++) ...[
+              _SeriesRow(entry: ordered[i], controller: controller),
+              if (i != ordered.length - 1) const SizedBox(height: 14),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeriesRow extends StatelessWidget {
+  const _SeriesRow({required this.entry, required this.controller});
+
+  final SeriesEntry entry;
+  final AudioBookDetailsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final sequel = entry.relation == SeriesRelation.sequel;
+    const accent = Color(0xFF9BFF4D);
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => controller.openBook(entry),
+      child: Row(
+        children: [
+          CoverImage(url: entry.coverUrl, size: 60, radius: 12),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      sequel
+                          ? Icons.arrow_forward_rounded
+                          : Icons.arrow_back_rounded,
+                      size: 14,
+                      color: sequel ? accent : Colors.white54,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      sequel ? 'NEXT BOOK' : 'PREVIOUS BOOK',
+                      style: TextStyle(
+                        color: sequel ? accent : Colors.white54,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  entry.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (entry.subtitle.isNotEmpty)
+                  Text(
+                    entry.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF8E8A92),
+                      fontSize: 13,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+        ],
+      ),
+    );
+  }
+}
+
+/// Same-genre books, to try after this one.
+class _RelatedBlock extends StatelessWidget {
+  const _RelatedBlock({required this.books, required this.controller});
+
+  final List<Audiobook> books;
+  final AudioBookDetailsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    if (books.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(title: 'You might also like'),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: books.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, i) {
+                final book = books[i];
+                return SizedBox(
+                  width: 124,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => controller.openBook(
+                      SeriesEntry(
+                        id: book.id,
+                        title: book.title,
+                        subtitle: book.author,
+                        coverUrl: book.coverUrl,
+                        relation: SeriesRelation.related,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CoverImage(url: book.coverUrl, size: 124, radius: 12),
+                        const SizedBox(height: 8),
+                        Text(
+                          book.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          book.author,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF8E8A92),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

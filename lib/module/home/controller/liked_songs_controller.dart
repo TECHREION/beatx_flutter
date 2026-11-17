@@ -87,6 +87,7 @@ class LikedSongsController extends GetxController {
   Future<void> play(ListenMusicDetailsModel song) => _homeController().playSong(
     song.id,
     queue: [for (final liked in songs) liked.id],
+    source: 'Liked Songs',
   );
 
   /// Plays a song picked at random. The player holds one track at a time, so

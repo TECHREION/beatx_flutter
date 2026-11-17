@@ -192,4 +192,33 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
       },
     );
   }
+
+  @override
+  FutureRequest<Success<List<Audiobook>>> relatedAudiobooks(
+    String audiobookId, {
+    int limit = 10,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.relatedAudiobooks(audiobookId: audiobookId),
+          queryParameters: {'limit': limit},
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          // A plain array per Swagger; read a paged body the same way.
+          data: pagedEntries(body['data'])
+              .whereType<Map>()
+              .map((e) => Audiobook.fromJson(Map<String, dynamic>.from(e)))
+              .where((book) => book.id.isNotEmpty && book.id != audiobookId)
+              .toList(),
+        );
+      },
+    );
+  }
 }
