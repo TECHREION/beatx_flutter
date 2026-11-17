@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 
 import 'package:beatx_flutter/core/player/player_controller.dart';
@@ -1131,7 +1132,7 @@ class _ArtistWatchList extends StatelessWidget {
                       backgroundColor: const Color(0xFF1A1A1D),
                       backgroundImage: avatar == null
                           ? null
-                          : NetworkImage(avatar),
+                          : CachedNetworkImageProvider(avatar),
                       child: artist != null && avatar == null
                           ? Text(
                               artist.name.isEmpty
@@ -1195,7 +1196,7 @@ class _ArtworkBackground extends StatelessWidget {
           ),
         ),
         if (imageUrl != null && imageUrl!.isNotEmpty)
-          Image.network(
+          CachedImage.network(
             imageUrl!,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Image.asset(

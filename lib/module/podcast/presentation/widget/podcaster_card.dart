@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 import '../../model/podcast_home_model.dart';
 
@@ -43,7 +44,9 @@ class PodcasterCard extends StatelessWidget {
                           backgroundColor: const Color(0xFF111113),
                           backgroundImage:
                               podcaster.artistAvatar?.isNotEmpty == true
-                              ? NetworkImage(podcaster.artistAvatar!)
+                              ? CachedNetworkImageProvider(
+                                  podcaster.artistAvatar!,
+                                )
                               : null,
                           onBackgroundImageError:
                               podcaster.artistAvatar?.isNotEmpty == true

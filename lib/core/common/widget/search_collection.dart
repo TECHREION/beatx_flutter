@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
@@ -314,7 +315,7 @@ class SearchResultTile extends StatelessWidget {
                   ),
                   child: coverUrl.isEmpty
                       ? Icon(fallbackIcon, color: Colors.white, size: 25)
-                      : Image.network(
+                      : CachedImage.network(
                           coverUrl,
                           fit: BoxFit.cover,
                           // A missing cover should leave the gradient behind

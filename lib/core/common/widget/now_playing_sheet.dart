@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -740,7 +741,7 @@ class CoverImage extends StatelessWidget {
     );
     Widget image;
     if (url.startsWith('http')) {
-      image = Image.network(
+      image = CachedImage.network(
         url,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => placeholder,

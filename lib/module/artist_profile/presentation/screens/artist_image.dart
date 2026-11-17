@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 /// An image from the API (`http…`) or a bundled asset path; empty or broken
 /// sources show [fallback].
@@ -15,7 +16,7 @@ Widget artistImage(
   Widget onError(BuildContext _, Object _, StackTrace? _) =>
       SizedBox(width: width, height: height, child: fallback);
   return src.startsWith('http')
-      ? Image.network(
+      ? CachedImage.network(
           src,
           fit: fit,
           width: width,
@@ -34,5 +35,7 @@ Widget artistImage(
 /// The [ImageProvider] for [src], or null when there is none.
 ImageProvider? artistImageProvider(String src) {
   if (src.isEmpty) return null;
-  return src.startsWith('http') ? NetworkImage(src) : AssetImage(src);
+  return src.startsWith('http')
+      ? CachedNetworkImageProvider(src)
+      : AssetImage(src);
 }

@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'dart:io';
 
 import 'package:beatx_flutter/core/common/widget/now_playing_sheet.dart';
@@ -446,7 +447,7 @@ class PlayerScreen extends StatelessWidget {
                                               ctrl.imageAsset.value.startsWith(
                                                 'http',
                                               )
-                                              ? NetworkImage(
+                                              ? CachedNetworkImageProvider(
                                                   ctrl.imageAsset.value,
                                                 )
                                               // A downloaded song's saved cover.

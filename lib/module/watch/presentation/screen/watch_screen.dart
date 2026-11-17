@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
@@ -318,7 +319,7 @@ class _VideoTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
+                  CachedImage.network(
                     video.coverUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>

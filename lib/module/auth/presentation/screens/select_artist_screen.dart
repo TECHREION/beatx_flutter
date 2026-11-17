@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:flutter/material.dart';
@@ -641,7 +642,7 @@ class ArtistCard extends StatelessWidget {
 
 ImageProvider? _imageOf(String image) {
   if (image.isEmpty) return null;
-  if (image.startsWith('http')) return NetworkImage(image);
+  if (image.startsWith('http')) return CachedNetworkImageProvider(image);
   return AssetImage(image);
 }
 

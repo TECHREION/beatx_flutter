@@ -23,8 +23,7 @@ class LoadMoreOnScroll extends StatelessWidget {
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         final metrics = notification.metrics;
-        if (metrics.axis == Axis.vertical &&
-            metrics.extentAfter < threshold) {
+        if (metrics.axis == Axis.vertical && metrics.extentAfter < threshold) {
           onLoadMore();
         }
         return false;
@@ -68,6 +67,7 @@ class SliverLoadMoreFooter extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) =>
-      SliverToBoxAdapter(child: LoadMoreFooter(loading: loading, color: color));
+  Widget build(BuildContext context) => SliverToBoxAdapter(
+    child: LoadMoreFooter(loading: loading, color: color),
+  );
 }

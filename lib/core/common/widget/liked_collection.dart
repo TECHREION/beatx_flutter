@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 
 /// Chrome shared by the liked songs and liked podcasts screens: both are the
@@ -394,7 +395,7 @@ class LikedCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
+    return CachedImage.network(
       url,
       width: size,
       height: size,

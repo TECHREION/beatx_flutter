@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 import 'package:flutter/material.dart';
 
@@ -29,7 +30,7 @@ class UserAvatar extends StatelessWidget {
         ? MemoryImage(imageBytes!)
         : url.isEmpty
         ? null
-        : NetworkImage(url);
+        : CachedNetworkImageProvider(url);
 
     return CircleAvatar(
       radius: radius,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 /// A remote picture that fills its parent, or [icon] when there is none or it
 /// fails to load.
@@ -25,7 +26,7 @@ class ShopImage extends StatelessWidget {
     final source = url;
     if (source == null || source.isEmpty) return fallback;
 
-    return Image.network(
+    return CachedImage.network(
       source,
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => fallback,

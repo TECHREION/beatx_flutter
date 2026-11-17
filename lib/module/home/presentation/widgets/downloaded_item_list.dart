@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 
 import 'package:flutter/material.dart';
@@ -184,7 +185,7 @@ class _ItemRow extends StatelessWidget {
                         errorBuilder: (_, _, _) => _placeholder(),
                       )
                     else if (_first.artworkUrl.isNotEmpty)
-                      Image.network(
+                      CachedImage.network(
                         _first.artworkUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => _placeholder(),

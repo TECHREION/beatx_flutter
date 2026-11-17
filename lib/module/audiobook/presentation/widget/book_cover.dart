@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 
 /// Remote cover art with a branded placeholder while loading and on failure.
 class BookCover extends StatelessWidget {
@@ -23,7 +24,7 @@ class BookCover extends StatelessWidget {
       return _CoverPlaceholder(iconSize: iconSize, icon: placeholderIcon);
     }
 
-    return Image.network(
+    return CachedImage.network(
       url,
       fit: fit,
       alignment: alignment,

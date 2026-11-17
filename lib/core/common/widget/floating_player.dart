@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'dart:ui';
 
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
@@ -312,7 +313,7 @@ class _FloatingPlayerState extends State<FloatingPlayer>
   Widget _artwork(String source) {
     if (source.isEmpty) return _artworkFallback();
     if (source.startsWith('http')) {
-      return Image.network(
+      return CachedImage.network(
         source,
         fit: BoxFit.cover,
         errorBuilder: (_, err, trace) => _artworkFallback(),

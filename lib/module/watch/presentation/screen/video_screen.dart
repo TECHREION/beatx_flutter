@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
+import 'package:beatx_flutter/core/services/image_cache/cached_image.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -610,7 +611,7 @@ class _UpNextCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
+                    CachedImage.network(
                       video.coverUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) =>
