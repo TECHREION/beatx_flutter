@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 
+import '../../../module/watch/presentation/widgets/video_mini_player.dart';
 import 'floating_player.dart';
 
 /// Shows the [FloatingPlayer] on every screen of the app.
@@ -233,7 +234,16 @@ class MiniPlayerOverlay extends StatelessWidget {
                 bottom: bottom == 0,
                 child: Material(
                   type: MaterialType.transparency,
-                  child: player ?? const FloatingPlayer(),
+                  child:
+                      player ??
+                      const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // A minimized video, then the audio pill.
+                          VideoMiniPlayer(),
+                          FloatingPlayer(),
+                        ],
+                      ),
                 ),
               ),
             ),

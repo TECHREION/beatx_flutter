@@ -97,11 +97,8 @@ class WatchScreen extends StatelessWidget {
                                   for (final video in controller.trendingVideos)
                                     _VideoTile(
                                       video: video,
-                                      onTap: () => Get.to(
-                                        () => MusicPlayerScreen(
-                                          videoId: video.id,
-                                        ),
-                                      ),
+                                      onTap: () =>
+                                          MusicPlayerScreen.open(video.id),
                                     ),
                                 ],
                               ),
@@ -192,8 +189,7 @@ class _HeroVideo extends StatelessWidget {
             SizedBox(
               height: 43,
               child: FilledButton.icon(
-                onPressed: () =>
-                    Get.to(() => MusicPlayerScreen(videoId: video.id)),
+                onPressed: () => MusicPlayerScreen.open(video.id),
                 icon: const Icon(Icons.play_arrow_rounded, size: 23),
                 label: const Text('WATCH NOW'),
                 style: FilledButton.styleFrom(

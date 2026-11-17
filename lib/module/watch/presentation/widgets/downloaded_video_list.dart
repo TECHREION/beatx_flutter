@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../home/presentation/widgets/downloaded_item_list.dart';
 import '../../controller/video_download_controller.dart';
@@ -32,8 +31,7 @@ class DownloadedVideoList extends StatelessWidget {
       emptyBody:
           'Tap the download button under a video to keep it on this device '
           'and watch without internet.',
-      onPlay: (files) =>
-          Get.to(() => MusicPlayerScreen(videoId: files.first.id)),
+      onPlay: (files) => MusicPlayerScreen.open(files.first.id),
     );
   }
 }

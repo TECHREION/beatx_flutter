@@ -137,7 +137,7 @@ class _VideoRow extends StatelessWidget {
     return '${d.inMinutes}:$s';
   }
 
-  void _watch() => Get.to(() => MusicPlayerScreen(videoId: video.id));
+  void _watch() => MusicPlayerScreen.open(video.id);
 
   @override
   Widget build(BuildContext context) {

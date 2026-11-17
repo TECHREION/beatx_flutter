@@ -12,7 +12,10 @@ import 'package:video_player/video_player.dart';
 
 import '../../../../core/theme/responsive.dart';
 import '../../controller/video_download_controller.dart';
+import '../../controller/video_mini_player_controller.dart';
+import '../../model/watch_model.dart';
 import '../widgets/video_download_button.dart';
+import '../widgets/video_player_controls.dart';
 
 String _formatDuration(int durationMs) {
   final totalSeconds = (durationMs / 1000).round();
@@ -26,12 +29,22 @@ class MusicPlayerScreen extends StatefulWidget {
 
   final String videoId;
 
+  /// Opens the player sliding up from the bottom, the way the audio player
+  /// opens (see FloatingPlayer). GetX plays a route's transition in reverse
+  /// when it is popped, so minimizing (the down arrow, back, swipe down)
+  /// slides the screen back down.
+  static Future<void>? open(String videoId) => Get.to<void>(
+    () => MusicPlayerScreen(videoId: videoId),
+    transition: Transition.downToUp,
+    preventDuplicates: false,
+  );
+
   @override
   State<MusicPlayerScreen> createState() => _MusicPlayerScreenState();
 }
 
 class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
-  final MusicPlayerController controller = Get.put(MusicPlayerController());
+  late final MusicPlayerController controller;
 
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
@@ -42,11 +55,25 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   /// stopped at the end, and auto-play must only advance once.
   bool _reachedEnd = false;
 
+  /// Set once the player has been handed to the mini player, so leaving the
+  /// screen does not stop it.
+  bool _minimized = false;
+
   @override
   void initState() {
     super.initState();
-    controller.loadVideo(widget.videoId);
-    unawaited(_startPlayback(widget.videoId));
+    // Coming back from the mini player: carry on with the same player and
+    // the details already loaded. Any other video playing there is stopped.
+    final handoff = VideoMiniPlayerController.instance.takeOver(widget.videoId);
+    if (handoff != null) {
+      controller = handoff.details;
+      Get.put(controller);
+      _adoptPlayer(handoff.video);
+    } else {
+      controller = Get.put(MusicPlayerController());
+      controller.loadVideo(widget.videoId);
+      unawaited(_startPlayback(widget.videoId));
+    }
     _streamUrlWorker = ever<VideoStreamUrlModel?>(controller.streamUrlData, (
       streamUrlData,
     ) {
@@ -158,6 +185,72 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     scheduleMicrotask(() => _playVideo(next.id));
   }
 
+  /// Takes over a player that is already initialized and playing.
+  void _adoptPlayer(VideoPlayerController video) {
+    _videoController = video;
+    video.addListener(_onVideoTick);
+    _chewieController = _buildChewie(video, autoPlay: video.value.isPlaying);
+  }
+
+  /// YouTube's down arrow: the video keeps playing in the mini player and
+  /// the screen goes away.
+  void _minimize() {
+    final video = _videoController;
+    if (video == null || !video.value.isInitialized) {
+      // Nothing playing yet worth keeping.
+      Get.back<void>();
+      return;
+    }
+    video.removeListener(_onVideoTick);
+    final details = controller.details.value;
+    VideoMiniPlayerController.instance.minimize(
+      MiniVideoSession(
+        videoId: controller.currentVideoId ?? widget.videoId,
+        title: details?.title ?? '',
+        channel: details?.ownerId.name ?? '',
+        video: video,
+        details: controller,
+      ),
+    );
+    _minimized = true;
+    Get.back<void>();
+  }
+
+  ChewieController _buildChewie(
+    VideoPlayerController video, {
+    bool autoPlay = true,
+  }) {
+    return ChewieController(
+      videoPlayerController: video,
+      autoPlay: autoPlay,
+      looping: false,
+      aspectRatio: video.value.aspectRatio,
+      allowFullScreen: true,
+      allowMuting: true,
+      customControls: VideoPlayerControls(
+        onMinimize: _minimize,
+        onNext: () {
+          final next = controller.nextUpNext;
+          if (next != null) unawaited(_playVideo(next.id));
+        },
+        hasNext: () => controller.nextUpNext != null,
+        autoPlay: controller.autoPlay,
+      ),
+      deviceOrientationsOnEnterFullScreen: const [
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ],
+      deviceOrientationsAfterFullScreen: const [DeviceOrientation.portraitUp],
+      systemOverlaysAfterFullScreen: SystemUiOverlay.values,
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Colors.cyanAccent,
+        handleColor: Colors.cyanAccent,
+        bufferedColor: Colors.white38,
+        backgroundColor: Colors.white24,
+      ),
+    );
+  }
+
   /// [source] is a stream url, or the absolute path of a downloaded file.
   void _initializePlayer(String source) {
     if (_videoController != null) return;
@@ -182,30 +275,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           if (!mounted || _videoController != video) return;
         }
 
-        setState(() {
-          _chewieController = ChewieController(
-            videoPlayerController: video,
-            autoPlay: true,
-            looping: false,
-            aspectRatio: video.value.aspectRatio,
-            allowFullScreen: true,
-            allowMuting: true,
-            deviceOrientationsOnEnterFullScreen: const [
-              DeviceOrientation.landscapeLeft,
-              DeviceOrientation.landscapeRight,
-            ],
-            deviceOrientationsAfterFullScreen: const [
-              DeviceOrientation.portraitUp,
-            ],
-            systemOverlaysAfterFullScreen: SystemUiOverlay.values,
-            materialProgressColors: ChewieProgressColors(
-              playedColor: Colors.cyanAccent,
-              handleColor: Colors.cyanAccent,
-              bufferedColor: Colors.white38,
-              backgroundColor: Colors.white24,
-            ),
-          );
-        });
+        setState(() => _chewieController = _buildChewie(video));
       });
   }
 
@@ -213,6 +283,13 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   void dispose() {
     _streamUrlWorker?.dispose();
     _scrollController.dispose();
+
+    if (_minimized) {
+      // The mini player owns the video now and keeps it playing.
+      _chewieController?.dispose();
+      super.dispose();
+      return;
+    }
 
     // Leaving the screen is the last chance to record where playback got to.
     final position = _playedPosition();
@@ -227,201 +304,168 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      // No mini player here: a video is playing full screen.
-      MiniPlayerHidden(child: _buildScreen(context));
+  Widget build(BuildContext context) => PopScope(
+    // Back minimizes into the mini player, as on YouTube; the cross on the
+    // mini player is what stops the video. (Get.back pops regardless.)
+    canPop: false,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _minimize();
+    },
+    // No mini player here: a video is playing full screen.
+    child: MiniPlayerHidden(child: _buildScreen(context)),
+  );
 
   Widget _buildScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      // The way out sits above the video rather than on top of it, so nothing
-      // covers the picture and the button is always where it was last time.
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: Get.back<void>,
-          tooltip: 'Back',
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: Column(
-          children: [
-            // Pinned. The player holds the top of the screen and the detail
-            // below scrolls under it, rather than the whole page scrolling
-            // and carrying the video off screen with it.
-            // A 16:9 player that keeps growing with the screen ends up
-            // taller than the space left for anything else, so it is capped.
-            ContentWidth.wide(
-              padded: false,
-              child: _PlayerSurface(
-                chewieController: _chewieController,
-                errorMessage: controller.errorMessage,
+      // The player sits right under the status bar; its controls (minimize,
+      // auto-play, settings, full screen) are laid over the picture.
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Pinned. The player holds the top of the screen and the detail
+              // below scrolls under it, rather than the whole page scrolling
+              // and carrying the video off screen with it.
+              // A 16:9 player that keeps growing with the screen ends up
+              // taller than the space left for anything else, so it is capped.
+              ContentWidth.wide(
+                padded: false,
+                child: _PlayerSurface(
+                  chewieController: _chewieController,
+                  errorMessage: controller.errorMessage,
+                  onClose: _minimize,
+                ),
               ),
-            ),
 
-            /// Everything under the player scrolls.
-            Expanded(
-              child: Obx(
-                () => SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(bottom: 32),
-                  child: ContentWidth(
-                    padded: false,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// Title and stats
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                controller.details.value?.title ?? '',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+              /// Everything under the player scrolls.
+              Expanded(
+                child: Obx(
+                  () => SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: ContentWidth(
+                      padded: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// Title and stats
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  controller.details.value?.title ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  height: 1.5,
+                                const SizedBox(height: 10),
+                                Text(
+                                  '${controller.details.value?.ownerId.name ?? ''} • ${controller.details.value?.playCount ?? 0} plays • ${controller.likeCount.value} likes',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    height: 1.5,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        /// Action Buttons
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ActionCard(
-                                icon: controller.isLiked.value
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                title: 'LIKE',
-                                active: controller.isLiked.value,
-                                onTap: controller.toggleLike,
-                              ),
-                              const ActionCard(
-                                icon: Icons.share,
-                                title: 'SHARE',
-                              ),
-                              VideoDownloadButton(
-                                videoId: controller.currentVideoId ?? '',
-                                details: controller.details.value,
-                              ),
-                              const ActionCard(
-                                icon: Icons.playlist_add,
-                                title: 'SAVE',
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        /// Up Next
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              const Text(
-                                "Up Next",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              const Text("Auto-play"),
-                              Switch(
-                                value: controller.autoPlay.value,
-                                onChanged: controller.toggleAutoPlay,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        if (controller.isLoading.value &&
-                            controller.upNextList.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.cyanAccent,
-                              ),
+                              ],
                             ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: controller.upNextList.length,
-                            itemBuilder: (_, index) {
-                              final relatedVideo = controller.upNextList[index];
-
-                              return ListTile(
-                                onTap: () => _playVideo(relatedVideo.id),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: context.responsive(
-                                    phone: 16.0,
-                                    tablet: 20.0,
-                                  ),
-                                  vertical: context.responsive(
-                                    phone: 0.0,
-                                    tablet: 6.0,
-                                  ),
-                                ),
-                                leading: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    relatedVideo.coverUrl,
-                                    // A 90pt thumbnail beside a tablet-width
-                                    // title reads as a placeholder.
-                                    width: context.responsive(
-                                      phone: 90.0,
-                                      tablet: 132.0,
-                                    ),
-                                    height: context.responsive(
-                                      phone: 70.0,
-                                      tablet: 84.0,
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                title: Text(
-                                  relatedVideo.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(
-                                  '${relatedVideo.ownerId.name} • ${_formatDuration(relatedVideo.durationMs)}',
-                                ),
-                              );
-                            },
                           ),
-                      ],
+
+                          const SizedBox(height: 16),
+
+                          /// Action Buttons
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                ActionCard(
+                                  icon: controller.isLiked.value
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  title: 'LIKE',
+                                  active: controller.isLiked.value,
+                                  onTap: controller.toggleLike,
+                                ),
+                                const ActionCard(
+                                  icon: Icons.share,
+                                  title: 'SHARE',
+                                ),
+                                VideoDownloadButton(
+                                  videoId: controller.currentVideoId ?? '',
+                                  details: controller.details.value,
+                                ),
+                                const ActionCard(
+                                  icon: Icons.playlist_add,
+                                  title: 'SAVE',
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          /// Up Next
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              children: [
+                                const Text(
+                                  "Up Next",
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Text("Auto-play"),
+                                Switch(
+                                  value: controller.autoPlay.value,
+                                  onChanged: controller.toggleAutoPlay,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          if (controller.isLoading.value &&
+                              controller.upNextList.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.cyanAccent,
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              padding: const EdgeInsets.only(top: 8),
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: controller.upNextList.length,
+                              itemBuilder: (_, index) {
+                                final relatedVideo =
+                                    controller.upNextList[index];
+
+                                return _UpNextCard(
+                                  video: relatedVideo,
+                                  onTap: () => _playVideo(relatedVideo.id),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -430,17 +474,17 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 
 /// The video itself, at a fixed 16:9.
 ///
-/// Nothing is laid over the picture: the back button lives in the app bar
-/// above the player, so the frame stays clear whether or not Chewie happens
-/// to be showing its own controls.
+/// Its controls ([VideoPlayerControls]) are laid over the picture.
 class _PlayerSurface extends StatelessWidget {
   const _PlayerSurface({
     required this.chewieController,
     required this.errorMessage,
+    required this.onClose,
   });
 
   final ChewieController? chewieController;
   final RxString errorMessage;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -453,19 +497,38 @@ class _PlayerSurface extends StatelessWidget {
         final chewie = chewieController;
         if (chewie != null) return Chewie(controller: chewie);
 
+        // Still loading (or failed): the controls carrying the minimize
+        // button are not there yet, so offer the way out here.
         return ColoredBox(
           color: Colors.black,
-          child: Center(
-            child: message.isNotEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  )
-                : const CircularProgressIndicator(color: Colors.cyanAccent),
+          child: Stack(
+            children: [
+              Positioned(
+                top: 4,
+                left: 4,
+                child: IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white,
+                    size: 32,
+                    semanticLabel: 'Close',
+                  ),
+                ),
+              ),
+              Center(
+                child: message.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      )
+                    : const CircularProgressIndicator(color: kVideoAccent),
+              ),
+            ],
           ),
         );
       }),
@@ -509,5 +572,159 @@ class ActionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// An Up Next video as a YouTube feed card: the full-width thumbnail with its
+/// length, then the channel initial, title and "channel · plays · age".
+class _UpNextCard extends StatelessWidget {
+  const _UpNextCard({required this.video, required this.onTap});
+
+  final VideoModel video;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final channel = video.ownerId.name;
+    final age = _timeAgo(video.publishedAt);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+      child: Material(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      video.coverUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          const ColoredBox(color: Color(0xFF2A2A2A)),
+                    ),
+                    Positioned(
+                      right: 8,
+                      bottom: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _formatDuration(video.durationMs),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: const Color(0xFF3A3A3A),
+                      child: Text(
+                        channel.isEmpty ? '?' : channel[0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            video.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                if (channel.isNotEmpty)
+                                  TextSpan(text: '$channel  '),
+                                const WidgetSpan(
+                                  alignment: PlaceholderAlignment.middle,
+                                  child: Icon(
+                                    Icons.play_arrow_outlined,
+                                    size: 14,
+                                    color: Colors.white60,
+                                  ),
+                                ),
+                                TextSpan(text: _compact(video.playCount)),
+                                if (age != null) TextSpan(text: '  $age'),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(Icons.more_vert, color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 394000 -> 394K, 1200000 -> 1.2M.
+  static String _compact(int n) {
+    String trim(double v) => v >= 10 || v == v.roundToDouble()
+        ? v.toStringAsFixed(0)
+        : v.toStringAsFixed(1);
+    if (n >= 1000000) return '${trim(n / 1000000)}M';
+    if (n >= 1000) return '${trim(n / 1000)}K';
+    return '$n';
+  }
+
+  static String? _timeAgo(String? iso) {
+    final date = iso == null ? null : DateTime.tryParse(iso);
+    if (date == null) return null;
+    final d = DateTime.now().difference(date);
+    if (d.inDays >= 365) return '${d.inDays ~/ 365}y ago';
+    if (d.inDays >= 30) return '${d.inDays ~/ 30}mo ago';
+    if (d.inDays >= 1) return '${d.inDays}d ago';
+    if (d.inHours >= 1) return '${d.inHours}h ago';
+    return '${d.inMinutes}m ago';
   }
 }

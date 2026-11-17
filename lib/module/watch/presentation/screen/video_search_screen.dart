@@ -84,8 +84,7 @@ class VideoSearchScreen extends StatelessWidget {
                       tag: video.genre.name,
                       meta: _formatDuration(video.durationMs),
                       wideCover: true,
-                      onTap: () =>
-                          Get.to(() => MusicPlayerScreen(videoId: video.id)),
+                      onTap: () => MusicPlayerScreen.open(video.id),
                     );
                   },
                 );
