@@ -30,6 +30,7 @@ class AppHeader extends StatelessWidget {
     this.showActions = true,
     this.titleTrailing,
     this.searchHint,
+    this.trailing,
   });
 
   final bool showLogo;
@@ -57,6 +58,9 @@ class AppHeader extends StatelessWidget {
   /// between the title and the bell, showing this hint ("Search videos").
   /// Tapping it opens the screen's search, like the button did.
   final String? searchHint;
+
+  /// Shown in place of the notification bell: the Shop puts its cart there.
+  final Widget? trailing;
 
   bool get _searchField => showActions && searchHint != null && !showLogo;
 
@@ -132,19 +136,24 @@ class AppHeader extends StatelessWidget {
             child: _SearchField(hint: searchHint!, onTap: _openSearch),
           ),
           const SizedBox(width: 10),
-          _NotificationButton(
-            badge: notificationBadge,
-            onTap: onNotificationTap,
-          ),
+          trailing ??
+              _NotificationButton(
+                badge: notificationBadge,
+                onTap: onNotificationTap,
+              ),
         ] else ...[
           if (showLogo) const Spacer() else const SizedBox(width: 12),
           if (showActions) ...[
-            _ActionButton(icon: Icons.search_rounded, onTap: _openSearch),
-            const SizedBox(width: 12),
-            _NotificationButton(
-              badge: notificationBadge,
-              onTap: onNotificationTap,
+            AppHeaderActionButton(
+              icon: Icons.search_rounded,
+              onTap: _openSearch,
             ),
+            const SizedBox(width: 12),
+            trailing ??
+                _NotificationButton(
+                  badge: notificationBadge,
+                  onTap: onNotificationTap,
+                ),
           ],
         ],
       ],
@@ -280,7 +289,7 @@ class _NotificationButton extends StatelessWidget {
     // An explicit badge is taken at its word and asks for no controller, so a
     // caller can show a count without the feed being registered at all.
     if (badge != null) {
-      return _ActionButton(
+      return AppHeaderActionButton(
         icon: Icons.notifications_rounded,
         badge: badge,
         onTap: open,
@@ -289,7 +298,7 @@ class _NotificationButton extends StatelessWidget {
 
     final controller = NotificationController.instance;
     return Obx(
-      () => _ActionButton(
+      () => AppHeaderActionButton(
         icon: Icons.notifications_rounded,
         badge: controller.badge,
         onTap: open,
@@ -300,12 +309,21 @@ class _NotificationButton extends StatelessWidget {
 
 // ─── Action Button ────────────────────────────────────────────────────────────
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.icon, required this.onTap, this.badge});
+/// The header's round frosted button (search, notifications, cart), with an
+/// optional count badge.
+class AppHeaderActionButton extends StatelessWidget {
+  const AppHeaderActionButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.badge,
+    this.semanticLabel,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
   final String? badge;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +340,12 @@ class _ActionButton extends StatelessWidget {
             child: SizedBox(
               width: 42,
               height: 42,
-              child: Icon(icon, color: Colors.white, size: 24),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+                semanticLabel: semanticLabel,
+              ),
             ),
           ),
         ),
@@ -330,13 +353,15 @@ class _ActionButton extends StatelessWidget {
           Positioned(
             right: 1,
             top: -2,
+            // A circle for one digit, a pill that grows for "12" or "99+".
             child: Container(
-              width: 17,
               height: 17,
+              constraints: const BoxConstraints(minWidth: 17),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE93657),
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE93657),
+                borderRadius: BorderRadius.circular(9),
               ),
               child: Text(
                 badge!,

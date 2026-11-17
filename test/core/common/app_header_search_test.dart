@@ -104,4 +104,34 @@ void main() {
       expect(bell.right, closeTo(390 - AppSizes.screenHorizontalPadding, 0.5));
     }
   });
+
+  testWidgets('a trailing button (the Shop\'s cart) replaces the bell', (
+    tester,
+  ) async {
+    var openedCart = 0;
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          backgroundColor: Colors.black,
+          body: AppHeader(
+            title: 'Shop',
+            onSearchTap: () {},
+            trailing: AppHeaderActionButton(
+              icon: Icons.shopping_cart_outlined,
+              badge: '12',
+              onTap: () => openedCart++,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.notifications_rounded), findsNothing);
+    expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.shopping_cart_outlined));
+    expect(openedCart, 1);
+  });
 }

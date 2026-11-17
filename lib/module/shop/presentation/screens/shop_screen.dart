@@ -36,6 +36,18 @@ class ShopScreen extends StatelessWidget {
                   transition: Transition.rightToLeft,
                   preventDuplicates: true,
                 ),
+                // The cart, not notifications, is what matters while shopping.
+                trailing: Obx(() {
+                  final count = CartController.instance.itemCount;
+                  return AppHeaderActionButton(
+                    icon: Icons.shopping_cart_outlined,
+                    semanticLabel: count == 0
+                        ? 'Cart'
+                        : 'Cart, $count ${count == 1 ? 'item' : 'items'}',
+                    badge: count == 0 ? null : (count > 99 ? '99+' : '$count'),
+                    onTap: () => Get.to(() => const CartScreen()),
+                  );
+                }),
               ),
               Expanded(
                 child: ContentWidth.wide(

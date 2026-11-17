@@ -157,7 +157,7 @@ class PodcastCategoryScreen extends StatelessWidget {
             const _CategoryMessage(message: 'No episodes in this category yet.')
           else
             for (final episode in controller.episodes) ...[
-              _CategoryEpisodeTile(
+              CategoryEpisodeTile(
                 episode: episode,
                 isLoading: controller.loadingEpisodeId.value == episode.id,
                 onTap: () =>
@@ -544,8 +544,9 @@ class _PodcastCard extends StatelessWidget {
 
 // ─── Episodes ─────────────────────────────────────────────────────────────
 
-class _CategoryEpisodeTile extends StatelessWidget {
-  const _CategoryEpisodeTile({
+class CategoryEpisodeTile extends StatelessWidget {
+  const CategoryEpisodeTile({
+    super.key,
     required this.episode,
     required this.isLoading,
     required this.onTap,

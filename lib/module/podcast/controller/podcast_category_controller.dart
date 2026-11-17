@@ -18,9 +18,15 @@ import 'podcast_now_playing.dart';
 /// Everything published under one category: the shows themselves and, below
 /// them, every episode those shows have.
 class PodcastCategoryController extends GetxController {
-  PodcastCategoryController({required this.categoryId});
+  PodcastCategoryController({
+    required this.categoryId,
+    this.allPodcasts = false,
+  });
 
   final String categoryId;
+
+  /// Every show, not one category's: what "See all activity" lists.
+  final bool allPodcasts;
 
   /// Shows a page at a time, and the newest few episodes of each, so a big
   /// category never pulls in every episode of every show at once.
@@ -105,7 +111,7 @@ class PodcastCategoryController extends GetxController {
   Future<void> fetchCategory() async {
     // The search endpoint only accepts an ObjectId, so an id the home payload
     // never sent is worth saying out loud rather than posting and failing.
-    if (categoryId.isEmpty) {
+    if (categoryId.isEmpty && !allPodcasts) {
       errorMessage.value =
           'This category arrived without an id, so its shows cannot be looked '
           'up.';

@@ -18,6 +18,7 @@ import 'liked_podcasts_screen.dart';
 import 'podcast_category_screen.dart';
 import 'podcast_search_screen.dart';
 import '../../../../core/theme/responsive.dart';
+import 'all_episodes_screen.dart';
 
 class PodcastScreen extends StatelessWidget {
   const PodcastScreen({super.key});
@@ -435,16 +436,27 @@ class _RecentHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
-        Expanded(child: _SectionTitle(title: 'Recent Episodes')),
-        Text(
-          'See all activity',
-          style: TextStyle(
-            color: Color(0xFFBD89FF),
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
+        const Expanded(child: _SectionTitle(title: 'Recent Episodes')),
+        // The home feed lists only the latest few; every show's are there.
+        Semantics(
+          button: true,
+          child: GestureDetector(
+            onTap: () => Get.to<void>(() => const AllEpisodesScreen()),
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                'See all activity',
+                style: TextStyle(
+                  color: Color(0xFFBD89FF),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
           ),
         ),
       ],
