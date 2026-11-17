@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'app_back_button.dart';
 import 'package:get/get.dart';
 
 import '../../theme/app_sizes.dart';
@@ -107,7 +109,7 @@ class AppHeader extends StatelessWidget {
     return Row(
       children: [
         if (onBack != null)
-          _ActionButton(icon: Icons.arrow_back_ios_new_rounded, onTap: onBack!)
+          AppBackButton(onPressed: onBack)
         else
           const _ProfileAvatar(),
         const SizedBox(width: 12),

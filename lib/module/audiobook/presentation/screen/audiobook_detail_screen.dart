@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -144,20 +145,7 @@ class _DetailHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
       child: Row(
         children: [
-          Material(
-            color: const Color(0xFF3B276A),
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => Navigator.maybePop(context),
-              child: const SizedBox(
-                width: 50,
-                height: 50,
-                child: Icon(Icons.arrow_back_rounded, color: Colors.white),
-              ),
-            ),
-          ),
+          const AppBackButton(),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

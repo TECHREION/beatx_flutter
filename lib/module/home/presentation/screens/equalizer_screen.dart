@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
@@ -100,11 +101,7 @@ class _TopBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(context.pageInset, 8, context.pageInset, 4),
       child: Row(
         children: [
-          _CircleButton(
-            icon: Icons.arrow_back,
-            onTap: Get.back,
-            tooltip: 'Back',
-          ),
+          const AppBackButton(),
           const Expanded(
             child: Text(
               'Equalizer',

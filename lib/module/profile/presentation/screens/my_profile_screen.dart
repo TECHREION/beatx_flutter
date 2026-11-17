@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/module/profile/presentation/screens/change_password_screen.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/genaarel_settings_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
@@ -71,18 +72,7 @@ class ProfileScreen extends StatelessWidget {
                   /// Back Button
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: .06),
-                      ),
-                      child: IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                    ),
+                    child: const AppBackButton(),
                   ),
 
                   const SizedBox(height: 18),

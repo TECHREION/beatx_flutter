@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/module/subscription/model/subscription_model.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -290,18 +291,7 @@ class SubscriptionScreen extends StatelessWidget {
   }
 
   Widget _backButton(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: .06),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
-    );
+    return const AppBackButton();
   }
 }
 

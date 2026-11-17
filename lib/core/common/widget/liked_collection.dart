@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 
 /// Chrome shared by the liked songs and liked podcasts screens: both are the
 /// same layout over a different collection, differing only in accent colour
@@ -66,26 +67,7 @@ class LikedHeader extends StatelessWidget {
               ),
               Align(
                 alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () => Navigator.maybePop(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: LikedPalette.card,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.chevron_left_rounded,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                ),
+                child: const AppBackButton(),
               ),
             ],
           ),

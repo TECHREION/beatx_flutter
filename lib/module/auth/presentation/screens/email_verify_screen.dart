@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/controller/verify_account_view_controller.dart';
 import 'package:flutter/material.dart';
@@ -405,20 +406,7 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF1A1A1D),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => Navigator.maybePop(context),
-        child: const SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(Icons.arrow_back, color: Color(0xFFD5D1D8), size: 22),
-        ),
-      ),
-    );
+    return const AppBackButton();
   }
 }
 

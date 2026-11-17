@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
@@ -35,24 +36,7 @@ class SearchHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: SearchPalette.card,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: const Icon(
-                Icons.chevron_left_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-          ),
+          const AppBackButton(),
           const SizedBox(width: 12),
           Icon(icon, color: accent, size: 20),
           const SizedBox(width: 8),

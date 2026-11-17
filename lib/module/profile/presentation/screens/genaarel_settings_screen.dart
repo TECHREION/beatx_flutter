@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/equalizer_screen.dart';
 import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
@@ -81,23 +82,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   /// Header
                   Row(
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: .06),
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      const AppBackButton(),
 
                       const SizedBox(width: 14),
 

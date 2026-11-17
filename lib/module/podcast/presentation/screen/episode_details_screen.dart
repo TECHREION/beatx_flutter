@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -44,12 +45,9 @@ class EpisodeDetailsScreen extends StatelessWidget {
               elevation: 0,
               automaticallyImplyLeading: false,
               leadingWidth: 66,
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 14),
-                child: _CircleIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  onTap: () => Navigator.maybePop(context),
-                ),
+              leading: const Padding(
+                padding: EdgeInsets.only(left: 14),
+                child: Center(child: AppBackButton()),
               ),
               actions: [
                 _CircleIconButton(

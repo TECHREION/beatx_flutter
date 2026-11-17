@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/controller/create_new_password_controller.dart';
 import 'package:flutter/material.dart';
@@ -68,27 +69,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              Positioned(
-                top: 16,
-                left: 16,
-                child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .05),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
-              ),
+              Positioned(top: 16, left: 16, child: const AppBackButton()),
 
               Center(
                 child: SingleChildScrollView(

@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -199,17 +200,6 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: .06),
-      ),
-      child: IconButton(
-        onPressed: () => Navigator.pop(parentContext),
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-      ),
-    );
+    return const AppBackButton();
   }
 }

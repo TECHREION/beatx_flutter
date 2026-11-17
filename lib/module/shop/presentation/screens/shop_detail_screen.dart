@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -144,24 +145,11 @@ class _ShopDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       titleSpacing: 4,
       automaticallyImplyLeading: false,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 16),
-        child: GestureDetector(
-          onTap: () => Get.back(),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E1B2E),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ),
+      // Room for the 42 pt back button after the 16 pt page margin.
+      leadingWidth: 16 + AppBackButton.size,
+      leading: const Padding(
+        padding: EdgeInsets.only(left: 16),
+        child: Center(child: AppBackButton()),
       ),
       title: const Text(
         'Store',

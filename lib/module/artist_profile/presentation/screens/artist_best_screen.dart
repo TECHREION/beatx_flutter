@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:get/get.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
@@ -249,24 +250,7 @@ class _PurpleBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF2E1F72),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => Navigator.of(context).maybePop(),
-        child: const SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-      ),
-    );
+    return const AppBackButton();
   }
 }
 

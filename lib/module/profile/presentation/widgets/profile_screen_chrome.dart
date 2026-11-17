@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 
 class ProfileScreenHeader extends StatelessWidget {
   const ProfileScreenHeader({super.key, required this.title});
@@ -9,18 +10,7 @@ class ProfileScreenHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: .06),
-          ),
-          child: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          ),
-        ),
+        const AppBackButton(),
         const SizedBox(width: 12),
         Expanded(
           child: Text(

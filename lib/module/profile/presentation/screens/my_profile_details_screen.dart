@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/auth/presentation/widget/textfield.dart';
@@ -124,21 +125,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     /// Header
                     Row(
                       children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: .06),
-                          ),
-                          child: IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                        const AppBackButton(),
 
                         const SizedBox(width: 12),
 

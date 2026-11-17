@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -206,10 +207,7 @@ class _CategoryHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _CircleIconButton(
-            icon: Icons.arrow_back_rounded,
-            onTap: () => Navigator.maybePop(context),
-          ),
+          const AppBackButton(),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
@@ -229,31 +227,6 @@ class _CategoryHeader extends StatelessWidget {
             icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.14),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, color: Colors.white, size: 20),
-        ),
       ),
     );
   }

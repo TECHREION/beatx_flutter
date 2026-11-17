@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -199,24 +200,7 @@ class _ExploreHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       child: Row(
         children: [
-          Material(
-            color: Colors.white.withValues(alpha: 0.1),
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onBack,
-              child: const SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(
-                  Icons.arrow_back_rounded,
-                  color: Colors.white,
-                  size: 25,
-                ),
-              ),
-            ),
-          ),
+          AppBackButton(onPressed: onBack),
           const SizedBox(width: 13),
           const Text(
             'Explore',
