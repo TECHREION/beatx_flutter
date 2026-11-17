@@ -3,23 +3,19 @@ import 'dart:async';
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
 
-import '../../../core/player/player_controller.dart';
+import '../../../core/player/progress_tracker.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
 
-/// Reports podcast listening progress to the backend while an episode plays.
+/// Reports podcast listening progress to the backend while an episode plays,
+/// so the next play of it resumes where the listener left off.
 ///
-/// Once [start] is called the current player position is POSTed every
-/// [_interval]. The shared [PlayerController] is also used for songs and
-/// audiobooks, so tracking is tied to the play session that started it and
-/// ends by itself as soon as the player moves on to a different track.
+/// The shared [ProgressTracker] decides when: every 10 s while playing, and
+/// at once on a pause, the episode ending (sent as completed), another track
+/// taking over, or the app going to the background. Each position is also
+/// kept on the device, so a downloaded episode played offline resumes too.
 class SaveProgressController extends GetxController {
-  static const Duration _interval = Duration(seconds: 10);
-
-  Timer? _timer;
-  String _episodeId = '';
-  int _playSession = -1;
-  int _lastSavedMs = -1;
+  final _tracker = ProgressTracker();
 
   PodcastInterface _podcastInterface() {
     if (!Get.isRegistered<PodcastInterface>() &&
@@ -31,83 +27,24 @@ class SaveProgressController extends GetxController {
     return Get.find<PodcastInterface>();
   }
 
-  PlayerController _playerController() {
-    if (!Get.isRegistered<PlayerController>()) {
-      Get.put(PlayerController(), permanent: true);
-    }
-    return Get.find<PlayerController>();
-  }
-
   /// Starts reporting progress for [episodeId]. Call right after playback
-  /// begins; any episode already being tracked is flushed and dropped.
-  void start(String episodeId) {
-    if (episodeId.isEmpty) return;
-
-    stop();
-
-    _episodeId = episodeId;
-    _playSession = _playerController().playCount.value;
-    _lastSavedMs = -1;
-    _timer = Timer.periodic(_interval, (_) => _tick());
-  }
+  /// begins.
+  void start(String episodeId) => _tracker.start(episodeId, _send);
 
   /// Saves the position reached right now without interrupting tracking, so
-  /// a resume taken straight afterwards is not up to [_interval] behind.
-  Future<void> flush() async {
-    if (_episodeId.isEmpty || !_isCurrentSession) return;
-    await _save(_positionMs);
-  }
+  /// a resume taken straight afterwards is not behind.
+  Future<void> flush() => _tracker.flush();
 
-  /// Stops reporting and saves the position reached one last time, so the
-  /// final seconds before a pause or a screen exit are not lost.
-  void stop() {
-    _timer?.cancel();
-    _timer = null;
+  /// Saves one last time and stops reporting.
+  void stop() => unawaited(_tracker.stop());
 
-    if (_episodeId.isEmpty) return;
-
-    if (_isCurrentSession) _save(_positionMs);
-    _episodeId = '';
-    _playSession = -1;
-  }
-
-  void _tick() {
-    // The shared player moved on to another track — nothing left to report.
-    if (!_isCurrentSession) {
-      stop();
-      return;
-    }
-
-    final player = _playerController();
-
-    // Playback finished or was stopped: the position resets to zero, so there
-    // is nothing more to send for this episode.
-    if (!player.isPlaying.value) {
-      if (_positionMs == 0) stop();
-      return;
-    }
-
-    _save(_positionMs);
-  }
-
-  bool get _isCurrentSession =>
-      _playerController().playCount.value == _playSession;
-
-  int get _positionMs => _playerController().position.value.inMilliseconds;
-
-  Future<void> _save(int positionMs) async {
-    if (positionMs <= 0 || positionMs == _lastSavedMs) return;
-
-    final episodeId = _episodeId;
-    _lastSavedMs = positionMs;
-
+  Future<bool> _send(String episodeId, int positionMs, bool completed) async {
     final result = await _podcastInterface().saveProgress(
       episodeId,
       positionMs,
+      completed: completed,
     );
-
-    // Let the next tick retry from wherever playback has reached by then.
-    result.fold((failure) => _lastSavedMs = -1, (success) {});
+    return result.isRight();
   }
 
   @override

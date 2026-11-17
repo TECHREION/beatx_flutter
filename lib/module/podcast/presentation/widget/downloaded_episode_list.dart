@@ -8,6 +8,7 @@ import '../../../home/presentation/screens/audio_play_screen.dart';
 import '../../../home/presentation/widgets/downloaded_item_list.dart';
 import '../../controller/episode_download_controller.dart';
 import '../../controller/save_progress_controller.dart';
+import '../../controller/podcast_now_playing.dart';
 
 /// The podcast episodes saved on this device, for the Downloads screen.
 /// Plays straight from the saved file, so it works with no connection.
@@ -37,11 +38,17 @@ class DownloadedEpisodeList extends StatelessWidget {
     if (!Get.isRegistered<PlayerController>()) {
       Get.put(PlayerController(), permanent: true);
     }
+    // Where it was left off; offline this is what the device kept.
+    final startAt = await PodcastNowPlaying.resumeFor(
+      episode.id,
+      durationMs: episode.durationMs,
+    );
     Get.find<PlayerController>().play(
       title: episode.title,
       artist: episode.artist,
       imageAsset: downloads.coverPath(episode) ?? episode.artworkUrl,
       audioAsset: path,
+      startAt: startAt,
       trackId: episode.id,
     );
     // Reports how far the user got whenever there is a connection.

@@ -4,6 +4,9 @@ import 'package:beatx_flutter/module/auth/services/auth_interface.dart';
 import 'package:beatx_flutter/module/home/controller/song_progress_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/player/progress_store.dart';
+import '../../../audiobook/controller/audiobook_progress_controller.dart';
+import '../../../podcast/controller/save_progress_controller.dart';
 
 class LogoutDialog extends StatefulWidget {
   const LogoutDialog({super.key, this.onCancel});
@@ -41,9 +44,14 @@ class _LogoutDialogState extends State<LogoutDialog> {
     _logoutButtonStatus.setLoading();
 
     // Saved while still signed in: the progress belongs to this account.
-    if (Get.isRegistered<SongProgressController>()) {
-      await Get.find<SongProgressController>().flush();
-    }
+    await Future.wait([
+      if (Get.isRegistered<SongProgressController>())
+        Get.find<SongProgressController>().flush(),
+      if (Get.isRegistered<SaveProgressController>())
+        Get.find<SaveProgressController>().flush(),
+      if (Get.isRegistered<AudiobookProgressController>())
+        Get.find<AudiobookProgressController>().flush(),
+    ]);
 
     final result = await Get.find<AuthInterface>().logout();
 
@@ -55,6 +63,8 @@ class _LogoutDialogState extends State<LogoutDialog> {
         ).showSnackBar(SnackBar(content: Text(failure.uiMessage)));
       },
       (_) {
+        // The positions kept on this device were this account's.
+        ProgressStore.clear();
         // AppManager listens to authStream and navigates to LoginScreen
         Navigator.pop(context);
       },

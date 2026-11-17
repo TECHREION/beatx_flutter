@@ -186,8 +186,7 @@ class _ActionPanel extends StatelessWidget {
     await controller.ensureLoaded(book.id);
     if (!context.mounted) return;
 
-    final chapter = controller.firstChapter;
-    if (chapter == null) {
+    if (controller.firstChapter == null) {
       // "No chapters" is only true of a book that actually loaded.
       SnackbarNotifier(context: context).notifyError(
         message: controller.errorMessage.value.isNotEmpty
@@ -197,7 +196,8 @@ class _ActionPanel extends StatelessWidget {
       return;
     }
 
-    await controller.playChapter(chapter);
+    // Carries on from where the listener left off, if anywhere.
+    await controller.listenNow();
 
     if (context.mounted && controller.errorMessage.value.isNotEmpty) {
       SnackbarNotifier(
@@ -309,6 +309,10 @@ class _ActionPanel extends StatelessWidget {
                   height: 54,
                   child: Obx(() {
                     final isLoading = controller.isStreamLoading.value;
+                    final resume = controller.resumePoint.value;
+                    final label = resume != null
+                        ? 'Resume · ${AudioBookDetailsController.chapterLabel(resume.chapter, (controller.details.value?.chapters ?? const []).indexOf(resume.chapter))}'
+                        : (progress > 0 ? 'Resume' : 'Listen Now');
                     return FilledButton.icon(
                       onPressed: isLoading ? null : () => _listenNow(context),
                       icon: isLoading
@@ -322,7 +326,7 @@ class _ActionPanel extends StatelessWidget {
                             )
                           : const Icon(Icons.play_arrow_rounded, size: 28),
                       label: Text(
-                        progress > 0 ? 'Resume' : 'Listen Now',
+                        label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

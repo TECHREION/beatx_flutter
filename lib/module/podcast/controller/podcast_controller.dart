@@ -115,7 +115,13 @@ class PodcastController extends GetxController {
     loadingEpisodeId.value = episode.id;
     errorMessage.value = '';
 
+    // Where this user left off, fetched alongside the stream url.
+    final resume = PodcastNowPlaying.resumeFor(
+      episode.id,
+      durationMs: episode.durationMs,
+    );
     final result = await _podcastInterface().getStreamUrl(episode.id);
+    final startAt = await resume;
 
     result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
       final streamUrl = success.data?.streamUrl ?? '';
@@ -140,6 +146,7 @@ class PodcastController extends GetxController {
         artist: episode.podcastId.title,
         imageAsset: episode.coverUrl ?? episode.podcastId.coverUrl ?? '',
         audioAsset: streamUrl,
+        startAt: startAt,
         trackId: episode.id,
       );
 

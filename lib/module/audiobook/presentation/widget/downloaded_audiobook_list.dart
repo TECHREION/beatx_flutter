@@ -8,7 +8,9 @@ import '../../../../core/player/player_controller.dart';
 import '../../../home/model/downloaded_song_model.dart';
 import '../../../home/presentation/screens/audio_play_screen.dart';
 import '../../../home/presentation/widgets/downloaded_item_list.dart';
+import '../../../../core/player/progress_store.dart';
 import '../../controller/audiobook_download_controller.dart';
+import '../../controller/audiobook_progress_controller.dart';
 
 /// The audiobooks saved on this device, for the Downloads screen. Tapping a
 /// book lists its chapters; any of them plays with the rest queued, all from
@@ -24,19 +26,22 @@ class DownloadedAudiobookList extends StatelessWidget {
   final String Function(int bytes) formatBytes;
 
   /// Plays a saved book's [chapters], from [index] on, and opens the player.
+  /// The chapter starts where it was left on this device.
   static Future<void> play(
     List<DownloadedSong> chapters, {
     int index = 0,
   }) async {
     if (chapters.isEmpty) return;
     chapters = inOrder(chapters);
+    await ProgressStore.ready();
     if (!Get.isRegistered<PlayerController>()) {
       Get.put(PlayerController(), permanent: true);
     }
     final player = Get.find<PlayerController>();
     final downloads = AudiobookDownloadController.instance;
 
-    Future<bool> start(String chapterId) async {
+    /// [fromStart] for the queue moving on through the book.
+    Future<bool> start(String chapterId, {bool fromStart = false}) async {
       final chapter = chapters.firstWhereOrNull((c) => c.id == chapterId);
       final path = chapter == null
           ? null
@@ -55,7 +60,16 @@ class DownloadedAudiobookList extends StatelessWidget {
         artist: chapter.artist,
         imageAsset: downloads.coverPath(chapter) ?? chapter.artworkUrl,
         audioAsset: path,
+        startAt: fromStart ? Duration.zero : resumeOf(chapter),
         trackId: chapter.id,
+      );
+      // Saved on the device, and to the server whenever there is a
+      // connection.
+      final i = chapters.indexOf(chapter);
+      AudiobookProgressController.instance.start(
+        audiobookId: chapter.groupId,
+        chapterId: chapter.id,
+        nextChapterId: i + 1 < chapters.length ? chapters[i + 1].id : null,
       );
       return true;
     }
@@ -65,7 +79,7 @@ class DownloadedAudiobookList extends StatelessWidget {
     player.setQueue(
       [for (final chapter in chapters) chapter.id],
       current: first,
-      start: start,
+      start: (id) => start(id, fromStart: true),
     );
     // Which book this is and its chapters, so the player can say "Chapter 3
     // of 12" rather than show a bare chapter title.
@@ -110,6 +124,27 @@ class DownloadedAudiobookList extends StatelessWidget {
     return [for (final (_, chapter) in indexed) chapter];
   }
 
+  /// Where [chapter] was left on this device.
+  static Duration resumeOf(DownloadedSong chapter) {
+    final saved = ProgressStore.entry(chapter.id);
+    if (saved == null) return Duration.zero;
+    return ProgressStore.resumeFrom(
+      saved.position,
+      Duration(milliseconds: chapter.durationMs),
+    );
+  }
+
+  /// The chapter to carry on from: where the book was left on this device,
+  /// or -1 when it was never started (or was finished).
+  static int resumeIndex(List<DownloadedSong> ordered) {
+    if (ordered.isEmpty) return -1;
+    final current = ProgressStore.currentOf(
+      AudiobookProgressController.bookKey(ordered.first.groupId),
+    );
+    if (current == null) return -1;
+    return ordered.indexWhere((c) => c.id == current);
+  }
+
   static String chapterLabel(DownloadedSong chapter, int index) =>
       'Chapter ${chapter.trackNumber > 0 ? chapter.trackNumber : index + 1}';
 
@@ -117,8 +152,10 @@ class DownloadedAudiobookList extends StatelessWidget {
   static Future<void> showChapters(
     BuildContext context,
     List<DownloadedSong> chapters,
-  ) {
+  ) async {
     final ordered = inOrder(chapters);
+    await ProgressStore.ready();
+    if (!context.mounted) return;
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF111214),
@@ -184,7 +221,11 @@ class _ChaptersSheet extends StatelessWidget {
     return Obx(() {
       final playingId = player.trackId.value;
       final playing = player.isPlaying.value;
-      final current = chapters.indexWhere((c) => c.id == playingId);
+      final playingIndex = chapters.indexWhere((c) => c.id == playingId);
+      // The chapter playing, else where the book was left on this device.
+      final current = playingIndex >= 0
+          ? playingIndex
+          : DownloadedAudiobookList.resumeIndex(chapters);
       return ListView(
         controller: scroll,
         padding: EdgeInsets.only(
@@ -300,8 +341,8 @@ class _ChaptersSheet extends StatelessWidget {
               label: DownloadedAudiobookList.chapterLabel(chapters[i], i),
               title: chapters[i].title,
               durationMs: chapters[i].durationMs,
-              isCurrent: i == current,
-              isPlaying: i == current && playing,
+              isCurrent: i == playingIndex,
+              isPlaying: i == playingIndex && playing,
               onTap: () => _play(context, i),
             ),
         ],

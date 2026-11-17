@@ -75,7 +75,10 @@ void main() {
       final gains = EqualizerPreset.rock.gainsFor(kReferenceFrequenciesHz);
       expect(gains, hasLength(kReferenceFrequenciesHz.length));
       for (var i = 0; i < gains.length; i++) {
-        expect(gains[i], closeTo(EqualizerPreset.rock.referenceCurve![i], 1e-9));
+        expect(
+          gains[i],
+          closeTo(EqualizerPreset.rock.referenceCurve![i], 1e-9),
+        );
       }
     });
 

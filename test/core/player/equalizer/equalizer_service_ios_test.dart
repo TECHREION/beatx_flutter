@@ -16,8 +16,18 @@ class _FakeNative {
   bool processing;
   bool hasSeenItem;
   bool itemHasAudioTrack;
-  List<double> frequencies =
-      const [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  List<double> frequencies = const [
+    31,
+    62,
+    125,
+    250,
+    500,
+    1000,
+    2000,
+    4000,
+    8000,
+    16000,
+  ];
   List<double> gains = List<double>.filled(10, 0);
   bool enabled = false;
 
@@ -85,8 +95,18 @@ void main() {
       expect(service.isSupported, isTrue);
       expect(service.isReady, isTrue);
       expect(service.bands, hasLength(10));
-      expect(service.getBandFrequencies(),
-          [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
+      expect(service.getBandFrequencies(), [
+        31,
+        62,
+        125,
+        250,
+        500,
+        1000,
+        2000,
+        4000,
+        8000,
+        16000,
+      ]);
       expect(service.minDb, -12);
       expect(service.maxDb, 12);
     });
@@ -109,22 +129,30 @@ void main() {
     test('reports needsPlayback before anything has played', () async {
       install(_FakeNative(processing: false, hasSeenItem: false));
       await service.initialize();
-      expect(service.unavailableReason, EqualizerUnavailableReason.needsPlayback);
-    });
-
-    test('reports incompatibleStream for an asset with no audio track', () async {
-      // This is the HLS case: an item was seen, but it exposes no track.
-      install(_FakeNative(
-        processing: false,
-        hasSeenItem: true,
-        itemHasAudioTrack: false,
-      ));
-      await service.initialize();
       expect(
         service.unavailableReason,
-        EqualizerUnavailableReason.incompatibleStream,
+        EqualizerUnavailableReason.needsPlayback,
       );
     });
+
+    test(
+      'reports incompatibleStream for an asset with no audio track',
+      () async {
+        // This is the HLS case: an item was seen, but it exposes no track.
+        install(
+          _FakeNative(
+            processing: false,
+            hasSeenItem: true,
+            itemHasAudioTrack: false,
+          ),
+        );
+        await service.initialize();
+        expect(
+          service.unavailableReason,
+          EqualizerUnavailableReason.incompatibleStream,
+        );
+      },
+    );
 
     test('reports none once actually processing', () async {
       await service.initialize();
@@ -139,8 +167,13 @@ void main() {
       native.calls.clear();
       await expectLater(
         service.setBandGain(99, 0),
-        throwsA(isA<EqualizerException>().having(
-            (e) => e.kind, 'kind', EqualizerErrorKind.invalidBandIndex)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.invalidBandIndex,
+          ),
+        ),
       );
       expect(native.calls, isEmpty);
     });
@@ -149,8 +182,13 @@ void main() {
       native.calls.clear();
       await expectLater(
         service.setBandGain(0, 99),
-        throwsA(isA<EqualizerException>().having(
-            (e) => e.kind, 'kind', EqualizerErrorKind.gainOutOfRange)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.gainOutOfRange,
+          ),
+        ),
       );
       expect(native.calls, isEmpty);
     });
@@ -158,8 +196,13 @@ void main() {
     test('rejects a wrong-length gain vector', () async {
       await expectLater(
         service.setAllBandGains(List<double>.filled(5, 0)),
-        throwsA(isA<EqualizerException>().having(
-            (e) => e.kind, 'kind', EqualizerErrorKind.bandCountMismatch)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.bandCountMismatch,
+          ),
+        ),
       );
     });
 
@@ -168,8 +211,13 @@ void main() {
       await service.initialize();
       await expectLater(
         service.setBandGain(0, 3),
-        throwsA(isA<EqualizerException>()
-            .having((e) => e.kind, 'kind', EqualizerErrorKind.notReady)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.notReady,
+          ),
+        ),
       );
     });
   });
@@ -209,8 +257,13 @@ void main() {
       native.throwCode = 'gain_out_of_range';
       await expectLater(
         service.setEnabled(true),
-        throwsA(isA<EqualizerException>().having(
-            (e) => e.kind, 'kind', EqualizerErrorKind.gainOutOfRange)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.gainOutOfRange,
+          ),
+        ),
       );
     });
 
@@ -218,28 +271,45 @@ void main() {
       native.throwCode = 'effect_unavailable';
       await expectLater(
         service.setEnabled(true),
-        throwsA(isA<EqualizerException>().having(
-            (e) => e.kind, 'kind', EqualizerErrorKind.effectUnavailable)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.effectUnavailable,
+          ),
+        ),
       );
     });
 
-    test('maps an unknown code to platformError rather than swallowing it',
-        () async {
-      native.throwCode = 'something_new';
-      await expectLater(
-        service.setEnabled(true),
-        throwsA(isA<EqualizerException>()
-            .having((e) => e.kind, 'kind', EqualizerErrorKind.platformError)),
-      );
-    });
+    test(
+      'maps an unknown code to platformError rather than swallowing it',
+      () async {
+        native.throwCode = 'something_new';
+        await expectLater(
+          service.setEnabled(true),
+          throwsA(
+            isA<EqualizerException>().having(
+              (e) => e.kind,
+              'kind',
+              EqualizerErrorKind.platformError,
+            ),
+          ),
+        );
+      },
+    );
 
     test('a missing plugin is reported as unsupported', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, null);
       await expectLater(
         service.setEnabled(true),
-        throwsA(isA<EqualizerException>()
-            .having((e) => e.kind, 'kind', EqualizerErrorKind.notSupported)),
+        throwsA(
+          isA<EqualizerException>().having(
+            (e) => e.kind,
+            'kind',
+            EqualizerErrorKind.notSupported,
+          ),
+        ),
       );
     });
   });

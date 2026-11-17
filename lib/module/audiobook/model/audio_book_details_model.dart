@@ -218,16 +218,44 @@ class Chapter {
   }
 }
 
-/// Currently the API returns `null` for userProgress.
-/// Extend this model later if the backend starts sending data.
+/// Where this user is in the book: the chapter, and how far into it.
+/// `null` until they have listened to any of it.
 class UserProgress {
-  UserProgress();
+  UserProgress({
+    this.currentChapterId = '',
+    this.positionMs = 0,
+    this.completed = false,
+    this.lastListenedAt,
+  });
+
+  final String currentChapterId;
+
+  /// Into [currentChapterId], not into the book.
+  final int positionMs;
+
+  /// The whole book was finished.
+  final bool completed;
+  final DateTime? lastListenedAt;
 
   factory UserProgress.fromJson(Map<String, dynamic> json) {
-    return UserProgress();
+    final chapter = json['currentChapterId'];
+    return UserProgress(
+      currentChapterId:
+          (chapter is Map ? chapter['_id'] : chapter)?.toString() ?? '',
+      positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
+      completed: json['completed'] == true,
+      lastListenedAt: DateTime.tryParse(
+        (json['lastListenedAt'] ?? json['updatedAt'] ?? '').toString(),
+      ),
+    );
   }
 
-  Map<String, dynamic> toJson() => {};
+  Map<String, dynamic> toJson() => {
+    'currentChapterId': currentChapterId,
+    'positionMs': positionMs,
+    'completed': completed,
+    'lastListenedAt': lastListenedAt?.toIso8601String(),
+  };
 }
 
 class Metadata {

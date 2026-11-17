@@ -20,6 +20,15 @@ abstract base class AudioBookInterface extends BaseRepository {
   FutureRequest<Success<AudioBookLikeModel>> likeAudiobook(String audiobookId);
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks();
 
+  /// Saves where the listener is in [audiobookId]: [positionMs] into
+  /// [chapterId]. [completed] means the whole book, never one chapter.
+  FutureRequest<Success<void>> saveAudiobookProgress(
+    String audiobookId, {
+    required String chapterId,
+    required int positionMs,
+    bool completed = false,
+  });
+
   /// Books in the same genre as [audiobookId], to suggest after it.
   FutureRequest<Success<List<Audiobook>>> relatedAudiobooks(
     String audiobookId, {

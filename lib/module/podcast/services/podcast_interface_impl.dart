@@ -204,13 +204,14 @@ final class PodcastInterfaceImpl extends PodcastInterface {
   @override
   FutureRequest<Success<SaveProgressData>> saveProgress(
     String id,
-    int positionMs,
-  ) async {
+    int positionMs, {
+    bool completed = false,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.post(
           ApiEndpoints.saveProgress(episodeId: id),
-          data: {'positionMs': positionMs},
+          data: {'positionMs': positionMs, if (completed) 'completed': true},
         );
 
         final body = response.data is Map

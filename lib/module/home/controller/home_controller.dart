@@ -17,6 +17,7 @@ import 'song_like_controller.dart';
 import 'song_progress_controller.dart';
 import '../../../core/common/widget/now_playing_sheet.dart';
 import '../../../core/player/now_playing.dart';
+import '../../../core/player/progress_store.dart';
 
 class HomeController extends GetxController {
   final isLoading = true.obs;
@@ -181,6 +182,17 @@ class HomeController extends GetxController {
     var likeCount = 0;
     var startAt = Duration.zero;
 
+    // Offline (or slow), the server cannot say where this song was left:
+    // fall back to what this device saved.
+    await ProgressStore.ready();
+    final saved = ProgressStore.entry(listenId);
+    if (saved != null) {
+      startAt = ProgressStore.resumeFrom(
+        saved.position,
+        Duration(milliseconds: downloaded?.durationMs ?? 0),
+      );
+    }
+
     detailsResult.fold(
       (failure) {
         error = failure.uiMessage;
@@ -192,11 +204,21 @@ class HomeController extends GetxController {
         coverUrl = success.data?.coverUrl ?? coverUrl;
         isLiked = success.data?.isLiked ?? false;
         likeCount = success.data?.likeCount ?? 0;
-        startAt =
-            success.data?.userProgress?.resumePosition(
-              success.data?.durationMs ?? 0,
-            ) ??
-            Duration.zero;
+        // The server's resume point, unless this device saved a newer one.
+        final progress = success.data?.userProgress;
+        startAt = ProgressStore.choose(
+          id: listenId,
+          length: Duration(milliseconds: success.data?.durationMs ?? 0),
+          server: progress == null
+              ? (position: Duration.zero, completed: false, savedAt: null)
+              : (
+                  position: progress.resumePosition(
+                    success.data?.durationMs ?? 0,
+                  ),
+                  completed: progress.completed,
+                  savedAt: progress.lastPlayedAt ?? progress.updatedAt,
+                ),
+        );
       },
     );
     streamResult?.fold((failure) {

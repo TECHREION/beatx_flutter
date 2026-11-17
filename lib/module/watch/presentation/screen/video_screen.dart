@@ -170,8 +170,15 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     // Throttled controller side — this runs several times a second.
     if (video.isPlaying) {
       controller.reportProgress(video.position, video.duration);
+    } else if (_wasPlaying) {
+      // Just paused (by the user, or the app going to the background): save
+      // now rather than up to 10 s behind.
+      unawaited(controller.flushProgress(video.position, video.duration));
     }
+    _wasPlaying = video.isPlaying;
   }
+
+  bool _wasPlaying = false;
 
   /// Rolls on to the top of Up Next when the switch is on. Before this the
   /// toggle only stored a flag and nothing ever read it.

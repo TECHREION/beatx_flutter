@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart' show ProcessingState;
 
 import '../../../core/player/player_controller.dart';
+import '../../../core/player/progress_store.dart';
 import '../services/listen_interface.dart';
 import '../services/lister_interface_impl.dart';
 
@@ -151,6 +152,9 @@ class SongProgressController extends GetxController
     _lastSavedMs = positionMs;
     _lastSavedAt = DateTime.now();
     if (completed) _completedSaved = true;
+
+    // On the device too, for a downloaded song played offline next time.
+    ProgressStore.save(songId, positionMs, completed: completed);
 
     final result = await _listenInterface().saveProgress(
       songId,

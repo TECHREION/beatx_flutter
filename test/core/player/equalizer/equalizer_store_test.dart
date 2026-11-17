@@ -24,20 +24,22 @@ void main() {
       expect(restored.gains, [1, -2, 3.5, 0, -4]);
     });
 
-    test('preserves the band count, which is what makes gains portable or not',
-        () {
-      final restored = EqualizerSettings.fromJson(
-        jsonDecode(
-          jsonEncode(
-            EqualizerSettings(
-              preset: EqualizerPreset.custom,
-              gains: List<double>.filled(10, 1),
-            ).toJson(),
+    test(
+      'preserves the band count, which is what makes gains portable or not',
+      () {
+        final restored = EqualizerSettings.fromJson(
+          jsonDecode(
+            jsonEncode(
+              EqualizerSettings(
+                preset: EqualizerPreset.custom,
+                gains: List<double>.filled(10, 1),
+              ).toJson(),
+            ),
           ),
-        ),
-      );
-      expect(restored!.gains, hasLength(10));
-    });
+        );
+        expect(restored!.gains, hasLength(10));
+      },
+    );
 
     test('rejects a blob from a different schema version', () {
       final future = {
@@ -49,26 +51,28 @@ void main() {
       expect(EqualizerSettings.fromJson(future), isNull);
     });
 
-    test('rejects structurally wrong payloads rather than half-reading them',
-        () {
-      expect(EqualizerSettings.fromJson(null), isNull);
-      expect(EqualizerSettings.fromJson('not a map'), isNull);
-      expect(EqualizerSettings.fromJson(<String, dynamic>{}), isNull);
-      expect(
-        EqualizerSettings.fromJson({
-          'schemaVersion': EqualizerSettings.schemaVersion,
-          'gains': 'not a list',
-        }),
-        isNull,
-      );
-      expect(
-        EqualizerSettings.fromJson({
-          'schemaVersion': EqualizerSettings.schemaVersion,
-          'gains': [1, 'two', 3],
-        }),
-        isNull,
-      );
-    });
+    test(
+      'rejects structurally wrong payloads rather than half-reading them',
+      () {
+        expect(EqualizerSettings.fromJson(null), isNull);
+        expect(EqualizerSettings.fromJson('not a map'), isNull);
+        expect(EqualizerSettings.fromJson(<String, dynamic>{}), isNull);
+        expect(
+          EqualizerSettings.fromJson({
+            'schemaVersion': EqualizerSettings.schemaVersion,
+            'gains': 'not a list',
+          }),
+          isNull,
+        );
+        expect(
+          EqualizerSettings.fromJson({
+            'schemaVersion': EqualizerSettings.schemaVersion,
+            'gains': [1, 'two', 3],
+          }),
+          isNull,
+        );
+      },
+    );
 
     test('falls back to custom for an unknown preset id', () {
       final restored = EqualizerSettings.fromJson({
@@ -116,10 +120,12 @@ void main() {
     // No plugin is registered in a unit test, so the secure-storage channel
     // throws MissingPluginException. That is exactly the failure the store has
     // to absorb: a broken keystore must never stop the app from starting.
-    test('returns null instead of throwing when storage is unavailable',
-        () async {
-      expect(await EqualizerStore().read(), isNull);
-    });
+    test(
+      'returns null instead of throwing when storage is unavailable',
+      () async {
+        expect(await EqualizerStore().read(), isNull);
+      },
+    );
 
     test('a failed write is swallowed rather than surfaced mid-drag', () async {
       await expectLater(

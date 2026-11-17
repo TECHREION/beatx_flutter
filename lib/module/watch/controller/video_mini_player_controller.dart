@@ -121,8 +121,14 @@ class VideoMiniPlayerController extends GetxService {
     }
     if (value.isPlaying) {
       current.details.reportProgress(value.position, value.duration);
+    } else if (_wasPlaying) {
+      // Paused in the mini player (or the app went to the background).
+      unawaited(current.details.flushProgress(value.position, value.duration));
     }
+    _wasPlaying = value.isPlaying;
   }
+
+  bool _wasPlaying = false;
 
   /// A screen hands over or takes back the player from initState/dispose,
   /// when the overlay showing the mini player cannot be asked to rebuild, so

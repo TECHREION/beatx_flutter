@@ -76,7 +76,11 @@ void main() {
         [4],
       );
       expect(
-        resampleCurve(curve, fromHz: kDisplayFrequenciesHz, toHz: const [22000]),
+        resampleCurve(
+          curve,
+          fromHz: kDisplayFrequenciesHz,
+          toHz: const [22000],
+        ),
         [-4],
       );
     });

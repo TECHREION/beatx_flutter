@@ -221,4 +221,29 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
       },
     );
   }
+
+  @override
+  FutureRequest<Success<void>> saveAudiobookProgress(
+    String audiobookId, {
+    required String chapterId,
+    required int positionMs,
+    bool completed = false,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.post(
+          ApiEndpoints.audiobookProgress(audiobookId: audiobookId),
+          data: {
+            'chapterId': chapterId,
+            'positionMs': positionMs,
+            if (completed) 'completed': true,
+          },
+        );
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+        return Success(message: body['message']?.toString() ?? 'Success');
+      },
+    );
+  }
 }

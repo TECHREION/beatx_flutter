@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/common/widget/now_playing_sheet.dart';
 import '../../../core/player/now_playing.dart';
 import '../../../core/player/player_controller.dart';
+import '../../../core/player/progress_store.dart';
 import '../model/episodes_model.dart';
 import '../services/podcast_interface.dart';
 import '../services/podcast_interface_impl.dart';
@@ -27,6 +28,44 @@ class PodcastNowPlaying {
   /// The show's episodes by id, for playing one from the list.
   static final _episodes = <String, PodcastEpisode>{};
   static String _coverUrl = '';
+
+  /// How long to wait on the server for a resume point before starting from
+  /// what this device remembers. Offline the request fails at once; this only
+  /// bounds a connection that is up but crawling.
+  static const _resumeWait = Duration(seconds: 3);
+
+  /// Where [episodeId] should start: where this user left off, from the
+  /// server or this device (whichever is newer), or the beginning when it
+  /// was finished. [durationMs] is used when the server reports no length.
+  static Future<Duration> resumeFor(
+    String episodeId, {
+    int durationMs = 0,
+  }) async {
+    await ProgressStore.ready();
+    ({Duration position, bool completed, DateTime? savedAt})? server;
+    var length = Duration(milliseconds: durationMs);
+    try {
+      final result = await _interface()
+          .episodeDetails(episodeId)
+          .timeout(_resumeWait);
+      result.fold((_) {}, (success) {
+        final data = success.data;
+        if (data == null) return;
+        if (data.episode.durationMs > 0) {
+          length = Duration(milliseconds: data.episode.durationMs);
+        }
+        final progress = data.userProgress;
+        server = (
+          position: Duration(milliseconds: progress?.positionMs ?? 0),
+          completed: progress?.completed ?? false,
+          savedAt: progress?.lastListenedAt,
+        );
+      });
+    } catch (_) {
+      // Timed out: go with what the device has.
+    }
+    return ProgressStore.choose(id: episodeId, length: length, server: server);
+  }
 
   /// "S2 · E5", or "Episode 5" for a show without seasons.
   static String episodeLabel({
@@ -161,6 +200,10 @@ class PodcastNowPlaying {
     final episode = _episodes[episodeId];
     final entry = show.entry(episodeId);
 
+    final resume = resumeFor(
+      episodeId,
+      durationMs: episode?.durationMs ?? entry?.durationMs ?? 0,
+    );
     final saved = await EpisodeDownloadController.instance.playablePath(
       episodeId,
     );
@@ -186,6 +229,7 @@ class PodcastNowPlaying {
       artist: show.collectionTitle,
       imageAsset: episode?.coverUrl ?? _coverUrl,
       audioAsset: url,
+      startAt: await resume,
       trackId: episodeId,
     );
 

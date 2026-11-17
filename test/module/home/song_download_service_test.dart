@@ -131,8 +131,7 @@ void main() {
 
     // The dropped entry is written out, not just skipped.
     final stored =
-        jsonDecode(await File('${dir.path}/index.json').readAsString())
-            as List;
+        jsonDecode(await File('${dir.path}/index.json').readAsString()) as List;
     expect(stored, hasLength(1));
   });
 

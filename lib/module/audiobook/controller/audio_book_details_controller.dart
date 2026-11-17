@@ -17,9 +17,17 @@ import '../services/audio_book_interface.dart';
 import '../services/audio_book_interface_impl.dart';
 import 'audiobook_download_controller.dart';
 import 'audiobook_like_controller.dart';
+import 'audiobook_progress_controller.dart';
+import '../../../core/player/progress_store.dart';
 import 'liked_audiobooks_controller.dart';
 
+/// Where to pick a book up: a chapter, and how far into it.
+typedef ResumePoint = ({Chapter chapter, Duration startAt});
+
 class AudioBookDetailsController extends GetxController {
+  /// Where "Listen Now" carries on from, or null to start at chapter 1.
+  final resumePoint = Rxn<ResumePoint>();
+
   final details = Rxn<AudiobookDetailsData>();
   final isLoading = false.obs;
   final errorMessage = ''.obs;
@@ -88,6 +96,8 @@ class AudioBookDetailsController extends GetxController {
       (success) => details.value = success.data,
     );
     isLoading.value = false;
+
+    unawaited(refreshResume());
 
     final book = details.value?.book;
     if (book != null) {
@@ -261,6 +271,87 @@ class AudioBookDetailsController extends GetxController {
     if (first != null) await next.playChapter(first);
   }
 
+  /// Works out [resumePoint] from the server's progress and what this device
+  /// saved, whichever is newer.
+  Future<void> refreshResume() async {
+    await ProgressStore.ready();
+    resumePoint.value = _computeResume();
+  }
+
+  ResumePoint? _computeResume() {
+    final chapters = (details.value?.chapters ?? const <Chapter>[])
+        .where((c) => c.id != null)
+        .toList();
+    if (chapters.isEmpty) return null;
+
+    final bookId = details.value?.book?.id ?? _loadedAudiobookId ?? '';
+    final server = details.value?.userProgress;
+    final local = ProgressStore.currentEntry(
+      AudiobookProgressController.bookKey(bookId),
+    );
+    final serverAt = server?.lastListenedAt;
+    final useLocal =
+        local != null &&
+        (server == null ||
+            (server.currentChapterId.isEmpty && !server.completed) ||
+            (serverAt != null && local.savedAt.isAfter(serverAt)));
+
+    final String chapterId;
+    final Duration position;
+    if (useLocal) {
+      if (local.id == AudiobookProgressController.finished) return null;
+      chapterId = local.id;
+      position = ProgressStore.entry(chapterId)?.position ?? Duration.zero;
+    } else {
+      // Finished (or never started): from the top.
+      if (server == null || server.completed) return null;
+      chapterId = server.currentChapterId;
+      position = Duration(milliseconds: server.positionMs);
+    }
+
+    final i = chapters.indexWhere((c) => c.id == chapterId);
+    if (i < 0) return null;
+    final chapter = chapters[i];
+    final startAt = ProgressStore.resumeFrom(
+      position,
+      Duration(milliseconds: chapter.durationMs ?? 0),
+    );
+    if (startAt == Duration.zero && position > Duration.zero) {
+      // That chapter was played to its end: on to the next one.
+      return i + 1 < chapters.length
+          ? (chapter: chapters[i + 1], startAt: Duration.zero)
+          : null;
+    }
+    if (i == 0 && startAt == Duration.zero) return null;
+    return (chapter: chapter, startAt: startAt);
+  }
+
+  /// Where [chapter] should start when picked from the list: the resume
+  /// point if it is that chapter, else wherever this device left it.
+  Duration startAtFor(Chapter chapter) {
+    final point = resumePoint.value;
+    if (point != null && point.chapter.id == chapter.id) return point.startAt;
+    final local = ProgressStore.entry(chapter.id ?? '');
+    if (local == null) return Duration.zero;
+    return ProgressStore.resumeFrom(
+      local.position,
+      Duration(milliseconds: chapter.durationMs ?? 0),
+    );
+  }
+
+  /// "Listen Now": carries on where the listener left off, or starts the
+  /// first chapter.
+  Future<void> listenNow() async {
+    await refreshResume();
+    final point = resumePoint.value;
+    if (point != null) {
+      await playChapter(point.chapter, startAt: point.startAt);
+      return;
+    }
+    final first = firstChapter;
+    if (first != null) await playChapter(first, startAt: Duration.zero);
+  }
+
   /// The chapter `Listen Now` should start from — first chapter in the list.
   Chapter? get firstChapter {
     final chapters = details.value?.chapters;
@@ -273,7 +364,12 @@ class AudioBookDetailsController extends GetxController {
   ///
   /// The book's chapters become the player's queue, so next/previous and the
   /// end of a chapter move through the book.
-  Future<void> playChapter(Chapter chapter, {bool openPlayer = true}) async {
+  /// [startAt] defaults to where this chapter was left ([startAtFor]).
+  Future<void> playChapter(
+    Chapter chapter, {
+    bool openPlayer = true,
+    Duration? startAt,
+  }) async {
     if (isStreamLoading.value) return;
 
     final audiobookId = details.value?.book?.id ?? _loadedAudiobookId ?? '';
@@ -315,7 +411,10 @@ class AudioBookDetailsController extends GetxController {
         current: chapterId,
         start: (id) async {
           final next = chapters.firstWhereOrNull((c) => c.id == id);
-          if (next != null) await playChapter(next, openPlayer: false);
+          // Moving on through the book: each chapter from its start.
+          if (next != null) {
+            await playChapter(next, openPlayer: false, startAt: Duration.zero);
+          }
         },
       );
       attachNowPlaying(_playing ??= _nowPlaying());
@@ -325,7 +424,17 @@ class AudioBookDetailsController extends GetxController {
         artist: book?.author ?? '',
         imageAsset: book?.coverUrl ?? '',
         audioAsset: streamUrl,
+        startAt: startAt ?? startAtFor(chapter),
         trackId: chapterId,
+      );
+
+      final index = chapters.indexWhere((c) => c.id == chapterId);
+      AudiobookProgressController.instance.start(
+        audiobookId: audiobookId,
+        chapterId: chapterId,
+        nextChapterId: index >= 0 && index + 1 < chapters.length
+            ? chapters[index + 1].id
+            : null,
       );
 
       // The like belongs to the book, not the chapter — the player screen
@@ -340,7 +449,11 @@ class AudioBookDetailsController extends GetxController {
         () => const PlayerScreen(),
         transition: Transition.downToUp,
         preventDuplicates: true,
-      );
+      )?.then((_) async {
+        // Back on the book: "Listen Now" should carry on from here.
+        await AudiobookProgressController.instance.flush();
+        await refreshResume();
+      });
     });
 
     isStreamLoading.value = false;

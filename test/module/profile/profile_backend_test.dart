@@ -30,7 +30,8 @@ void main() {
     final page = LegalPage.fromJson({
       'slug': 'terms',
       'title': 'Terms',
-      'body': '# Terms\n\n- **Use** the [app](https://x.y) fairly\n'
+      'body':
+          '# Terms\n\n- **Use** the [app](https://x.y) fairly\n'
           'snake_case stays',
       'updatedAt': '2026-11-01T00:00:00.000Z',
     });

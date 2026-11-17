@@ -19,8 +19,9 @@ abstract base class PodcastInterface extends BaseRepository {
   FutureRequest<Success<EpisodeDetailsData>> episodeDetails(String id);
   FutureRequest<Success<SaveProgressData>> saveProgress(
     String id,
-    int positionMs,
-  );
+    int positionMs, {
+    bool completed = false,
+  });
   FutureRequest<Success<SearchCategoryData>> searchCategory(String id);
   FutureRequest<Success<PagedResult<CategoryPodcast>>> searchPodcast({
     required String query,

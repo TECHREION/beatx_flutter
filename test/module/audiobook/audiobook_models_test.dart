@@ -1,6 +1,7 @@
 import 'package:beatx_flutter/core/api_handler/success.dart';
 import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/core/player/now_playing.dart';
+import 'package:beatx_flutter/core/player/progress_store.dart';
 import 'package:beatx_flutter/module/audiobook/controller/audio_book_details_controller.dart';
 import 'package:beatx_flutter/module/audiobook/model/audio_book_details_model.dart';
 import 'package:beatx_flutter/module/audiobook/model/audiobook_model.dart';
@@ -214,6 +215,88 @@ void main() {
       expect(playing.heading, 'PLAYING FROM AUDIOBOOK');
       expect(playing.sequel?.id, 'b2');
       expect(playing.prequel, isNull);
+    });
+  });
+
+  group('where Listen Now resumes', () {
+    late _FakeBooks books;
+
+    /// A two-chapter book whose saved progress is [progress].
+    Map<String, dynamic> book(Map<String, dynamic>? progress) => {
+      'book': {'_id': 'b1', 'title': 'Two Parts'},
+      'chapters': [
+        {'_id': 'c1', 'chapterNumber': 1, 'title': 'One', 'durationMs': 600000},
+        {'_id': 'c2', 'chapterNumber': 2, 'title': 'Two', 'durationMs': 600000},
+      ],
+      'userProgress': progress,
+    };
+
+    Future<AudioBookDetailsController> load(
+      Map<String, dynamic>? progress,
+    ) async {
+      books.answers.add(
+        Right(Success(data: AudiobookDetailsData.fromJson(book(progress)))),
+      );
+      final controller = AudioBookDetailsController();
+      await controller.loadDetails('b1');
+      await controller.refreshResume();
+      return controller;
+    }
+
+    setUp(() async {
+      Get.testMode = true;
+      await ProgressStore.clear();
+      books = _FakeBooks();
+      Get.put<AudioBookInterface>(books);
+      Get.put(LikedAudiobooksController(), permanent: true);
+    });
+    tearDown(Get.reset);
+
+    test(
+      'carries on in the chapter and at the point the server saved',
+      () async {
+        final controller = await load({
+          'currentChapterId': 'c2',
+          'positionMs': 125000,
+          'completed': false,
+        });
+
+        final point = controller.resumePoint.value;
+        expect(point?.chapter.id, 'c2');
+        expect(point?.startAt, const Duration(milliseconds: 125000));
+      },
+    );
+
+    test('a chapter left at its very end moves on to the next', () async {
+      final controller = await load({
+        'currentChapterId': 'c1',
+        'positionMs': 599000,
+      });
+
+      expect(controller.resumePoint.value?.chapter.id, 'c2');
+      expect(controller.resumePoint.value?.startAt, Duration.zero);
+    });
+
+    test(
+      'a finished book, or one never started, starts at chapter 1',
+      () async {
+        expect((await load({'completed': true})).resumePoint.value, isNull);
+        expect((await load(null)).resumePoint.value, isNull);
+      },
+    );
+
+    test('offline listening on this device is picked up too', () async {
+      // What playing chapter 2 offline left on the device.
+      ProgressStore.setCurrent('audiobook:b1', 'c2');
+      ProgressStore.save('c2', 42000);
+
+      final controller = await load(null);
+
+      expect(controller.resumePoint.value?.chapter.id, 'c2');
+      expect(
+        controller.resumePoint.value?.startAt,
+        const Duration(milliseconds: 42000),
+      );
     });
   });
 }

@@ -13,6 +13,7 @@ import '../services/podcast_interface_impl.dart';
 import 'episode_download_controller.dart';
 import 'podcast_like_controller.dart';
 import 'podcast_now_playing.dart';
+import '../../../core/player/progress_store.dart';
 import 'save_progress_controller.dart';
 
 class EpisodeDetailsController extends GetxController {
@@ -168,6 +169,29 @@ class EpisodeDetailsController extends GetxController {
     loadingEpisodeId.value = episodeId;
     errorMessage.value = '';
 
+    // Where this user left off: the progress this screen loaded (weighed
+    // against what the device kept), or a lookup for any other episode.
+    final Future<Duration> resume;
+    if (episodeId == _loadedEpisodeId) {
+      await ProgressStore.ready();
+      final progress = _progress;
+      resume = Future.value(
+        ProgressStore.choose(
+          id: episodeId,
+          length: Duration(milliseconds: durationMs),
+          server: details.value == null
+              ? null
+              : (
+                  position: Duration(milliseconds: progress?.positionMs ?? 0),
+                  completed: progress?.completed ?? false,
+                  savedAt: progress?.lastListenedAt,
+                ),
+        ),
+      );
+    } else {
+      resume = PodcastNowPlaying.resumeFor(episodeId);
+    }
+
     // A downloaded episode plays from the device, with or without internet.
     final saved = await EpisodeDownloadController.instance.playablePath(
       episodeId,
@@ -177,6 +201,8 @@ class EpisodeDetailsController extends GetxController {
         : (await _podcastInterface().getStreamUrl(
             episodeId,
           )).map((success) => success.data?.streamUrl ?? '');
+
+    final startAt = await resume;
 
     result.fold((failure) => errorMessage.value = failure.uiMessage, (
       streamUrl,
@@ -209,9 +235,7 @@ class EpisodeDetailsController extends GetxController {
         artist: artist,
         imageAsset: coverUrl ?? '',
         audioAsset: streamUrl,
-        // Only the episode this screen loaded has a progress record to
-        // resume from.
-        startAt: episodeId == _loadedEpisodeId ? resumePosition : Duration.zero,
+        startAt: startAt,
         trackId: episodeId,
       );
 

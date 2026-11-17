@@ -117,11 +117,15 @@ class UserProgress {
   final double percentComplete;
   final int positionMs;
 
+  /// When it was last saved, to weigh against a position kept on the device.
+  final DateTime? lastListenedAt;
+
   UserProgress({
     required this.id,
     required this.completed,
     required this.percentComplete,
     required this.positionMs,
+    this.lastListenedAt,
   });
 
   factory UserProgress.fromJson(Map<String, dynamic> json) {
@@ -129,7 +133,10 @@ class UserProgress {
       id: json['_id'] ?? '',
       completed: json['completed'] ?? false,
       percentComplete: (json['percentComplete'] ?? 0).toDouble(),
-      positionMs: json['positionMs'] ?? 0,
+      positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
+      lastListenedAt: DateTime.tryParse(
+        (json['lastListenedAt'] ?? json['updatedAt'] ?? '').toString(),
+      ),
     );
   }
 }

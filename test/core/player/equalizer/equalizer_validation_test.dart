@@ -6,9 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// range gain must throw so the bug surfaces, never be quietly clamped into
 /// something that sounds different from what the caller asked for.
 void main() {
-  Matcher throwsKind(EqualizerErrorKind kind) => throwsA(
-        isA<EqualizerException>().having((e) => e.kind, 'kind', kind),
-      );
+  Matcher throwsKind(EqualizerErrorKind kind) =>
+      throwsA(isA<EqualizerException>().having((e) => e.kind, 'kind', kind));
 
   group('bandIndex', () {
     test('accepts every index the device reports', () {
