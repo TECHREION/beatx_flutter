@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 
 class ArtistBestScreen extends StatelessWidget {
@@ -92,11 +94,16 @@ class ArtistBestScreen extends StatelessWidget {
                   _buildHeader(context),
                   const SizedBox(height: 20),
                   Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      itemCount: _songs.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (_, index) => _SongTile(song: _songs[index]),
+                    child: Obx(
+                      () => ListView.separated(
+                        padding: MiniPlayerHost.padded(
+                          const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        ),
+                        itemCount: _songs.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, index) =>
+                            _SongTile(song: _songs[index]),
+                      ),
                     ),
                   ),
                 ],

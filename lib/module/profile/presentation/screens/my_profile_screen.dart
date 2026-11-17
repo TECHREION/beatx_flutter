@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/module/profile/presentation/screens/change_password_screen.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/genaarel_settings_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/logout_screen.dart';
 import 'package:beatx_flutter/module/profile/presentation/screens/my_profile_details_screen.dart';
@@ -228,6 +229,8 @@ class ProfileScreen extends StatelessWidget {
                             iconColor: Colors.red,
                             onTap: () => _showLogoutDialog(context),
                           ),
+                          // Room to scroll the last items clear of the mini player.
+                          const MiniPlayerSpacer(),
                         ],
                       ),
                     ),

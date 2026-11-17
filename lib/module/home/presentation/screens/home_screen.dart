@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 
 import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/artist_profile/presentation/screens/artist_profile_screen.dart';
@@ -167,6 +168,8 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Room to scroll the last items clear of the mini player.
+                      const SliverMiniPlayerSpacer(),
                     ],
                   ),
                 ),

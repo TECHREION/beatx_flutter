@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/equalizer_screen.dart';
 import 'package:beatx_flutter/module/profile/controller/settings_controller.dart';
 import '../../../home/presentation/screens/recently_played_screen.dart';
@@ -337,6 +338,8 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   ),
 
                   const SizedBox(height: 40),
+                  // Room to scroll the last items clear of the mini player.
+                  const MiniPlayerSpacer(),
                 ],
               ),
             ),

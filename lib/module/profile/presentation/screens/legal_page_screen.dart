@@ -1,4 +1,5 @@
 import 'package:app_pigeon/app_pigeon.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -145,6 +146,8 @@ class _LegalPageScreenState extends State<LegalPageScreen> {
               height: 1.7,
             ),
           ),
+          // Room to scroll the last items clear of the mini player.
+          const MiniPlayerSpacer(),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/core/notifiers/button_status_notifier.dart';
 import 'package:beatx_flutter/module/profile/presentation/widgets/profile_screen_chrome.dart';
 import 'package:flutter/material.dart';
@@ -137,6 +138,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     onSaveTap: _savePaymentMethod,
                     onDone: _showSavedMessage,
                   ),
+                  // Room to scroll the last items clear of the mini player.
+                  const MiniPlayerSpacer(),
                 ],
               ),
             ),

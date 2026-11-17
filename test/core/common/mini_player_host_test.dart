@@ -80,4 +80,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(_playerVisible(tester), isTrue);
   });
+
+  testWidgets('scrolling screens get room for the player, only while shown', (
+    tester,
+  ) async {
+    const spacerKey = Key('spacer');
+    await tester.pumpWidget(
+      _app(
+        Scaffold(
+          body: ListView(
+            children: const [
+              SizedBox(height: 2000, child: Text('content')),
+              MiniPlayerSpacer(key: spacerKey),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The 60 high player, plus nothing for a safe area in tests.
+    expect(MiniPlayerHost.coverage.value, 60);
+    await tester.scrollUntilVisible(find.byKey(spacerKey), 500);
+    expect(tester.getSize(find.byKey(spacerKey)).height, 60);
+
+    Get.to(
+      () => const MiniPlayerHidden(child: Scaffold(body: Text('full player'))),
+    );
+    await tester.pumpAndSettle();
+    expect(MiniPlayerHost.coverage.value, 0);
+
+    Get.back();
+    await tester.pumpAndSettle();
+    expect(MiniPlayerHost.coverage.value, 60);
+  });
 }

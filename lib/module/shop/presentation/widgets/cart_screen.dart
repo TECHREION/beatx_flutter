@@ -42,11 +42,13 @@ class CartScreen extends StatelessWidget {
             ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: cart.lines.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (_, index) => _CartRow(line: cart.lines[index]),
+        return Obx(
+          () => ListView.separated(
+            padding: MiniPlayerHost.padded(const EdgeInsets.all(16)),
+            itemCount: cart.lines.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (_, index) => _CartRow(line: cart.lines[index]),
+          ),
         );
       }),
       bottomNavigationBar: MiniPlayerAnchor(

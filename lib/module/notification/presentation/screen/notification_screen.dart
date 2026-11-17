@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/common/widget/liked_collection.dart';
@@ -100,45 +101,49 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       );
                     }
 
-                    return ListView.separated(
-                      controller: _scroll,
-                      // Keeps pull-to-refresh reachable while the list is
-                      // short.
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        4,
-                        16,
-                        28 + context.pageInset,
-                      ),
-                      // One extra row for the paging spinner when there is
-                      // more to come.
-                      itemCount: items.length + (ctrl.hasMore ? 1 : 0),
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        if (index >= items.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 18),
-                            child: Center(
-                              child: SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: accent,
+                    return Obx(
+                      () => ListView.separated(
+                        controller: _scroll,
+                        // Keeps pull-to-refresh reachable while the list is
+                        // short.
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: MiniPlayerHost.padded(
+                          EdgeInsets.fromLTRB(
+                            16,
+                            4,
+                            16,
+                            28 + context.pageInset,
+                          ),
+                        ),
+                        // One extra row for the paging spinner when there is
+                        // more to come.
+                        itemCount: items.length + (ctrl.hasMore ? 1 : 0),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          if (index >= items.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 18),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: accent,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }
+                            );
+                          }
 
-                        final notification = items[index];
-                        return NotificationTile(
-                          notification: notification,
-                          onTap: () => ctrl.markRead(notification),
-                        );
-                      },
+                          final notification = items[index];
+                          return NotificationTile(
+                            notification: notification,
+                            onTap: () => ctrl.markRead(notification),
+                          );
+                        },
+                      ),
                     );
                   }),
                 ),

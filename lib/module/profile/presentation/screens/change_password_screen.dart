@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/core/common/widget/reactive_button/save_button.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:beatx_flutter/core/notifiers/snackbar_notifier.dart';
 import 'package:beatx_flutter/module/profile/controller/change_password_cintroller.dart';
 import 'package:flutter/material.dart';
@@ -213,6 +214,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       onSaveTap: _savePassword,
                       onDone: _showSavedMessage,
                     ),
+                    // Room to scroll the last items clear of the mini player.
+                    const MiniPlayerSpacer(),
                   ],
                 ),
               ),

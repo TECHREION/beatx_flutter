@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/common/widget/liked_collection.dart';
@@ -135,6 +136,8 @@ class RecentlyPlayedScreen extends StatelessWidget {
                               : const SizedBox(height: 24),
                         ),
                       ),
+                      // Room to scroll the last items clear of the mini player.
+                      const SliverMiniPlayerSpacer(),
                     ],
                   ),
                 ),

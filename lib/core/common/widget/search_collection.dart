@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
 import '../../../module/genre-artist/controller/genre_controller.dart';
@@ -545,32 +546,36 @@ class SearchResultsList extends StatelessWidget {
       // songs, podcasts, audiobooks and videos in one place.
       child: ContentWidth(
         padded: false,
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: itemCount + 1,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == itemCount) {
-              return isLoadingMore
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Center(
-                        child: SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: accent,
+        child: Obx(
+          () => ListView.separated(
+            padding: MiniPlayerHost.padded(
+              const EdgeInsets.fromLTRB(16, 4, 16, 32),
+            ),
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: itemCount + 1,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              if (index == itemCount) {
+                return isLoadingMore
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: accent,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  : const SizedBox(height: 12);
-            }
+                      )
+                    : const SizedBox(height: 12);
+              }
 
-            return itemBuilder(context, index);
-          },
+              return itemBuilder(context, index);
+            },
+          ),
         ),
       ),
     );

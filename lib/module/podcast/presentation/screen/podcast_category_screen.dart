@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -53,7 +54,12 @@ class PodcastCategoryScreen extends StatelessWidget {
                       child: Obx(
                         () => CustomScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          slivers: [_buildBody(context, controller)],
+                          slivers: [
+                            _buildBody(context, controller),
+                            // Room to scroll the last items clear of the
+                            // mini player.
+                            const SliverMiniPlayerSpacer(),
+                          ],
                         ),
                       ),
                     ),

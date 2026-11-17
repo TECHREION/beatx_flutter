@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/helpers/json_read.dart';
@@ -124,6 +125,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         const SizedBox(height: 14),
                         const _SecureNotice(),
+                        // Room to scroll the last items clear of the mini player.
+                        const MiniPlayerSpacer(),
                       ],
                     ),
                   ),

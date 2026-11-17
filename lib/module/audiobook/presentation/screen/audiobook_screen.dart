@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/common/background_image.dart';
@@ -50,7 +51,11 @@ class AudiobookScreen extends StatelessWidget {
                       padded: false,
                       child: CustomScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        slivers: [_buildBody(context, controller)],
+                        slivers: [
+                          _buildBody(context, controller),
+                          // Room to scroll the last items clear of the mini player.
+                          const SliverMiniPlayerSpacer(),
+                        ],
                       ),
                     ),
                   ),

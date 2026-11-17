@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -145,6 +146,8 @@ class ExploreScreen extends StatelessWidget {
                           );
                         }),
                         const SliverToBoxAdapter(child: SizedBox(height: 34)),
+                        // Room to scroll the last items clear of the mini player.
+                        const SliverMiniPlayerSpacer(),
                       ],
                     ),
                   ),

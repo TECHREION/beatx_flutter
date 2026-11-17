@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
 
 class ArtistHitsScreen extends StatelessWidget {
@@ -66,18 +68,22 @@ class ArtistHitsScreen extends StatelessWidget {
                   _Header(title: "Hit's"),
                   const SizedBox(height: 24),
                   Expanded(
-                    child: GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 14,
-                            mainAxisSpacing: 24,
-                            childAspectRatio: 0.8,
-                          ),
-                      itemCount: _albums.length,
-                      itemBuilder: (_, index) =>
-                          _AlbumCard(item: _albums[index]),
+                    child: Obx(
+                      () => GridView.builder(
+                        padding: MiniPlayerHost.padded(
+                          const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 14,
+                              mainAxisSpacing: 24,
+                              childAspectRatio: 0.8,
+                            ),
+                        itemCount: _albums.length,
+                        itemBuilder: (_, index) =>
+                            _AlbumCard(item: _albums[index]),
+                      ),
                     ),
                   ),
                 ],

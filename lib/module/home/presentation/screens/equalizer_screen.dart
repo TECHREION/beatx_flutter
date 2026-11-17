@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/player/equalizer/equalizer_controller.dart';
@@ -591,20 +592,24 @@ class _PresetList extends StatelessWidget {
         ...EqualizerPreset.selectable,
       ];
 
-      return ListView.builder(
-        padding: EdgeInsets.only(top: 4, bottom: 24 + context.pageInset),
-        itemCount: presets.length,
-        itemBuilder: (context, index) {
-          final preset = presets[index];
-          return _PresetRow(
-            label: preset.displayName,
-            selected: preset == current,
-            // Stays tappable while off: picking a preset turns the equalizer on.
-            onTap: preset.hasCurve
-                ? () => controller.selectPreset(preset)
-                : null,
-          );
-        },
+      return Obx(
+        () => ListView.builder(
+          padding: MiniPlayerHost.padded(
+            EdgeInsets.only(top: 4, bottom: 24 + context.pageInset),
+          ),
+          itemCount: presets.length,
+          itemBuilder: (context, index) {
+            final preset = presets[index];
+            return _PresetRow(
+              label: preset.displayName,
+              selected: preset == current,
+              // Stays tappable while off: picking a preset turns the equalizer on.
+              onTap: preset.hasCurve
+                  ? () => controller.selectPreset(preset)
+                  : null,
+            );
+          },
+        ),
       );
     });
   }

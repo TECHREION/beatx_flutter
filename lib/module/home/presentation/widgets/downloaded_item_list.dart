@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -76,38 +77,42 @@ class DownloadedItemList extends StatelessWidget {
       final bytes = items
           .expand((files) => files)
           .fold<int>(0, (sum, file) => sum + file.fileSize);
-      return ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-        itemCount: items.length + 1,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (_, index) {
-          if (index == 0) {
-            return Row(
-              children: [
-                const Icon(
-                  Icons.sd_storage_outlined,
-                  color: LikedPalette.muted,
-                  size: 15,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '${items.length} ${items.length == 1 ? singular : plural}'
-                    '  •  ${formatBytes(bytes)} on this device',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: LikedPalette.muted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+      return Obx(
+        () => ListView.separated(
+          padding: MiniPlayerHost.padded(
+            const EdgeInsets.fromLTRB(16, 4, 16, 32),
+          ),
+          itemCount: items.length + 1,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (_, index) {
+            if (index == 0) {
+              return Row(
+                children: [
+                  const Icon(
+                    Icons.sd_storage_outlined,
+                    color: LikedPalette.muted,
+                    size: 15,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${items.length} ${items.length == 1 ? singular : plural}'
+                      '  •  ${formatBytes(bytes)} on this device',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: LikedPalette.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            );
-          }
-          return _ItemRow(list: this, files: items[index - 1]);
-        },
+                ],
+              );
+            }
+            return _ItemRow(list: this, files: items[index - 1]);
+          },
+        ),
       );
     });
   }

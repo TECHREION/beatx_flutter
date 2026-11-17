@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -100,6 +101,8 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                     isLoading: controller.isLoadingMore.value,
                     onTap: controller.loadMore,
                   ),
+                  // Room to scroll the last items clear of the mini player.
+                  const MiniPlayerSpacer(),
                 ],
               );
             }),

@@ -108,6 +108,8 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                             ],
                           ),
                         ),
+                        // Room to scroll the last items clear of the mini player.
+                        const MiniPlayerSpacer(),
                       ],
                     ),
                   );

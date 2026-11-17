@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 
@@ -22,6 +23,23 @@ class MiniPlayerHost {
 
   /// Add to `GetMaterialApp.navigatorObservers`.
   static final MiniPlayerRouteObserver observer = MiniPlayerRouteObserver();
+
+  /// How much of the bottom of the screen the floating player covers above
+  /// the screen's bar (0 while it is hidden or nothing is playing). Scrolling
+  /// screens end with a [MiniPlayerSpacer] of this height, so their last
+  /// items can be scrolled clear of the player instead of sitting under it.
+  static final coverage = 0.0.obs;
+
+  /// [padding] plus room for the player at the bottom, for a builder list
+  /// that cannot end with a [MiniPlayerSpacer]. Read inside an `Obx`, so the
+  /// list follows the player.
+  static EdgeInsetsGeometry padded(EdgeInsetsGeometry padding) =>
+      padding.add(EdgeInsets.only(bottom: coverage.value));
+
+  static void _setCoverage(double height) {
+    final rounded = height.roundToDouble();
+    if (coverage.value != rounded) coverage.value = rounded;
+  }
 
   static final _hidden = <Route<dynamic>>{}.obs;
   static final _anchors = <Route<dynamic>, double>{}.obs;
@@ -228,22 +246,27 @@ class MiniPlayerOverlay extends StatelessWidget {
             child: Visibility(
               visible: visible,
               maintainState: true,
-              child: SafeArea(
-                top: false,
-                // Above a bar the bar already clears the home indicator.
-                bottom: bottom == 0,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child:
-                      player ??
-                      const Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // A minimized video, then the audio pill.
-                          VideoMiniPlayer(),
-                          FloatingPlayer(),
-                        ],
-                      ),
+              child: _SizeReporter(
+                onSize: (size) => MiniPlayerHost._whenIdle(
+                  () => MiniPlayerHost._setCoverage(visible ? size.height : 0),
+                ),
+                child: SafeArea(
+                  top: false,
+                  // Above a bar the bar already clears the home indicator.
+                  bottom: bottom == 0,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child:
+                        player ??
+                        const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // A minimized video, then the audio pill.
+                            VideoMiniPlayer(),
+                            FloatingPlayer(),
+                          ],
+                        ),
+                  ),
                 ),
               ),
             ),
@@ -252,4 +275,74 @@ class MiniPlayerOverlay extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Reports its child's size after every layout.
+class _SizeReporter extends SingleChildRenderObjectWidget {
+  const _SizeReporter({required this.onSize, super.child});
+
+  final ValueChanged<Size> onSize;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderSizeReporter(onSize);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderSizeReporter renderObject,
+  ) => renderObject.onSize = onSize;
+}
+
+class _RenderSizeReporter extends RenderProxyBox {
+  _RenderSizeReporter(this._onSize);
+
+  ValueChanged<Size> _onSize;
+
+  /// A new callback comes with every rebuild — the player shown or hidden on
+  /// a new screen — which may not lay anything out again, so report now.
+  set onSize(ValueChanged<Size> value) {
+    _onSize = value;
+    if (hasSize) _report();
+  }
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    _report();
+  }
+
+  // After the frame: listeners cannot rebuild mid-layout.
+  void _report() {
+    final measured = size;
+    SchedulerBinding.instance.addPostFrameCallback((_) => _onSize(measured));
+  }
+}
+
+/// Empty space as tall as the floating player covers, for the end of a
+/// scrolling screen: its last items then scroll up clear of the player. It
+/// grows and shrinks with the player, and is nothing when no player shows.
+class MiniPlayerSpacer extends StatelessWidget {
+  const MiniPlayerSpacer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => TweenAnimationBuilder<double>(
+        tween: Tween(end: MiniPlayerHost.coverage.value),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        builder: (context, height, _) => SizedBox(height: height),
+      ),
+    );
+  }
+}
+
+/// [MiniPlayerSpacer] for a [CustomScrollView].
+class SliverMiniPlayerSpacer extends StatelessWidget {
+  const SliverMiniPlayerSpacer({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const SliverToBoxAdapter(child: MiniPlayerSpacer());
 }

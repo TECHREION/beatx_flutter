@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -169,12 +170,16 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                     );
                   }
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                    itemCount: songs.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (_, index) =>
-                        _DownloadRow(song: songs[index], position: index + 1),
+                  return Obx(
+                    () => ListView.separated(
+                      padding: MiniPlayerHost.padded(
+                        const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      ),
+                      itemCount: songs.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (_, index) =>
+                          _DownloadRow(song: songs[index], position: index + 1),
+                    ),
                   );
                 }),
               ),

@@ -1,4 +1,5 @@
 import 'package:beatx_flutter/module/subscription/model/subscription_model.dart';
+import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -104,6 +105,8 @@ class SubscriptionScreen extends StatelessWidget {
                     'No ads, no interruptions. Pure, unfiltered auditory flow 24/7.',
                   ),
                   const SizedBox(height: 40),
+                  // Room to scroll the last items clear of the mini player.
+                  const MiniPlayerSpacer(),
                 ],
               ),
             ),
