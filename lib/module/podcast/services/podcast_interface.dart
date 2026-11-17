@@ -15,7 +15,13 @@ abstract base class PodcastInterface extends BaseRepository {
   FutureRequest<Success<PodcastHomeData>> podcastHome();
   FutureRequest<Success<PodcastDetailsModel>> podcastDetails(String id);
   FutureRequest<Success<EpisodeStreamData>> getStreamUrl(String id);
-  FutureRequest<Success<List<EpisodeModel>>> podcastEpisodes(String id);
+
+  /// One page of a show's episodes (the API caps [limit] at 100).
+  FutureRequest<Success<List<EpisodeModel>>> podcastEpisodes(
+    String id, {
+    int page = 1,
+    int limit = 100,
+  });
   FutureRequest<Success<EpisodeDetailsData>> episodeDetails(String id);
   FutureRequest<Success<SaveProgressData>> saveProgress(
     String id,
@@ -31,4 +37,10 @@ abstract base class PodcastInterface extends BaseRepository {
   });
   FutureRequest<Success<PodcastLikeModel>> likePodcast(String podcastid);
   FutureRequest<Success<List<Podcast>>> getLikedPodcast();
+
+  /// One page of the user's likes, with the total across all pages.
+  FutureRequest<Success<PagedResult<Podcast>>> likedPodcastsPage({
+    required int page,
+    required int limit,
+  });
 }

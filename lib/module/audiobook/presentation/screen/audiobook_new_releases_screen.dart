@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+
+import '../../../../core/common/widget/load_more.dart';
+import '../../../genre-artist/controller/genre_controller.dart';
+import '../../controller/audiobook_new_releases_controller.dart';
 
 import '../../controller/audiobook_controller.dart';
 import '../../model/audiobook_model.dart';
 import '../widget/book_cover.dart';
 import 'audiobook_detail_screen.dart';
 
+/// Every new-release audiobook, in a grid that loads a page at a time as it
+/// scrolls, filtered by genre on the server.
+///
+/// [books] are what the home feed already had; they show at once while the
+/// first page loads.
 class AudiobookNewReleasesScreen extends StatefulWidget {
   const AudiobookNewReleasesScreen({super.key, required this.books});
 
@@ -20,25 +30,29 @@ class AudiobookNewReleasesScreen extends StatefulWidget {
 
 class _AudiobookNewReleasesScreenState
     extends State<AudiobookNewReleasesScreen> {
-  String _selectedGenre = AudiobookController.allGenres;
+  late final AudiobookNewReleasesController _controller = Get.put(
+    AudiobookNewReleasesController(),
+    tag: 'audiobook-new-releases-${identityHashCode(this)}',
+  );
 
-  List<String> get _genres {
-    final names = <String>{for (final book in widget.books) book.genreName}
-      ..removeWhere((name) => name.isEmpty);
+  static const _accent = Color(0xFF40DDEB);
 
-    return [AudiobookController.allGenres, ...names];
+  @override
+  void dispose() {
+    Get.delete<AudiobookNewReleasesController>(
+      tag: 'audiobook-new-releases-${identityHashCode(this)}',
+    );
+    super.dispose();
   }
 
-  List<Audiobook> get _filteredBooks {
-    if (_selectedGenre == AudiobookController.allGenres) return widget.books;
-    return widget.books
-        .where((book) => book.genreName == _selectedGenre)
-        .toList();
-  }
+  void _open(Audiobook book) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => AudiobookDetailScreen(book: book)),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final books = _filteredBooks;
+    final genres = GenreController.instance;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -52,69 +66,108 @@ class _AudiobookNewReleasesScreenState
             const _ReleaseGlow(),
             SafeArea(
               bottom: false,
-              child: CustomScrollView(
-                slivers: [
-                  const SliverToBoxAdapter(child: _ReleaseHeader()),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 34, 16, 120),
-                    sliver: SliverList.list(
-                      children: [
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 14,
-                          children: [
-                            for (final genre in _genres)
-                              _ReleaseChip(
-                                label: genre,
-                                selected: genre == _selectedGenre,
-                                onTap: () =>
-                                    setState(() => _selectedGenre = genre),
-                              ),
-                          ],
+              child: RefreshIndicator(
+                onRefresh: _controller.search,
+                color: _accent,
+                backgroundColor: const Color(0xFF202020),
+                child: LoadMoreOnScroll(
+                  onLoadMore: _controller.loadMore,
+                  child: Obx(() {
+                    final c = _controller;
+                    // The home feed's books until the first page lands.
+                    final books =
+                        !c.hasSearched.value && c.genreId.value.isEmpty
+                        ? widget.books
+                        : c.results.toList();
+                    final selected = c.genreId.value;
+                    final options = [
+                      ('', AudiobookController.allGenres),
+                      for (final g in genres.genres) (g.id, g.name),
+                    ];
+
+                    return CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        const SliverToBoxAdapter(child: _ReleaseHeader()),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 34, 16, 34),
+                          sliver: SliverToBoxAdapter(
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 14,
+                              children: [
+                                for (final (id, name) in options)
+                                  _ReleaseChip(
+                                    label: name,
+                                    selected: id == selected,
+                                    onTap: () => c.selectGenre(id),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 34),
-                        if (books.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Text(
-                              'No releases in this genre.',
-                              style: TextStyle(
-                                color: Color(0xFF77727A),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0,
+                        if (c.isLoading.value && books.isEmpty)
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: _accent,
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (books.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 40,
+                              ),
+                              child: Text(
+                                c.errorMessage.value.isNotEmpty
+                                    ? c.errorMessage.value
+                                    : 'No releases in this genre.',
+                                style: const TextStyle(
+                                  color: Color(0xFF77727A),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0,
+                                ),
                               ),
                             ),
                           )
                         else
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: books.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 24,
-                                  mainAxisSpacing: 30,
-                                  childAspectRatio: 0.5,
-                                ),
-                            itemBuilder: (context, index) => _ReleaseGridCard(
-                              book: books[index],
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      AudiobookDetailScreen(book: books[index]),
-                                ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            // Lazy: only the cards on screen are built.
+                            sliver: SliverGrid.builder(
+                              itemCount: books.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 24,
+                                    mainAxisSpacing: 30,
+                                    childAspectRatio: 0.5,
+                                  ),
+                              itemBuilder: (context, index) => _ReleaseGridCard(
+                                book: books[index],
+                                onTap: () => _open(books[index]),
                               ),
                             ),
                           ),
+                        SliverLoadMoreFooter(
+                          loading: c.isLoadingMore.value,
+                          color: _accent,
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 86)),
+                        // Room to scroll the last items clear of the mini
+                        // player.
+                        const SliverMiniPlayerSpacer(),
                       ],
-                    ),
-                  ),
-                  // Room to scroll the last items clear of the mini player.
-                  const SliverMiniPlayerSpacer(),
-                ],
+                    );
+                  }),
+                ),
               ),
             ),
           ],

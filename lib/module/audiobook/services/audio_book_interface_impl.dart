@@ -40,12 +40,18 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
 
   @override
   FutureRequest<Success<AudiobookDetailsData>> audiobookDetails(
-    String audiobookId,
-  ) async {
+    String audiobookId, {
+    int chapterPage = 1,
+    int chapterLimit = 50,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.audiobookDetails(audiobookId: audiobookId),
+          queryParameters: {
+            'page': chapterPage,
+            'limit': chapterLimit.clamp(1, 50),
+          },
         );
 
         final body = response.data is Map
@@ -96,33 +102,40 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
 
   @override
   FutureRequest<Success<List<Audiobook>>> getLikedAudiobooks() async {
+    // The first hundred, for the heart checks; the liked screen pages.
+    final result = await likedAudiobooksPage(page: 1, limit: 100);
+    return result.map((s) => Success(message: s.message, data: s.data?.items));
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<Audiobook>>> likedAudiobooksPage({
+    required int page,
+    required int limit,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.getLikedAudiobooks,
-          queryParameters: {'page': 1, 'limit': 100},
+          queryParameters: {'page': page, 'limit': limit},
         );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
-
-        final data = body['data'];
-        final items = pagedEntries(data);
+        // A paged envelope, or a bare list.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
-          data: items.whereType<Map>().map((item) {
-            final entry = Map<String, dynamic>.from(item);
-
-            // Liked books come back as books, but the details endpoint wraps
-            // one in `book` — take whichever this entry carries.
-            final book = entry['book'] is Map
-                ? Map<String, dynamic>.from(entry['book'] as Map)
-                : entry;
-
-            return Audiobook.fromJson(book);
-          }).toList(),
+          data: PagedResult.fromJson(data, (json) {
+            // Books, though one wrapped in `book` is unwrapped too.
+            final book = json['book'];
+            return Audiobook.fromJson(
+              book is Map ? Map<String, dynamic>.from(book) : json,
+            );
+          }),
         );
       },
     );
@@ -243,6 +256,37 @@ final class AudioBookInterfaceImpl extends AudioBookInterface {
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
         return Success(message: body['message']?.toString() ?? 'Success');
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<Audiobook>>> newReleases({
+    required String genreId,
+    required int page,
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          ApiEndpoints.newReleaseAudiobooks,
+          queryParameters: searchQueryParameters(
+            query: '',
+            genreId: genreId,
+            page: page,
+            limit: limit,
+          ),
+        );
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: PagedResult.fromJson(data, Audiobook.fromJson),
+        );
       },
     );
   }

@@ -45,6 +45,12 @@ abstract base class ListenInterface extends BaseRepository {
   });
   FutureRequest<Success<SongLikeModel>> likesong(String songId);
   FutureRequest<Success<List<ListenMusicDetailsModel>>> getLikedSong();
+
+  /// One page of the user's liked songs, with the total across all pages.
+  FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> likedSongsPage({
+    required int page,
+    required int limit,
+  });
   FutureRequest<Success<RecentlyPlayedPage>> recentlyPlayed(
     String userId, {
     required int page,
@@ -57,6 +63,15 @@ abstract base class ListenInterface extends BaseRepository {
 
   /// Songs matching [query] and/or [genreId]. Both are empty when unset, and
   /// an unset filter is left off the request rather than sent blank.
+  /// One page of [feed]: new releases, trending, or every song (newest
+  /// first), narrowed to [genreId] when it is set.
+  FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> browseSongs({
+    required SongFeed feed,
+    required String genreId,
+    required int page,
+    required int limit,
+  });
+
   FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> searchSong({
     required String query,
     required String genreId,
@@ -77,4 +92,15 @@ abstract base class ListenInterface extends BaseRepository {
     required int positionMs,
     bool completed = false,
   });
+}
+
+/// The song lists that can be browsed in full.
+enum SongFeed {
+  newReleases('New Releases'),
+  trending('Trending'),
+  all('All Songs');
+
+  const SongFeed(this.label);
+
+  final String label;
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/load_more.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
@@ -54,7 +55,7 @@ class _LikedAudiobooksScreenState extends State<LikedAudiobooksScreen> {
               () => LikedSummaryStrip(
                 icon: Icons.menu_book_rounded,
                 accent: accent,
-                count: ctrl.hasLoaded.value ? ctrl.books.length : null,
+                count: ctrl.hasLoaded.value ? ctrl.total.value : null,
                 noun: 'Liked Audiobook',
               ),
             ),
@@ -64,53 +65,63 @@ class _LikedAudiobooksScreenState extends State<LikedAudiobooksScreen> {
                 onRefresh: ctrl.fetch,
                 color: accent,
                 backgroundColor: LikedPalette.card,
-                child: CustomScrollView(
-                  // Keeps pull-to-refresh reachable while the list is empty
-                  // or short.
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    Obx(() {
-                      if (ctrl.isLoading.value && ctrl.books.isEmpty) {
-                        return const SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: CircularProgressIndicator(color: accent),
+                child: LoadMoreOnScroll(
+                  onLoadMore: ctrl.loadMore,
+                  child: CustomScrollView(
+                    // Keeps pull-to-refresh reachable while the list is empty
+                    // or short.
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      Obx(() {
+                        if (ctrl.isLoading.value && ctrl.books.isEmpty) {
+                          return const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: CircularProgressIndicator(color: accent),
+                            ),
+                          );
+                        }
+
+                        if (ctrl.books.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: LikedEmptyState(
+                              message: ctrl.errorMessage.value,
+                              emptyTitle: 'No liked audiobooks yet',
+                              emptyBody:
+                                  'Tap the heart on a book and it will show up '
+                                  'here.',
+                              accent: accent,
+                              onRetry: ctrl.fetch,
+                            ),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                          sliver: SliverList.separated(
+                            itemCount: ctrl.books.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, index) => _AudiobookRow(
+                              book: ctrl.books[index],
+                              position: index + 1,
+                              controller: ctrl,
+                            ),
                           ),
                         );
-                      }
-
-                      if (ctrl.books.isEmpty) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: LikedEmptyState(
-                            message: ctrl.errorMessage.value,
-                            emptyTitle: 'No liked audiobooks yet',
-                            emptyBody:
-                                'Tap the heart on a book and it will show up '
-                                'here.',
-                            accent: accent,
-                            onRetry: ctrl.fetch,
-                          ),
-                        );
-                      }
-
-                      return SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                        sliver: SliverList.separated(
-                          itemCount: ctrl.books.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (_, index) => _AudiobookRow(
-                            book: ctrl.books[index],
-                            position: index + 1,
-                            controller: ctrl,
-                          ),
+                      }),
+                      // The next page, on its way as the end comes into view.
+                      Obx(
+                        () => SliverLoadMoreFooter(
+                          loading: ctrl.isLoadingMore.value,
+                          color: accent,
                         ),
-                      );
-                    }),
-                    // Room to scroll the last items clear of the mini player.
-                    const SliverMiniPlayerSpacer(),
-                  ],
+                      ),
+                      // Room to scroll the last items clear of the mini player.
+                      const SliverMiniPlayerSpacer(),
+                    ],
+                  ),
                 ),
               ),
             ),

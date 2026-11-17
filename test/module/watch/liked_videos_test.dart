@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/api_handler/paged_result.dart';
 import 'package:beatx_flutter/core/api_handler/success.dart';
 import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/module/watch/controller/liked_videos_controller.dart';
@@ -27,6 +28,25 @@ final class _FakeVideos extends VideoInterface {
   @override
   FutureRequest<Success<List<VideoModel>>> getLikedVideos() async =>
       Right(Success(data: liked.toList()));
+
+  @override
+  FutureRequest<Success<PagedResult<VideoModel>>> likedVideosPage({
+    required int page,
+    required int limit,
+  }) async {
+    final start = (page - 1) * limit;
+    final items = liked.skip(start).take(limit).toList();
+    return Right(
+      Success(
+        data: PagedResult(
+          items: items,
+          total: liked.length,
+          page: page,
+          limit: limit,
+        ),
+      ),
+    );
+  }
 
   @override
   FutureRequest<Success<LikeUnlikeModel>> likeUnlike(String id) async {

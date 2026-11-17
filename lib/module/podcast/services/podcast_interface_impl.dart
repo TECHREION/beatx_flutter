@@ -113,13 +113,17 @@ final class PodcastInterfaceImpl extends PodcastInterface {
   }
 
   @override
-  FutureRequest<Success<List<EpisodeModel>>> podcastEpisodes(String id) async {
+  FutureRequest<Success<List<EpisodeModel>>> podcastEpisodes(
+    String id, {
+    int page = 1,
+    int limit = 100,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.podcastEpisodes(podcastId: id),
           // `limit` is capped at 100 by the API.
-          queryParameters: {'page': 1, 'limit': 100},
+          queryParameters: {'page': page, 'limit': limit.clamp(1, 100)},
         );
 
         final body = response.data is Map
@@ -232,35 +236,41 @@ final class PodcastInterfaceImpl extends PodcastInterface {
 
   @override
   FutureRequest<Success<List<Podcast>>> getLikedPodcast() async {
+    // The first hundred, for the heart checks; the liked screen pages.
+    final result = await likedPodcastsPage(page: 1, limit: 100);
+    return result.map((s) => Success(message: s.message, data: s.data?.items));
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<Podcast>>> likedPodcastsPage({
+    required int page,
+    required int limit,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.getLikepodcast,
-          queryParameters: {'page': 1, 'limit': 100},
+          queryParameters: {'page': page, 'limit': limit},
         );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
-
-        final data = body['data'];
-
-        // Lists arrive either bare or inside a paged envelope.
-        final items = pagedEntries(data);
+        // A paged envelope, or a bare list.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
-          data: items.whereType<Map>().map((item) {
-            final json = Map<String, dynamic>.from(item);
-
-            // A liked list holds podcasts themselves, not the
-            // `{podcast, episodes}` envelope `GET /podcasts/:id` returns —
-            // unwrap it only if this backend sends one anyway.
+          data: PagedResult.fromJson(data, (json) {
+            // Podcasts themselves, though a `{podcast, episodes}` envelope
+            // is unwrapped if this backend sends one anyway.
             final podcast = json['podcast'];
             return Podcast.fromJson(
               podcast is Map ? Map<String, dynamic>.from(podcast) : json,
             );
-          }).toList(),
+          }),
         );
       },
     );

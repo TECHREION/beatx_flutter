@@ -1,3 +1,4 @@
+import 'package:beatx_flutter/core/api_handler/paged_result.dart';
 import 'package:beatx_flutter/core/api_handler/success.dart';
 import 'package:beatx_flutter/core/helpers/typedefs.dart';
 import 'package:beatx_flutter/core/player/now_playing.dart';
@@ -45,8 +46,10 @@ final class _FakeBooks extends AudioBookInterface {
 
   @override
   FutureRequest<Success<AudiobookDetailsData>> audiobookDetails(
-    String audiobookId,
-  ) async {
+    String audiobookId, {
+    int chapterPage = 1,
+    int chapterLimit = 50,
+  }) async {
     calls++;
     return answers.removeAt(0);
   }
@@ -56,10 +59,78 @@ final class _FakeBooks extends AudioBookInterface {
       Right(Success(data: const []));
 
   @override
+  FutureRequest<Success<PagedResult<Audiobook>>> likedAudiobooksPage({
+    required int page,
+    required int limit,
+  }) async => Right(Success(data: const PagedResult<Audiobook>()));
+
+  @override
   FutureRequest<Success<List<Audiobook>>> relatedAudiobooks(
     String audiobookId, {
     int limit = 10,
   }) async => Right(Success(data: const []));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// A book of [chapterCount] chapters, answered a page at a time the way
+/// `GET /audiobooks/:id` pages them.
+final class _LongBook extends AudioBookInterface {
+  _LongBook(this.chapterCount);
+
+  final int chapterCount;
+  final pagesAsked = <int>[];
+
+  @override
+  FutureRequest<Success<AudiobookDetailsData>> audiobookDetails(
+    String audiobookId, {
+    int chapterPage = 1,
+    int chapterLimit = 50,
+  }) async {
+    pagesAsked.add(chapterPage);
+    final start = (chapterPage - 1) * chapterLimit;
+    return Right(
+      Success(
+        data: AudiobookDetailsData.fromJson({
+          'book': {
+            '_id': audiobookId,
+            'title': 'Long',
+            'totalChapters': chapterCount,
+          },
+          'chapters': {
+            'data': [
+              for (
+                var i = start;
+                i < start + chapterLimit && i < chapterCount;
+                i++
+              )
+                {
+                  '_id': 'c$i',
+                  'chapterNumber': i + 1,
+                  'title': 'Chapter ${i + 1}',
+                },
+            ],
+            'total': chapterCount,
+            'page': chapterPage,
+            'limit': chapterLimit,
+          },
+        }),
+      ),
+    );
+  }
+
+  @override
+  FutureRequest<Success<List<Audiobook>>> relatedAudiobooks(
+    String audiobookId, {
+    int limit = 10,
+  }) async => Right(Success(data: const []));
+
+  @override
+  FutureRequest<Success<PagedResult<Audiobook>>> likedAudiobooksPage({
+    required int page,
+    required int limit,
+  }) async => Right(Success(data: const PagedResult<Audiobook>()));
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -297,6 +368,32 @@ void main() {
         controller.resumePoint.value?.startAt,
         const Duration(milliseconds: 42000),
       );
+    });
+  });
+
+  group('a long book', () {
+    setUp(() => Get.testMode = true);
+    tearDown(Get.reset);
+
+    test('loads every chapter, a page at a time', () async {
+      final api = _LongBook(120);
+      Get.put<AudioBookInterface>(api);
+      Get.put(LikedAudiobooksController(), permanent: true);
+
+      final controller = AudioBookDetailsController();
+      await controller.loadDetails('long');
+      // The rest arrive in the background after the first page.
+      for (var i = 0; i < 20 && api.pagesAsked.length < 3; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      await Future<void>.delayed(Duration.zero);
+
+      final chapters = controller.details.value?.chapters ?? const [];
+      expect(api.pagesAsked, [1, 2, 3]);
+      expect(chapters.length, 120);
+      expect(chapters.last.id, 'c119');
+      // Each chapter once, in order.
+      expect(chapters.map((c) => c.id).toSet().length, 120);
     });
   });
 }

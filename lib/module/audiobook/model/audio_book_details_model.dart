@@ -5,7 +5,27 @@ class AudiobookDetailsData {
   final List<Chapter>? chapters;
   final UserProgress? userProgress;
 
-  AudiobookDetailsData({this.book, this.chapters, this.userProgress});
+  /// How many chapters the book has across every page of [chapters]; the
+  /// details route pages them.
+  final int chaptersTotal;
+
+  AudiobookDetailsData({
+    this.book,
+    this.chapters,
+    this.userProgress,
+    this.chaptersTotal = 0,
+  });
+
+  /// The same book with [more] chapters appended (another page of them).
+  AudiobookDetailsData withChapters(List<Chapter> more) {
+    final known = {for (final c in chapters ?? const <Chapter>[]) c.id};
+    return AudiobookDetailsData(
+      book: book,
+      chapters: [...?chapters, ...more.where((c) => !known.contains(c.id))],
+      userProgress: userProgress,
+      chaptersTotal: chaptersTotal,
+    );
+  }
 
   factory AudiobookDetailsData.fromJson(Map<String, dynamic> json) {
     return AudiobookDetailsData(
@@ -19,6 +39,9 @@ class AudiobookDetailsData {
       userProgress: json['userProgress'] != null
           ? UserProgress.fromJson(json['userProgress'])
           : null,
+      chaptersTotal: json['chapters'] is Map
+          ? ((json['chapters'] as Map)['total'] as num?)?.toInt() ?? 0
+          : 0,
     );
   }
 

@@ -9,6 +9,7 @@ import '../../../../core/theme/responsive.dart';
 import '../../controller/liked_videos_controller.dart';
 import '../../controller/watch_controller.dart';
 import '../../model/watch_model.dart';
+import 'all_videos_screen.dart';
 import 'liked_videos_screen.dart';
 import 'video_screen.dart';
 import 'video_search_screen.dart';
@@ -244,12 +245,12 @@ class _TrendingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(
+            const Expanded(
               child: Text(
                 'Trending Music',
                 style: TextStyle(
@@ -260,13 +261,24 @@ class _TrendingHeader extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              'View All',
-              style: TextStyle(
-                color: Color(0xFF9BFF4D),
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0,
+            // Every video, a page at a time; the feed shows only a few.
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                onTap: () => Get.to<void>(() => AllVideosScreen()),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Color(0xFF9BFF4D),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -453,7 +465,7 @@ class _LikedVideosButton extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
-                  '${controller.videos.length}',
+                  '${controller.total.value}',
                   style: const TextStyle(
                     color: _accent,
                     fontSize: 15,

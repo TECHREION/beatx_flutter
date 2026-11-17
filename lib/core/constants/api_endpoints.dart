@@ -77,6 +77,7 @@ base class ApiEndpoints {
   static const String getLikedAudiobooks = _Audiobook.getLikedAudiobooks;
   static String relatedAudiobooks({required String audiobookId}) =>
       _Audiobook._relatedAudiobooks(audiobookId);
+  static const String newReleaseAudiobooks = _Audiobook.newReleases;
   static String audiobookProgress({required String audiobookId}) =>
       _Audiobook._audiobookProgress(audiobookId);
   static const String searchAudiobook = _Audiobook.searchAudiobook;
@@ -92,6 +93,8 @@ base class ApiEndpoints {
   static String likeUnlike({required String videoId}) =>
       _Video._likeUnlike(videoId);
   static const String searchVideo = _Video.searchVideo;
+  static const String videos = _Video.videoRoute;
+  static const String trendingVideos = _Video.trending;
   static const String getLikedVideos = _Video.likedVideos;
   static String videoProgress({required String videoId}) =>
       _Video._videoProgress(videoId);
@@ -112,6 +115,8 @@ base class ApiEndpoints {
   static const String onRepeatedSong = _Listen._onRepeatedSong;
   static const String searchSong = _Listen._searchSong;
   static const String dailyDiscover = _Listen.dailyDiscover;
+  static const String newReleaseSongs = _Listen.newReleases;
+  static const String trendingSongs = _Listen.trending;
   static String songSaveProgress({required String songId}) =>
       _Listen._songsaveProgress(songId);
 
@@ -269,6 +274,7 @@ class _Audiobook {
   static String _likeAudibook(String audiobookId) =>
       '$_audiobookRoute/$audiobookId/like';
   static const String getLikedAudiobooks = '$_audiobookRoute/liked';
+  static const String newReleases = '$_audiobookRoute/new-releases';
   static String _relatedAudiobooks(String audiobookId) =>
       '$_audiobookRoute/$audiobookId/related';
   static String _audiobookProgress(String audiobookId) =>
@@ -288,6 +294,7 @@ class _Video {
   static String _likeUnlike(String videoId) => '$videoRoute/$videoId/like';
   static const String likedVideos = '$videoRoute/liked';
   static const String searchVideo = '$videoRoute/search';
+  static const String trending = '$videoRoute/trending';
   static String _videoProgress(String videoId) =>
       '$videoRoute/$videoId/progress';
 }
@@ -305,6 +312,8 @@ class _Listen {
   static const String _onRepeatedSong = '$listen/on-repeat';
   static const String searchSong = '$listen/search';
   static const String dailyDiscover = '$listen/daily-discovery';
+  static const String newReleases = '$listen/new-releases';
+  static const String trending = '$listen/trending';
   static String _songsaveProgress(String songId) => '$listen/$songId/progress';
 }
 

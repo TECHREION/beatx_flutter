@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/load_more.dart';
 import 'package:beatx_flutter/core/common/widget/app_back_button.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:flutter/services.dart';
@@ -52,15 +53,23 @@ class PodcastCategoryScreen extends StatelessWidget {
                       onRefresh: controller.fetchCategory,
                       backgroundColor: const Color(0xFF202020),
                       color: const Color(0xFF40DDEB),
-                      child: Obx(
-                        () => CustomScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          slivers: [
-                            _buildBody(context, controller),
-                            // Room to scroll the last items clear of the
-                            // mini player.
-                            const SliverMiniPlayerSpacer(),
-                          ],
+                      // More shows (and their episodes) as the end nears.
+                      child: LoadMoreOnScroll(
+                        onLoadMore: controller.loadMore,
+                        child: Obx(
+                          () => CustomScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              _buildBody(context, controller),
+                              SliverLoadMoreFooter(
+                                loading: controller.isLoadingMore.value,
+                                color: const Color(0xFF40DDEB),
+                              ),
+                              // Room to scroll the last items clear of the
+                              // mini player.
+                              const SliverMiniPlayerSpacer(),
+                            ],
+                          ),
                         ),
                       ),
                     ),

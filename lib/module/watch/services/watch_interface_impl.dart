@@ -120,26 +120,34 @@ final class VideoInterfaceImpl extends VideoInterface {
 
   @override
   FutureRequest<Success<List<VideoModel>>> getLikedVideos() async {
+    // The first hundred, for the heart checks; the liked screen pages.
+    final result = await likedVideosPage(page: 1, limit: 100);
+    return result.map((s) => Success(message: s.message, data: s.data?.items));
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<VideoModel>>> likedVideosPage({
+    required int page,
+    required int limit,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.getLikedVideos,
-          queryParameters: {'page': 1, 'limit': 100},
+          queryParameters: {'page': page, 'limit': limit},
         );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
+        // A paged envelope, or a bare list.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
 
-        // `{videos, total, page, limit}`; the list carries no channel.
         return Success(
           message: body['message']?.toString() ?? 'Success',
-          data: pagedEntries(body['data'])
-              .whereType<Map>()
-              .map(
-                (item) => VideoModel.fromJson(Map<String, dynamic>.from(item)),
-              )
-              .toList(),
+          data: PagedResult.fromJson(data, VideoModel.fromJson),
         );
       },
     );
@@ -164,6 +172,42 @@ final class VideoInterfaceImpl extends VideoInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: LikeUnlikeModel.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<VideoModel>>> browseVideos({
+    required VideoFeed feed,
+    required String genreId,
+    required int page,
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          feed == VideoFeed.trending
+              ? ApiEndpoints.trendingVideos
+              : ApiEndpoints.videos,
+          queryParameters: searchQueryParameters(
+            query: '',
+            genreId: genreId,
+            page: page,
+            limit: limit,
+          ),
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: PagedResult.fromJson(data, VideoModel.fromJson),
         );
       },
     );

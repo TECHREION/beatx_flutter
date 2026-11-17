@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beatx_flutter/core/common/widget/load_more.dart';
 import 'package:beatx_flutter/core/common/widget/mini_player_host.dart';
 import 'package:get/get.dart';
 
@@ -51,7 +52,7 @@ class _LikedVideosScreenState extends State<LikedVideosScreen> {
               () => LikedSummaryStrip(
                 icon: Icons.smart_display_rounded,
                 accent: accent,
-                count: ctrl.hasLoaded.value ? ctrl.videos.length : null,
+                count: ctrl.hasLoaded.value ? ctrl.total.value : null,
                 noun: 'Liked Video',
               ),
             ),
@@ -61,53 +62,63 @@ class _LikedVideosScreenState extends State<LikedVideosScreen> {
                 onRefresh: ctrl.fetch,
                 color: accent,
                 backgroundColor: LikedPalette.card,
-                child: CustomScrollView(
-                  // Keeps pull-to-refresh reachable while the list is short.
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    Obx(() {
-                      if (ctrl.isLoading.value && ctrl.videos.isEmpty) {
-                        return const SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: CircularProgressIndicator(color: accent),
+                child: LoadMoreOnScroll(
+                  onLoadMore: ctrl.loadMore,
+                  child: CustomScrollView(
+                    // Keeps pull-to-refresh reachable while the list is short.
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      Obx(() {
+                        if (ctrl.isLoading.value && ctrl.videos.isEmpty) {
+                          return const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: CircularProgressIndicator(color: accent),
+                            ),
+                          );
+                        }
+
+                        if (ctrl.videos.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: LikedEmptyState(
+                              message: ctrl.errorMessage.value,
+                              emptyTitle: 'No liked videos yet',
+                              emptyBody:
+                                  'Tap the heart under a video and it will show '
+                                  'up here.',
+                              accent: accent,
+                              emptyIcon: Icons.video_library_outlined,
+                              onRetry: ctrl.fetch,
+                            ),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                          sliver: SliverList.separated(
+                            itemCount: ctrl.videos.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, index) => _VideoRow(
+                              video: ctrl.videos[index],
+                              position: index + 1,
+                              controller: ctrl,
+                            ),
                           ),
                         );
-                      }
-
-                      if (ctrl.videos.isEmpty) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: LikedEmptyState(
-                            message: ctrl.errorMessage.value,
-                            emptyTitle: 'No liked videos yet',
-                            emptyBody:
-                                'Tap the heart under a video and it will show '
-                                'up here.',
-                            accent: accent,
-                            emptyIcon: Icons.video_library_outlined,
-                            onRetry: ctrl.fetch,
-                          ),
-                        );
-                      }
-
-                      return SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                        sliver: SliverList.separated(
-                          itemCount: ctrl.videos.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (_, index) => _VideoRow(
-                            video: ctrl.videos[index],
-                            position: index + 1,
-                            controller: ctrl,
-                          ),
+                      }),
+                      // The next page, on its way as the end comes into view.
+                      Obx(
+                        () => SliverLoadMoreFooter(
+                          loading: ctrl.isLoadingMore.value,
+                          color: accent,
                         ),
-                      );
-                    }),
-                    // Room to scroll the last items clear of the mini player.
-                    const SliverMiniPlayerSpacer(),
-                  ],
+                      ),
+                      // Room to scroll the last items clear of the mini player.
+                      const SliverMiniPlayerSpacer(),
+                    ],
+                  ),
                 ),
               ),
             ),

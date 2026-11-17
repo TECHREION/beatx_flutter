@@ -566,14 +566,28 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _ChaptersBlock extends StatelessWidget {
+class _ChaptersBlock extends StatefulWidget {
   const _ChaptersBlock({required this.chapters, required this.controller});
 
   final List<details_model.Chapter> chapters;
   final AudioBookDetailsController controller;
 
   @override
+  State<_ChaptersBlock> createState() => _ChaptersBlockState();
+}
+
+/// Lists the chapters a batch at a time: a long book's hundreds of rows are
+/// never all laid out at once, and "Show more" brings in the next batch.
+class _ChaptersBlockState extends State<_ChaptersBlock> {
+  static const _batch = 30;
+  int _shown = _batch;
+
+  @override
   Widget build(BuildContext context) {
+    final chapters = widget.chapters;
+    final controller = widget.controller;
+    final visible = chapters.length < _shown ? chapters.length : _shown;
+    final remaining = chapters.length - visible;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -601,9 +615,27 @@ class _ChaptersBlock extends StatelessWidget {
           ),
           if (chapters.isNotEmpty) ...[
             const SizedBox(height: 22),
-            for (var i = 0; i < chapters.length; i++) ...[
+            for (var i = 0; i < visible; i++) ...[
               _ChapterRow(chapter: chapters[i], controller: controller),
-              if (i != chapters.length - 1) const SizedBox(height: 24),
+              if (i != visible - 1) const SizedBox(height: 24),
+            ],
+            if (remaining > 0) ...[
+              const SizedBox(height: 20),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => setState(() => _shown += _batch),
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: Text(
+                    remaining > _batch
+                        ? 'Show $_batch more chapters ($remaining left)'
+                        : 'Show $remaining more chapters',
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFD7F2B8),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
             ],
           ],
         ],

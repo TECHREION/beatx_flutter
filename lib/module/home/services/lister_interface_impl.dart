@@ -170,31 +170,34 @@ final class ListenInterfaceImpl extends ListenInterface {
 
   @override
   FutureRequest<Success<List<ListenMusicDetailsModel>>> getLikedSong() async {
+    // The first hundred, for the heart checks; the liked screen pages.
+    final result = await likedSongsPage(page: 1, limit: 100);
+    return result.map((s) => Success(message: s.message, data: s.data?.items));
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> likedSongsPage({
+    required int page,
+    required int limit,
+  }) async {
     return await asyncTryCatch(
       tryFunc: () async {
         final response = await appPigeon.get(
           ApiEndpoints.getLikesong,
-          queryParameters: {'page': 1, 'limit': 100},
+          queryParameters: {'page': page, 'limit': limit},
         );
 
         final body = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};
-
-        // `/songs/liked` answers `{ data: { songs: [...], total, ... } }`,
-        // daily-discovery answers a bare list — pagedEntries reads either.
-        final items = pagedEntries(body['data']);
+        // `{ data: { songs: [...], total, ... } }`, or a bare list.
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
 
         return Success(
           message: body['message']?.toString() ?? 'Success',
-          data: items
-              .whereType<Map>()
-              .map(
-                (item) => ListenMusicDetailsModel.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
-              )
-              .toList(),
+          data: PagedResult.fromJson(data, ListenMusicDetailsModel.fromJson),
         );
       },
     );
@@ -282,6 +285,47 @@ final class ListenInterfaceImpl extends ListenInterface {
         return Success(
           message: body['message']?.toString() ?? 'Success',
           data: OnRepeatPage.fromJson(data),
+        );
+      },
+    );
+  }
+
+  @override
+  FutureRequest<Success<PagedResult<ListenMusicDetailsModel>>> browseSongs({
+    required SongFeed feed,
+    required String genreId,
+    required int page,
+    required int limit,
+  }) async {
+    return await asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(
+          switch (feed) {
+            SongFeed.newReleases => ApiEndpoints.newReleaseSongs,
+            SongFeed.trending => ApiEndpoints.trendingSongs,
+            SongFeed.all => ApiEndpoints.songs,
+          },
+          queryParameters: {
+            ...searchQueryParameters(
+              query: '',
+              genreId: genreId,
+              page: page,
+              limit: limit,
+            ),
+            if (feed == SongFeed.all) 'sort': 'latest',
+          },
+        );
+
+        final body = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : <String, dynamic>{};
+        final data = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : {'data': body['data']};
+
+        return Success(
+          message: body['message']?.toString() ?? 'Success',
+          data: PagedResult.fromJson(data, ListenMusicDetailsModel.fromJson),
         );
       },
     );

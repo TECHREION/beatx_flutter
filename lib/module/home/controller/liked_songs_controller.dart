@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:beatx_flutter/core/base/paged_list.dart';
 
 import 'package:app_pigeon/app_pigeon.dart';
 import 'package:get/get.dart';
@@ -22,13 +23,31 @@ class LikedSongsController extends GetxController {
     return Get.find<LikedSongsController>();
   }
 
-  final songs = <ListenMusicDetailsModel>[].obs;
-  final isLoading = false.obs;
-  final errorMessage = ''.obs;
+  /// Loaded a page at a time as the liked screen scrolls, so a long list
+  /// is never fetched (or laid out) all at once.
+  late final _pages = PagedList<ListenMusicDetailsModel>(
+    fetch: (page, limit) =>
+        _listenInterface().likedSongsPage(page: page, limit: limit),
+    idOf: (item) => item.id,
+  );
+
+  /// The pages loaded so far.
+  RxList<ListenMusicDetailsModel> get songs => _pages.items;
+  RxBool get isLoading => _pages.isLoading;
+  RxString get errorMessage => _pages.errorMessage;
 
   /// False until a fetch has come back, so the count can be held back rather
   /// than shown as a zero that only means "not asked yet".
-  final hasLoaded = false.obs;
+  RxBool get hasLoaded => _pages.hasLoaded;
+
+  /// How many are liked in all — more than [songs] until every
+  /// page has loaded.
+  RxInt get total => _pages.total;
+  RxBool get isLoadingMore => _pages.isLoadingMore;
+  bool get hasMore => _pages.hasMore;
+
+  /// Appends the next page; called as the liked screen nears its end.
+  Future<void> loadMore() => _pages.loadMore();
 
   /// Songs with an unlike in flight, kept out of the way of a second tap.
   final unliking = <String>{}.obs;
@@ -67,20 +86,7 @@ class LikedSongsController extends GetxController {
   Future<void> fetch() =>
       _inFlight ??= _fetch().whenComplete(() => _inFlight = null);
 
-  Future<void> _fetch() async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
-    final result = await _listenInterface().getLikedSong();
-
-    result.fold(
-      (failure) => errorMessage.value = failure.uiMessage,
-      (success) => songs.assignAll(success.data ?? const []),
-    );
-
-    hasLoaded.value = true;
-    isLoading.value = false;
-  }
+  Future<void> _fetch() => _pages.refresh();
 
   /// Plays [song] and opens the player, through the same path the home
   /// screen uses.
@@ -111,7 +117,7 @@ class LikedSongsController extends GetxController {
       // not liked to begin with and is now — leave it on the list.
       if (success.data?.liked == true) return;
 
-      songs.removeWhere((item) => item.id == song.id);
+      _pages.remove((item) => item.id == song.id);
 
       // Keep the heart on the player screen honest when the song unliked
       // here is the one playing.

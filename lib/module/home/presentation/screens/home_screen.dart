@@ -26,6 +26,8 @@ import '../../../../core/common/background_image.dart';
 import '../../../../core/common/widget/app_header.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/responsive.dart';
+import '../../services/listen_interface.dart';
+import 'all_songs_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -64,9 +66,14 @@ class HomeScreen extends StatelessWidget {
                         ),
                         sliver: SliverList.list(
                           children: [
-                            const _SectionTitle(
+                            _SectionTitle(
                               title: 'Trending Now',
                               action: 'See all',
+                              onAction: () => Get.to<void>(
+                                () => AllSongsScreen(
+                                  initialFeed: SongFeed.trending,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Obx(() {
@@ -182,11 +189,44 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+/// The green "See all" beside a section title.
+class _SeeAllLink extends StatelessWidget {
+  const _SeeAllLink({required this.label, this.onTap});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: onTap != null,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        // A taller target than the line of text alone.
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64FF8F),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, this.action});
+  const _SectionTitle({required this.title, this.action, this.onAction});
 
   final String title;
   final String? action;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -202,16 +242,7 @@ class _SectionTitle extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        if (action != null)
-          Text(
-            action!,
-            style: const TextStyle(
-              color: Color(0xFF64FF8F),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0,
-            ),
-          ),
+        if (action != null) _SeeAllLink(label: action!, onTap: onAction),
       ],
     );
   }
@@ -565,7 +596,7 @@ class _MixGrid extends StatelessWidget {
   static String _likedSubtitle(LikedSongsController controller) {
     if (!controller.hasLoaded.value) return 'Your favourites';
 
-    final count = controller.songs.length;
+    final count = controller.total.value;
     return count == 1 ? '1 track' : '$count tracks';
   }
 }
@@ -889,6 +920,15 @@ class _NewReleaseSectionState extends State<_NewReleaseSection> {
               if (i > 0) const SizedBox(width: 8),
               _PagerLine(active: i == visiblePage),
             ],
+            const SizedBox(width: 14),
+            // The pager holds only what the home feed sent; every release,
+            // to scroll through, is on the next screen.
+            _SeeAllLink(
+              label: 'See all',
+              onTap: () => Get.to<void>(
+                () => AllSongsScreen(initialFeed: SongFeed.newReleases),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),

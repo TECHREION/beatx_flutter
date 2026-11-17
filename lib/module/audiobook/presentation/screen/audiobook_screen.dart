@@ -309,7 +309,7 @@ class _LikedAudiobooksButton extends StatelessWidget {
   /// Held back until the fetch lands, so the button never reads "0" when it
   /// only means the count is not in yet.
   static int? _count(LikedAudiobooksController controller) =>
-      controller.hasLoaded.value ? controller.books.length : null;
+      controller.hasLoaded.value ? controller.total.value : null;
 }
 
 class _AudiobookMessage extends StatelessWidget {

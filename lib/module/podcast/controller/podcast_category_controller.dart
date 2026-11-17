@@ -3,6 +3,9 @@ import 'package:beatx_flutter/core/player/player_controller.dart';
 import 'package:beatx_flutter/module/home/presentation/screens/audio_play_screen.dart';
 import 'package:get/get.dart';
 
+import '../../../core/api_handler/paged_result.dart';
+import '../../../core/helpers/typedefs.dart';
+
 import '../model/episodes_model.dart';
 import '../model/podcast_home_model.dart';
 import '../model/search_category_model.dart';
@@ -19,9 +22,24 @@ class PodcastCategoryController extends GetxController {
 
   final String categoryId;
 
+  /// Shows a page at a time, and the newest few episodes of each, so a big
+  /// category never pulls in every episode of every show at once.
+  static const _showsPerPage = 20;
+  static const _episodesPerShow = 10;
+
   final podcasts = <CategoryPodcast>[].obs;
   final episodes = <RecentEpisode>[].obs;
   final isLoading = true.obs;
+
+  /// The next page of shows (and their episodes) is on its way.
+  final isLoadingMore = false.obs;
+
+  /// How many shows the category holds, across every page.
+  final totalPodcasts = 0.obs;
+  int _page = 0;
+  int _generation = 0;
+
+  bool get hasMore => podcasts.length < totalPodcasts.value;
   final isLoadingEpisodes = false.obs;
   final errorMessage = ''.obs;
 
@@ -95,33 +113,82 @@ class PodcastCategoryController extends GetxController {
       return;
     }
 
+    final generation = ++_generation;
     isLoading.value = true;
     errorMessage.value = '';
 
-    final result = await _podcastInterface().searchCategory(categoryId);
-    result.fold((failure) => errorMessage.value = failure.uiMessage, (success) {
-      podcasts.value = success.data?.data ?? const [];
+    final result = await _showsPage(1);
+    if (generation != _generation) return;
+    result.fold((failure) => errorMessage.value = failure.uiMessage, (page) {
+      _page = 1;
+      podcasts.assignAll(page.items);
+      totalPodcasts.value = page.total > page.items.length
+          ? page.total
+          : page.items.length;
     });
-
+    episodes.clear();
     isLoading.value = false;
 
-    if (podcasts.isNotEmpty) await _fetchEpisodes();
+    if (podcasts.isNotEmpty) {
+      isLoadingEpisodes.value = true;
+      final newest = await _newestEpisodes(podcasts);
+      if (generation != _generation) return;
+      episodes.assignAll(newest);
+      isLoadingEpisodes.value = false;
+    }
   }
 
-  /// The search only returns shows, so the episode list is stitched together
-  /// from each show's own episode call — newest first, whichever show it
-  /// belongs to.
-  Future<void> _fetchEpisodes() async {
-    isLoadingEpisodes.value = true;
+  /// The next page of shows, with their newest episodes appended below the
+  /// ones already listed. Called as the screen nears its end.
+  Future<void> loadMore() async {
+    if (isLoading.value || isLoadingMore.value || !hasMore) return;
+    final generation = _generation;
+    isLoadingMore.value = true;
 
+    final result = await _showsPage(_page + 1);
+    if (generation != _generation) return;
+    final added = result.fold((_) => const <CategoryPodcast>[], (page) {
+      _page++;
+      final known = {for (final p in podcasts) p.id};
+      final fresh = page.items.where((p) => !known.contains(p.id)).toList();
+      podcasts.addAll(fresh);
+      // Nothing new: the server has no more, whatever its count said.
+      if (page.items.isEmpty) totalPodcasts.value = podcasts.length;
+      return fresh;
+    });
+    if (added.isNotEmpty) {
+      final newest = await _newestEpisodes(added);
+      if (generation != _generation) return;
+      episodes.addAll(newest);
+    }
+    isLoadingMore.value = false;
+  }
+
+  Future<Request<PagedResult<CategoryPodcast>>> _showsPage(int page) async {
+    final result = await _podcastInterface().searchPodcast(
+      query: '',
+      genreId: categoryId,
+      page: page,
+      limit: _showsPerPage,
+    );
+    return result.map((success) => success.data ?? PagedResult());
+  }
+
+  /// The newest few episodes of each of [shows], newest first.
+  Future<List<RecentEpisode>> _newestEpisodes(
+    List<CategoryPodcast> shows,
+  ) async {
     final interface = _podcastInterface();
     final results = await Future.wait(
-      podcasts.map((podcast) => interface.podcastEpisodes(podcast.id)),
+      shows.map(
+        (podcast) =>
+            interface.podcastEpisodes(podcast.id, limit: _episodesPerShow),
+      ),
     );
 
     final collected = <RecentEpisode>[];
     for (var index = 0; index < results.length; index++) {
-      final podcast = podcasts[index];
+      final podcast = shows[index];
       results[index].fold((failure) => null, (success) {
         for (final page in success.data ?? const <EpisodeModel>[]) {
           for (final episode in page.data) {
@@ -130,10 +197,8 @@ class PodcastCategoryController extends GetxController {
         }
       });
     }
-
     collected.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
-    episodes.value = collected;
-    isLoadingEpisodes.value = false;
+    return collected;
   }
 
   /// The episode screens all speak [RecentEpisode], so search results are

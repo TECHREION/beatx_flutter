@@ -98,6 +98,7 @@ class AudioBookDetailsController extends GetxController {
     isLoading.value = false;
 
     unawaited(refreshResume());
+    unawaited(_loadRemainingChapters(audiobookId));
 
     final book = details.value?.book;
     if (book != null) {
@@ -145,6 +146,66 @@ class AudioBookDetailsController extends GetxController {
     });
 
     isTogglingLike.value = false;
+  }
+
+  /// The details route pages a book's chapters, 50 at a time. The rest are
+  /// fetched here, a page after another, so the chapter list and the play
+  /// queue hold the whole book. (Chapter entries are a few fields each; it is
+  /// laying out hundreds of rows at once that the screen avoids, by showing
+  /// them a batch at a time.)
+  Future<void> _loadRemainingChapters(String audiobookId) async {
+    const pageSize = 50;
+    // Enough for any real book, and a stop should a total never be reached.
+    const maxPages = 40;
+    for (var page = 2; page <= maxPages; page++) {
+      final loaded = details.value;
+      if (loaded == null || _loadedAudiobookId != audiobookId) return;
+      final have = loaded.chapters?.length ?? 0;
+      final total = loaded.chaptersTotal > 0
+          ? loaded.chaptersTotal
+          : (loaded.book?.totalChapters ?? 0);
+      if (have >= total || have < (page - 1) * pageSize) return;
+
+      final result = await _audioBookInterface().audiobookDetails(
+        audiobookId,
+        chapterPage: page,
+        chapterLimit: pageSize,
+      );
+      final more = result.fold(
+        (_) => const <Chapter>[],
+        (success) => success.data?.chapters ?? const <Chapter>[],
+      );
+      if (more.isEmpty || _loadedAudiobookId != audiobookId) return;
+      details.value = details.value?.withChapters(more);
+      // A chapter already playing from this book keeps its list current, and
+      // its queue runs on into the chapters just loaded.
+      final playing = _playing;
+      if (playing != null) {
+        playing.entries.assignAll(_nowPlaying().entries);
+        final player = _playerController();
+        if (player.nowPlaying.value == playing) {
+          _queueBook(player.trackId.value);
+        }
+      }
+    }
+  }
+
+  /// Makes this book's chapters (as many as are loaded) the player's queue,
+  /// with [currentChapterId] the one playing.
+  void _queueBook(String currentChapterId) {
+    final chapters = details.value?.chapters ?? const <Chapter>[];
+    _playerController().setQueue(
+      [for (final c in chapters) c.id ?? ''],
+      current: currentChapterId,
+      start: (id) async {
+        final next = (details.value?.chapters ?? const <Chapter>[])
+            .firstWhereOrNull((c) => c.id == id);
+        // Moving on through the book: each chapter from its start.
+        if (next != null) {
+          await playChapter(next, openPlayer: false, startAt: Duration.zero);
+        }
+      },
+    );
   }
 
   /// Looks up the books this one links to as prequel/sequel. The link only
@@ -406,17 +467,7 @@ class AudioBookDetailsController extends GetxController {
       final player = _playerController();
       // Before play(), so it sees the chapter as part of the queue and of
       // the book.
-      player.setQueue(
-        [for (final c in chapters) c.id ?? ''],
-        current: chapterId,
-        start: (id) async {
-          final next = chapters.firstWhereOrNull((c) => c.id == id);
-          // Moving on through the book: each chapter from its start.
-          if (next != null) {
-            await playChapter(next, openPlayer: false, startAt: Duration.zero);
-          }
-        },
-      );
+      _queueBook(chapterId);
       attachNowPlaying(_playing ??= _nowPlaying());
 
       player.play(

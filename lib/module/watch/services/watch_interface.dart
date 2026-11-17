@@ -18,8 +18,23 @@ abstract base class VideoInterface extends BaseRepository {
   /// The videos the signed-in user has liked, most recent first.
   FutureRequest<Success<List<VideoModel>>> getLikedVideos();
 
+  /// One page of the user's likes, with the total across all pages.
+  FutureRequest<Success<PagedResult<VideoModel>>> likedVideosPage({
+    required int page,
+    required int limit,
+  });
+
   /// Videos matching [query] and/or [genreId]. Both are empty when unset, and
   /// an unset filter is left off the request rather than sent blank.
+  /// One page of [feed] (trending, or every video), narrowed to [genreId]
+  /// when it is set.
+  FutureRequest<Success<PagedResult<VideoModel>>> browseVideos({
+    required VideoFeed feed,
+    required String genreId,
+    required int page,
+    required int limit,
+  });
+
   FutureRequest<Success<PagedResult<VideoModel>>> searchVideo({
     required String query,
     required String genreId,
@@ -37,4 +52,14 @@ abstract base class VideoInterface extends BaseRepository {
     required int positionMs,
     bool completed = false,
   });
+}
+
+/// The video lists that can be browsed in full.
+enum VideoFeed {
+  trending('Trending'),
+  all('All Videos');
+
+  const VideoFeed(this.label);
+
+  final String label;
 }
